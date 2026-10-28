@@ -5,6 +5,10 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,9 +35,32 @@ jobs:
       - name: Gradle Build (debug)
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
+
+      - name: Report failure as issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo '### 编译错误'
+            echo '```'
+            grep -E "^e: " build.log | head -80 || true
+            echo '```'
+            echo '### What went wrong'
+            echo '```'
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -80 || true
+            echo '```'
+            echo '### 尾部日志'
+            echo '```'
+            tail -n 80 build.log || true
+            echo '```'
+          } > fail-body.md
+          gh issue create --title "build-fail-$(date +%Y%m%d%H%M%S)" --body-file fail-body.md
 
       - name: Extract version
+        if: success()
         id: version
         run: |
           VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
