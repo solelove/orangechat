@@ -1,0 +1,221 @@
+run=40685717195 sha=f509bdf221a1683779827940d6b9a376cdf092a6
+=== kotlin errors ===
+=== what went wrong ===
+* What went wrong:
+Execution failed for task ':web:buildWebUi'.
+> A problem occurred starting process 'command 'pnpm''
+
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:buildWebUi'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.process.ProcessExecutionException: A problem occurred starting process 'command 'pnpm''
+	at org.gradle.process.internal.DefaultExecHandle.execExceptionFor(DefaultExecHandle.java:245)
+	at org.gradle.process.internal.DefaultExecHandle.setEndStateInfo(DefaultExecHandle.java:222)
+	at org.gradle.process.internal.DefaultExecHandle.failed(DefaultExecHandle.java:412)
+	at org.gradle.process.internal.ExecHandleRunner.lambda$run$3(ExecHandleRunner.java:181)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:180)
+	... 2 more
+Caused by: net.rubygrapefruit.platform.NativeException: Could not start 'pnpm'
+	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:27)
+	at net.rubygrapefruit.platform.internal.WrapperProcessLauncher.start(WrapperProcessLauncher.java:36)
+	at org.gradle.process.internal.ExecHandleRunner.startProcess(ExecHandleRunner.java:201)
+	at org.gradle.process.internal.ExecHandleRunner.lambda$run$0(ExecHandleRunner.java:159)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:158)
+	... 2 more
+Caused by: java.io.IOException: Cannot run program "pnpm" (in directory "/home/runner/work/orangechat/orangechat/web-ui"): error=2, No such file or directory
+	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:25)
+	... 7 more
+Caused by: java.io.IOException: error=2, No such file or directory
+	... 8 more
+
+
+BUILD FAILED in 1m 59s
+=== tail ===
+Downloading https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+.............10%.............20%.............30%.............40%.............50%.............60%..............70%.............80%.............90%.............100%
+
+Welcome to Gradle 9.4.1!
+
+Here are the highlights of this release:
+ - Java 26 support
+ - Non-class-based JVM tests
+ - Enhanced console progress bar
+
+For more details see https://docs.gradle.org/9.4.1/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+> Configure project :ai
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Configure project :app
+w: file:///home/runner/work/orangechat/orangechat/app/build.gradle.kts:135:41: 'fun srcDirs(vararg srcDirs: Any): Any' is deprecated. Use `directories` mutable set instead.
+
+> Configure project :material3
+w: file:///home/runner/work/orangechat/orangechat/material3/build.gradle.kts:25:20: 'fun srcDir(srcDir: Any): Any' is deprecated. Use `directories` mutable set instead.
+
+> Configure project :workspace
+Checking the license for package NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/licenses
+License for package NDK (Side by side) 28.2.13676358 accepted.
+Preparing "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358".
+"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" ready.
+Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28.2.13676358
+"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" complete.
+"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" finished.
+
+> Task :document:preBuild UP-TO-DATE
+> Task :ai:preBuild UP-TO-DATE
+> Task :common:preBuild UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :ai:preDebugBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :common:preDebugBuild UP-TO-DATE
+> Task :document:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig
+> Task :document:extractDebugSupportedLocales
+> Task :common:generateDebugResources
+> Task :common:writeDebugAarMetadata
+> Task :highlight:preBuild UP-TO-DATE
+> Task :ai:mergeDebugJniLibFolders
+> Task :highlight:preDebugBuild UP-TO-DATE
+> Task :highlight:extractDebugSupportedLocales
+> Task :material3:preBuild UP-TO-DATE
+> Task :material3:preDebugBuild UP-TO-DATE
+> Task :ai:mergeDebugNativeLibs NO-SOURCE
+> Task :ai:stripDebugDebugSymbols NO-SOURCE
+> Task :material3:extractDebugSupportedLocales FROM-CACHE
+> Task :app:extractDebugSupportedLocales
+> Task :ai:copyDebugJniLibsProjectAndLocalJars
+> Task :search:preBuild UP-TO-DATE
+> Task :search:preDebugBuild UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :speech:preBuild UP-TO-DATE
+> Task :speech:preDebugBuild UP-TO-DATE
+> Task :common:packageDebugResources
+> Task :ai:generateDebugResources FROM-CACHE
+> Task :speech:extractDebugSupportedLocales FROM-CACHE
+> Task :common:processDebugNavigationResources
+> Task :search:extractDebugSupportedLocales
+> Task :workspace:preBuild UP-TO-DATE
+> Task :workspace:preDebugBuild UP-TO-DATE
+> Task :workspace:extractDebugSupportedLocales FROM-CACHE
+> Task :app:generateDebugResources
+> Task :document:processDebugNavigationResources FROM-CACHE
+> Task :highlight:processDebugNavigationResources
+> Task :web:buildWebUi FAILED
+> Task :material3:processDebugNavigationResources FROM-CACHE
+> Task :common:parseDebugLocalResources
+> Task :ai:checkDebugAarMetadata
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':web:buildWebUi'.
+> A problem occurred starting process 'command 'pnpm''
+
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:buildWebUi'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.process.ProcessExecutionException: A problem occurred starting process 'command 'pnpm''
+	at org.gradle.process.internal.DefaultExecHandle.execExceptionFor(DefaultExecHandle.java:245)
+	at org.gradle.process.internal.DefaultExecHandle.setEndStateInfo(DefaultExecHandle.java:222)
+	at org.gradle.process.internal.DefaultExecHandle.failed(DefaultExecHandle.java:412)
+	at org.gradle.process.internal.ExecHandleRunner.lambda$run$3(ExecHandleRunner.java:181)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:180)
+	... 2 more
+Caused by: net.rubygrapefruit.platform.NativeException: Could not start 'pnpm'
+	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:27)
+	at net.rubygrapefruit.platform.internal.WrapperProcessLauncher.start(WrapperProcessLauncher.java:36)
+	at org.gradle.process.internal.ExecHandleRunner.startProcess(ExecHandleRunner.java:201)
+	at org.gradle.process.internal.ExecHandleRunner.lambda$run$0(ExecHandleRunner.java:159)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:158)
+	... 2 more
+Caused by: java.io.IOException: Cannot run program "pnpm" (in directory "/home/runner/work/orangechat/orangechat/web-ui"): error=2, No such file or directory
+	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:25)
+	... 7 more
+Caused by: java.io.IOException: error=2, No such file or directory
+	... 8 more
+
+
+BUILD FAILED in 1m 59s
+23 actionable tasks: 17 executed, 6 from cache
