@@ -21,13 +21,21 @@ jobs:
       - name: Init needed submodules
         run: |
           git submodule update --init --depth 1 material3/material-color-utilities || true
-          ls material3/material-color-utilities/kotlin | head
 
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Gradle cache
         uses: actions/cache@v4
@@ -49,7 +57,7 @@ jobs:
           {
             echo "run=${{ github.run_id }} sha=${{ github.sha }}"
             echo "=== kotlin errors ==="
-            grep -E "^e: " build.log | head -120 || true
+            grep -E "^e: " build.log | head -80 || true
             echo "=== what went wrong ==="
             sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -60 || true
             echo "=== tail ==="
