@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
@@ -1206,6 +1206,63 @@ fun SettingSystemToolsPage(vm: SettingVM = koinViewModel()) {
                     item(
                         headlineContent = { Text("说明") },
                         supportingContent = { Text("AI 可在需要时调用 verify_fingerprint 工具弹出系统生物识别提示框。开启 allow_device_credential 后允许在无指纹或验证失败时回退到设备 PIN/密码。验证结果会返回给 AI（成功/取消/超时等）。") }
+                    )
+                }
+            }
+            }
+
+
+            // Shizuku 命令行
+            item {
+            CardGroup(title = { Text("Shizuku 命令行") }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                item(
+                    leadingContent = { Icon(imageVector = HugeIcons.SlidersHorizontal, contentDescription = null) },
+                    headlineContent = { Text("启用 Shizuku Shell 工具") },
+                    supportingContent = { Text("允许 AI 通过 Shizuku 以 shell 身份执行命令，可读写其他应用数据、调用 pm/settings/dumpsys 等。需要先安装并启动 Shizuku") },
+                    trailingContent = {
+                        Switch(
+                            checked = systemToolsSetting.shizukuShellEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && !me.rerere.rikkahub.data.service.ShizukuShellService.isPermissionGranted()) {
+                                    me.rerere.rikkahub.data.service.ShizukuShellService.requestPermission()
+                                }
+                                updateSystemToolsSetting(systemToolsSetting.copy(shizukuShellEnabled = enabled))
+                            }
+                        )
+                    }
+                )
+                if (systemToolsSetting.shizukuShellEnabled) {
+                    var shizukuTick by remember { mutableStateOf(0) }
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            kotlinx.coroutines.delay(1500)
+                            shizukuTick++
+                        }
+                    }
+                    val shizukuAvailable = remember(shizukuTick) {
+                        me.rerere.rikkahub.data.service.ShizukuShellService.isAvailable()
+                    }
+                    val shizukuGranted = remember(shizukuTick) {
+                        me.rerere.rikkahub.data.service.ShizukuShellService.isPermissionGranted()
+                    }
+                    item(
+                        headlineContent = { Text("Shizuku 状态") },
+                        supportingContent = {
+                            Text(
+                                when {
+                                    !shizukuAvailable -> "⚠ Shizuku 未运行，请先打开 Shizuku 应用并通过无线调试/root 启动"
+                                    !shizukuGranted -> "⚠ 已连上 Shizuku，但橘瓣还没拿到授权"
+                                    else -> "✓ 已连接，Shell 可用"
+                                }
+                            )
+                        },
+                        trailingContent = {
+                            if (shizukuAvailable && !shizukuGranted) {
+                                FilledTonalButton(onClick = {
+                                    me.rerere.rikkahub.data.service.ShizukuShellService.requestPermission()
+                                }) { Text("授权") }
+                            }
+                        }
                     )
                 }
             }
