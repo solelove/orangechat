@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Init needed submodules
+        run: |
+          git submodule update --init --depth 1 material3/material-color-utilities || true
+          ls material3/material-color-utilities/kotlin | head
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -46,9 +51,9 @@ jobs:
             echo "=== kotlin errors ==="
             grep -E "^e: " build.log | head -120 || true
             echo "=== what went wrong ==="
-            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -80 || true
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -60 || true
             echo "=== tail ==="
-            tail -n 120 build.log || true
+            tail -n 80 build.log || true
           } > ci-last-error.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
