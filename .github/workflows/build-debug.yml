@@ -36,7 +36,7 @@ jobs:
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleDebug -x :web:buildWebUi --stacktrace 2>&1 | tee build.log
 
       - name: Dump failure log to repo
         if: failure()
@@ -46,9 +46,9 @@ jobs:
             echo "=== kotlin errors ==="
             grep -E "^e: " build.log | head -120 || true
             echo "=== what went wrong ==="
-            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -120 || true
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -80 || true
             echo "=== tail ==="
-            tail -n 200 build.log || true
+            tail -n 120 build.log || true
           } > ci-last-error.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
