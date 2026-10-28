@@ -1,9 +1,110 @@
-run=40685717195 sha=f509bdf221a1683779827940d6b9a376cdf092a6
+run=40686469964 sha=a88b1433abc89b8eb89e2ff68744f9a3b1280c5b
 === kotlin errors ===
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:13:8 Unresolved reference 'dynamiccolor'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:15:5 Unresolved reference 'DynamicScheme'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:16:13 Unresolved reference 'DynamicScheme'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:17:16 Unresolved reference 'isDark'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:19:31 Unresolved reference 'primary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:20:33 Unresolved reference 'onPrimary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:21:40 Unresolved reference 'primaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:22:42 Unresolved reference 'onPrimaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:23:38 Unresolved reference 'inversePrimary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:24:33 Unresolved reference 'secondary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:25:35 Unresolved reference 'onSecondary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:26:42 Unresolved reference 'secondaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:27:44 Unresolved reference 'onSecondaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:28:32 Unresolved reference 'tertiary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:29:34 Unresolved reference 'onTertiary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:30:41 Unresolved reference 'tertiaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:31:43 Unresolved reference 'onTertiaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:32:34 Unresolved reference 'background'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:33:36 Unresolved reference 'onBackground'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:34:31 Unresolved reference 'surface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:35:33 Unresolved reference 'onSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:36:38 Unresolved reference 'surfaceVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:37:40 Unresolved reference 'onSurfaceVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:38:35 Unresolved reference 'surfaceTint'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:39:38 Unresolved reference 'inverseSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:40:40 Unresolved reference 'inverseOnSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:41:29 Unresolved reference 'error'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:42:31 Unresolved reference 'onError'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:43:38 Unresolved reference 'errorContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:44:40 Unresolved reference 'onErrorContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:45:31 Unresolved reference 'outline'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:46:38 Unresolved reference 'outlineVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:47:29 Unresolved reference 'scrim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:48:37 Unresolved reference 'surfaceBright'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:49:34 Unresolved reference 'surfaceDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:50:40 Unresolved reference 'surfaceContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:51:44 Unresolved reference 'surfaceContainerHigh'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:52:47 Unresolved reference 'surfaceContainerHighest'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:53:43 Unresolved reference 'surfaceContainerLow'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:54:46 Unresolved reference 'surfaceContainerLowest'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:55:36 Unresolved reference 'primaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:56:39 Unresolved reference 'primaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:57:38 Unresolved reference 'onPrimaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:58:45 Unresolved reference 'onPrimaryFixedVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:59:38 Unresolved reference 'secondaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:60:41 Unresolved reference 'secondaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:61:40 Unresolved reference 'onSecondaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:62:47 Unresolved reference 'onSecondaryFixedVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:63:37 Unresolved reference 'tertiaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:64:40 Unresolved reference 'tertiaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:65:39 Unresolved reference 'onTertiaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:66:46 Unresolved reference 'onTertiaryFixedVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:70:31 Unresolved reference 'primary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:71:33 Unresolved reference 'onPrimary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:72:40 Unresolved reference 'primaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:73:42 Unresolved reference 'onPrimaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:74:38 Unresolved reference 'inversePrimary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:75:33 Unresolved reference 'secondary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:76:35 Unresolved reference 'onSecondary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:77:42 Unresolved reference 'secondaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:78:44 Unresolved reference 'onSecondaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:79:32 Unresolved reference 'tertiary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:80:34 Unresolved reference 'onTertiary'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:81:41 Unresolved reference 'tertiaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:82:43 Unresolved reference 'onTertiaryContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:83:34 Unresolved reference 'background'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:84:36 Unresolved reference 'onBackground'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:85:31 Unresolved reference 'surface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:86:33 Unresolved reference 'onSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:87:38 Unresolved reference 'surfaceVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:88:40 Unresolved reference 'onSurfaceVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:89:35 Unresolved reference 'surfaceTint'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:90:38 Unresolved reference 'inverseSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:91:40 Unresolved reference 'inverseOnSurface'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:92:29 Unresolved reference 'error'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:93:31 Unresolved reference 'onError'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:94:38 Unresolved reference 'errorContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:95:40 Unresolved reference 'onErrorContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:96:31 Unresolved reference 'outline'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:97:38 Unresolved reference 'outlineVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:98:29 Unresolved reference 'scrim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:99:37 Unresolved reference 'surfaceBright'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:100:34 Unresolved reference 'surfaceDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:101:40 Unresolved reference 'surfaceContainer'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:102:44 Unresolved reference 'surfaceContainerHigh'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:103:47 Unresolved reference 'surfaceContainerHighest'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:104:43 Unresolved reference 'surfaceContainerLow'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:105:46 Unresolved reference 'surfaceContainerLowest'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:106:36 Unresolved reference 'primaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:107:39 Unresolved reference 'primaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:108:38 Unresolved reference 'onPrimaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:109:45 Unresolved reference 'onPrimaryFixedVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:110:38 Unresolved reference 'secondaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:111:41 Unresolved reference 'secondaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:112:40 Unresolved reference 'onSecondaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:113:47 Unresolved reference 'onSecondaryFixedVariant'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:114:37 Unresolved reference 'tertiaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:115:40 Unresolved reference 'tertiaryFixedDim'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:116:39 Unresolved reference 'onTertiaryFixed'.
+e: file:///home/runner/work/orangechat/orangechat/material3/src/main/java/me/rerere/material3/DynamicSchemeExt.kt:117:46 Unresolved reference 'onTertiaryFixedVariant'.
 === what went wrong ===
 * What went wrong:
-Execution failed for task ':web:buildWebUi'.
-> A problem occurred starting process 'command 'pnpm''
+Execution failed for task ':material3:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --info or --debug option to get more log output.
@@ -11,7 +112,7 @@ Execution failed for task ':web:buildWebUi'.
 > Get more help at https://help.gradle.org.
 
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:buildWebUi'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':material3:compileDebugKotlin'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
@@ -45,135 +146,135 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:bui
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.process.ProcessExecutionException: A problem occurred starting process 'command 'pnpm''
-	at org.gradle.process.internal.DefaultExecHandle.execExceptionFor(DefaultExecHandle.java:245)
-	at org.gradle.process.internal.DefaultExecHandle.setEndStateInfo(DefaultExecHandle.java:222)
-	at org.gradle.process.internal.DefaultExecHandle.failed(DefaultExecHandle.java:412)
-	at org.gradle.process.internal.ExecHandleRunner.lambda$run$3(ExecHandleRunner.java:181)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:180)
-	... 2 more
-Caused by: net.rubygrapefruit.platform.NativeException: Could not start 'pnpm'
-	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:27)
-	at net.rubygrapefruit.platform.internal.WrapperProcessLauncher.start(WrapperProcessLauncher.java:36)
-	at org.gradle.process.internal.ExecHandleRunner.startProcess(ExecHandleRunner.java:201)
-	at org.gradle.process.internal.ExecHandleRunner.lambda$run$0(ExecHandleRunner.java:159)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:158)
-	... 2 more
-Caused by: java.io.IOException: Cannot run program "pnpm" (in directory "/home/runner/work/orangechat/orangechat/web-ui"): error=2, No such file or directory
-	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:25)
-	... 7 more
-Caused by: java.io.IOException: error=2, No such file or directory
-	... 8 more
-
-
-BUILD FAILED in 1m 59s
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:289)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withoutLocks$2(DefaultWorkerLeaseService.java:350)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:348)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:332)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:337)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
 === tail ===
-Downloading https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
-.............10%.............20%.............30%.............40%.............50%.............60%..............70%.............80%.............90%.............100%
-
-Welcome to Gradle 9.4.1!
-
-Here are the highlights of this release:
- - Java 26 support
- - Non-class-based JVM tests
- - Enhanced console progress bar
-
-For more details see https://docs.gradle.org/9.4.1/release-notes.html
-
-Starting a Gradle Daemon (subsequent builds will be faster)
-
-> Configure project :ai
-WARNING: The option setting 'android.overridePathCheck=true' is experimental.
-The current default is 'false'.
-
-> Configure project :app
-w: file:///home/runner/work/orangechat/orangechat/app/build.gradle.kts:135:41: 'fun srcDirs(vararg srcDirs: Any): Any' is deprecated. Use `directories` mutable set instead.
-
-> Configure project :material3
-w: file:///home/runner/work/orangechat/orangechat/material3/build.gradle.kts:25:20: 'fun srcDir(srcDir: Any): Any' is deprecated. Use `directories` mutable set instead.
-
-> Configure project :workspace
-Checking the license for package NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/licenses
-License for package NDK (Side by side) 28.2.13676358 accepted.
-Preparing "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358".
-"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" ready.
-Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28.2.13676358
-"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" complete.
-"Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" finished.
-
-> Task :document:preBuild UP-TO-DATE
-> Task :ai:preBuild UP-TO-DATE
-> Task :common:preBuild UP-TO-DATE
-> Task :app:preBuild UP-TO-DATE
-> Task :ai:preDebugBuild UP-TO-DATE
-> Task :app:preDebugBuild UP-TO-DATE
-> Task :common:preDebugBuild UP-TO-DATE
-> Task :document:preDebugBuild UP-TO-DATE
-> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:generateDebugBuildConfig
-> Task :document:extractDebugSupportedLocales
-> Task :common:generateDebugResources
-> Task :common:writeDebugAarMetadata
-> Task :highlight:preBuild UP-TO-DATE
-> Task :ai:mergeDebugJniLibFolders
-> Task :highlight:preDebugBuild UP-TO-DATE
-> Task :highlight:extractDebugSupportedLocales
-> Task :material3:preBuild UP-TO-DATE
-> Task :material3:preDebugBuild UP-TO-DATE
-> Task :ai:mergeDebugNativeLibs NO-SOURCE
-> Task :ai:stripDebugDebugSymbols NO-SOURCE
-> Task :material3:extractDebugSupportedLocales FROM-CACHE
-> Task :app:extractDebugSupportedLocales
-> Task :ai:copyDebugJniLibsProjectAndLocalJars
-> Task :search:preBuild UP-TO-DATE
-> Task :search:preDebugBuild UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths
-> Task :speech:preBuild UP-TO-DATE
-> Task :speech:preDebugBuild UP-TO-DATE
-> Task :common:packageDebugResources
-> Task :ai:generateDebugResources FROM-CACHE
-> Task :speech:extractDebugSupportedLocales FROM-CACHE
-> Task :common:processDebugNavigationResources
-> Task :search:extractDebugSupportedLocales
-> Task :workspace:preBuild UP-TO-DATE
-> Task :workspace:preDebugBuild UP-TO-DATE
-> Task :workspace:extractDebugSupportedLocales FROM-CACHE
-> Task :app:generateDebugResources
-> Task :document:processDebugNavigationResources FROM-CACHE
-> Task :highlight:processDebugNavigationResources
-> Task :web:buildWebUi FAILED
-> Task :material3:processDebugNavigationResources FROM-CACHE
-> Task :common:parseDebugLocalResources
-> Task :ai:checkDebugAarMetadata
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':web:buildWebUi'.
-> A problem occurred starting process 'command 'pnpm''
-
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:buildWebUi'.
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
-	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeAndStoreInCache(BuildCacheStep.java:145)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$4(BuildCacheStep.java:104)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$5(BuildCacheStep.java:104)
+	at org.gradle.internal.Try$Success.map(Try.java:170)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithCache(BuildCacheStep.java:88)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$0(BuildCacheStep.java:75)
+	at org.gradle.internal.Either$Left.fold(Either.java:116)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
+Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
+	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
@@ -181,41 +282,23 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':web:bui
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
-	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.process.ProcessExecutionException: A problem occurred starting process 'command 'pnpm''
-	at org.gradle.process.internal.DefaultExecHandle.execExceptionFor(DefaultExecHandle.java:245)
-	at org.gradle.process.internal.DefaultExecHandle.setEndStateInfo(DefaultExecHandle.java:222)
-	at org.gradle.process.internal.DefaultExecHandle.failed(DefaultExecHandle.java:412)
-	at org.gradle.process.internal.ExecHandleRunner.lambda$run$3(ExecHandleRunner.java:181)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:180)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:176)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:194)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:127)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:169)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withLocksAcquired$0(DefaultWorkerLeaseService.java:275)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:273)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:265)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
 	... 2 more
-Caused by: net.rubygrapefruit.platform.NativeException: Could not start 'pnpm'
-	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:27)
-	at net.rubygrapefruit.platform.internal.WrapperProcessLauncher.start(WrapperProcessLauncher.java:36)
-	at org.gradle.process.internal.ExecHandleRunner.startProcess(ExecHandleRunner.java:201)
-	at org.gradle.process.internal.ExecHandleRunner.lambda$run$0(ExecHandleRunner.java:159)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:158)
-	... 2 more
-Caused by: java.io.IOException: Cannot run program "pnpm" (in directory "/home/runner/work/orangechat/orangechat/web-ui"): error=2, No such file or directory
-	at net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start(DefaultProcessLauncher.java:25)
-	... 7 more
-Caused by: java.io.IOException: error=2, No such file or directory
-	... 8 more
 
 
-BUILD FAILED in 1m 59s
-23 actionable tasks: 17 executed, 6 from cache
+BUILD FAILED in 2m 48s
+65 actionable tasks: 45 executed, 20 from cache
