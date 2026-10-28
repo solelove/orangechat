@@ -38,26 +38,23 @@ jobs:
           set -o pipefail
           ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
 
-      - name: Report failure as issue
+      - name: Dump failure log to repo
         if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           {
-            echo '### 编译错误'
-            echo '```'
-            grep -E "^e: " build.log | head -80 || true
-            echo '```'
-            echo '### What went wrong'
-            echo '```'
-            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -80 || true
-            echo '```'
-            echo '### 尾部日志'
-            echo '```'
-            tail -n 80 build.log || true
-            echo '```'
-          } > fail-body.md
-          gh issue create --title "build-fail-$(date +%Y%m%d%H%M%S)" --body-file fail-body.md
+            echo "run=${{ github.run_id }} sha=${{ github.sha }}"
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -120 || true
+            echo "=== what went wrong ==="
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -120 || true
+            echo "=== tail ==="
+            tail -n 200 build.log || true
+          } > ci-last-error.log
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -f ci-last-error.log
+          git commit -m "ci: dump build error [skip ci]" || true
+          git push origin HEAD:master || true
 
       - name: Extract version
         if: success()
