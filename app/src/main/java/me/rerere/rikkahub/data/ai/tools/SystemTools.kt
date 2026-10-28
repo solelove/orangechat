@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
@@ -58,6 +58,7 @@ sealed class SystemToolOption {
     @Serializable @SerialName("app_switch") data object AppSwitch : SystemToolOption()
     @Serializable @SerialName("app_lock") data object AppLock : SystemToolOption()
     @Serializable @SerialName("fingerprint") data object Fingerprint : SystemToolOption()
+    @Serializable @SerialName("shizuku_shell") data object ShizukuShell : SystemToolOption()
 }
 
 class SystemTools(private val context: Context, private val settings: Settings) {
@@ -388,6 +389,7 @@ class SystemTools(private val context: Context, private val settings: Settings) 
     private val storageInfoTool by lazy { createStorageInfoTool(context) }
     private val appSwitchTool by lazy { createAppSwitchTool(context) }
     private val appLockTool by lazy { createAppLockTool(context) }
+    private val shizukuShellTool by lazy { createShizukuShellTool(context) }
     // 指纹验证: 共用 BiometricPromptActivity.buffer 单例, 保证工具与弹窗 Activity 同一个 buffer
     private val fingerprintTool by lazy {
         me.rerere.rikkahub.data.ai.tools.local.fingerprintTool(
@@ -438,6 +440,7 @@ class SystemTools(private val context: Context, private val settings: Settings) 
         if (SystemToolOption.AppSwitch in enabledTools) tools.add(appSwitchTool)
         if (SystemToolOption.AppLock in enabledTools) tools.add(appLockTool)
         if (SystemToolOption.Fingerprint in enabledTools) tools.add(fingerprintTool)
+        if (SystemToolOption.ShizukuShell in enabledTools) tools.add(shizukuShellTool)
         return tools
     }
 }
