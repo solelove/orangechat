@@ -45,11 +45,11 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      - name: Gradle Build (debug)
+      - name: Gradle Build (debug + baseline)
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew assembleDebug -x :web:buildWebUi --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleDebug assembleBaseline -x :web:buildWebUi --stacktrace 2>&1 | tee build.log
 
       - name: Dump failure log to repo
         if: failure()
@@ -81,7 +81,7 @@ jobs:
         if: success()
         with:
           name: orangechat-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/**/*.apk
 
       - name: Publish release
         if: success()
@@ -91,5 +91,6 @@ jobs:
           TAG="debug-${{ steps.version.outputs.version }}-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "Debug $TAG" \
-            --notes "shizuku-shell build" \
-            app/build/outputs/apk/debug/*.apk
+            --notes "shizuku-shell build (debug + baseline)" \
+            app/build/outputs/apk/debug/*.apk \
+            app/build/outputs/apk/baseline/*.apk
