@@ -1,0 +1,56 @@
+name: Build Debug APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Gradle Build (debug)
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: orangechat-debug
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Publish release
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="debug-${{ steps.version.outputs.version }}-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "Debug $TAG" \
+            --notes "shizuku-shell build" \
+            app/build/outputs/apk/debug/*.apk

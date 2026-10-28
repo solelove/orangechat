@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
@@ -89,6 +89,9 @@ data class SystemToolsSetting(
 
     // Fingerprint: verify_fingerprint 工具, 弹出系统指纹/人脸验证框验证用户身份
     val fingerprintEnabled: Boolean = false,
+
+    // Shizuku Shell: 通过 Shizuku 以 shell 身份执行命令 (uid 2000)
+    val shizukuShellEnabled: Boolean = false,
 ) {
     fun getEnabledOptions(): Set<me.rerere.rikkahub.data.ai.tools.SystemToolOption> {
         val options = mutableSetOf<me.rerere.rikkahub.data.ai.tools.SystemToolOption>()
@@ -120,6 +123,7 @@ data class SystemToolsSetting(
         if (appSwitchEnabled) options.add(me.rerere.rikkahub.data.ai.tools.SystemToolOption.AppSwitch)
         if (appLockEnabled) options.add(me.rerere.rikkahub.data.ai.tools.SystemToolOption.AppLock)
         if (fingerprintEnabled) options.add(me.rerere.rikkahub.data.ai.tools.SystemToolOption.Fingerprint)
+        if (shizukuShellEnabled) options.add(me.rerere.rikkahub.data.ai.tools.SystemToolOption.ShizukuShell)
         return options
     }
 }
