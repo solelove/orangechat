@@ -1,6 +1,9 @@
-run=42388956323 sha=27db5ef1dccff09a1a3ebd4a43de55e0c9ddcd87
+run=42389952281 sha=e2a70631d3dc261ebd1cee23477b25d8e852ada8
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:868:35 Unresolved reference 'toEpochMilliseconds'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:37:71 Argument type mismatch: actual type is 'LocalDateTime', but 'Instant' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:39:39 Unresolved reference 'minus' for operator '-'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:41:73 Argument type mismatch: actual type is 'LocalDateTime', but 'Instant' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:49:40 Unresolved reference 'toJavaInstant'.
 === tail ===
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
@@ -60,5 +63,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 4m 14s
-325 actionable tasks: 272 executed, 53 from cache
+BUILD FAILED in 5m 48s
+325 actionable tasks: 273 executed, 52 from cache
