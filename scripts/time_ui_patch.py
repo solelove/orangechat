@@ -107,7 +107,7 @@ GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
 # ---------- 3. ChatList ----------
 CL_OLD_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller'''
 CL_NEW_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime'''
 
@@ -132,18 +132,13 @@ CL_APPEND = '''
 private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
     if (index == 0) return true
     val prev = nodes.getOrNull(index - 1) ?: return true
-    val curr = nodes[index]
     val a = prev.currentMessage.createdAt
-    val b = curr.currentMessage.createdAt
-    val sameOrOlder = b.year < a.year ||
-        (b.year == a.year && b.monthNumber < a.monthNumber) ||
-        (b.year == a.year && b.monthNumber == a.monthNumber && b.dayOfMonth < a.dayOfMonth)
+    val b = nodes[index].currentMessage.createdAt
     if (b.year != a.year || b.monthNumber != a.monthNumber || b.dayOfMonth != a.dayOfMonth) {
         return true
     }
-    if (sameOrOlder) return true
     val gapMinutes = (b.hour * 60 + b.minute) - (a.hour * 60 + a.minute)
-    return gapMinutes >= 5
+    return gapMinutes >= 5 || gapMinutes < 0
 }
 
 private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
