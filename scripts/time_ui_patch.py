@@ -18,7 +18,7 @@ def sub(text, old, new, tag):
 
 
 # ---------- 1. TimeReminderTransformer ----------
-# createdAt 是 LocalDateTime，不是 Instant
+# createdAt 是 kotlinx.datetime.LocalDateTime
 TR_SRC = '''\ufeff/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
@@ -27,10 +27,9 @@ TR_SRC = '''\ufeff/*
 
 package me.rerere.rikkahub.data.ai.transformers
 
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.TextStyle
-import java.util.Locale
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
 
@@ -50,12 +49,16 @@ object TimeReminderTransformer : InputMessageTransformer {
 
     /** 生成当前时间提醒文本；不需要注入时返回 null。 */
     fun buildReminder(messages: List<UIMessage>): String? {
+        val tz = TimeZone.currentSystemDefault()
         val userMessages = messages.filter { it.role == MessageRole.USER }
         val latest = userMessages.lastOrNull() ?: return null
         val curr = latest.createdAt
         val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
         if (prev == null) return buildTimeReminderText(null, curr)
-        val gapSeconds = Duration.between(prev, curr).seconds
+
+        val currInstant = curr.toInstant(tz)
+        val prevInstant = prev.toInstant(tz)
+        val gapSeconds = (currInstant - prevInstant).inWholeSeconds
         if (gapSeconds <= TIME_GAP_THRESHOLD_SECONDS) return null
         return buildTimeReminderText(gapSeconds, curr)
     }
@@ -65,10 +68,10 @@ object TimeReminderTransformer : InputMessageTransformer {
 internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
 
 internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
-    val dayOfWeek = time.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val dayOfWeek = time.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
     val timeStr = String.format(
-        Locale.US, "%04d-%02d-%02d %02d:%02d",
-        time.year, time.monthValue, time.dayOfMonth, time.hour, time.minute
+        java.util.Locale.US, "%04d-%02d-%02d %02d:%02d",
+        time.year, time.monthNumber, time.dayOfMonth, time.hour, time.minute
     )
     val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
     return if (gapSeconds != null) {
@@ -104,8 +107,9 @@ GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
 # ---------- 3. ChatList ----------
 CL_OLD_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller'''
 CL_NEW_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
-import java.time.Duration
-import java.time.LocalDateTime'''
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime'''
 
 CL_OLD_ITEM = '''            ) { index, node ->
                 Column {
@@ -129,22 +133,33 @@ private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
     if (index == 0) return true
     val prev = nodes.getOrNull(index - 1) ?: return true
     val curr = nodes[index]
-    val seconds = Duration.between(
-        prev.currentMessage.createdAt,
-        curr.currentMessage.createdAt,
-    ).seconds
-    return seconds >= 5 * 60 || seconds < 0
+    val a = prev.currentMessage.createdAt
+    val b = curr.currentMessage.createdAt
+    val sameOrOlder = b.year < a.year ||
+        (b.year == a.year && b.monthNumber < a.monthNumber) ||
+        (b.year == a.year && b.monthNumber == a.monthNumber && b.dayOfMonth < a.dayOfMonth)
+    if (b.year != a.year || b.monthNumber != a.monthNumber || b.dayOfMonth != a.dayOfMonth) {
+        return true
+    }
+    if (sameOrOlder) return true
+    val gapMinutes = (b.hour * 60 + b.minute) - (a.hour * 60 + a.minute)
+    return gapMinutes >= 5
 }
 
 private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
     val t = node.currentMessage.createdAt
-    val now = LocalDateTime.now()
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     val hm = "%02d:%02d".format(t.hour, t.minute)
-    if (t.toLocalDate() == now.toLocalDate()) return hm
+    if (t.year == now.year && t.monthNumber == now.monthNumber && t.dayOfMonth == now.dayOfMonth) {
+        return hm
+    }
     val prev = prevNode?.currentMessage?.createdAt
-    if (prev != null && prev.toLocalDate() == t.toLocalDate()) return hm
-    if (t.toLocalDate() == now.toLocalDate().minusDays(1)) return "昨天 $hm"
-    val md = "${t.monthValue}月${t.dayOfMonth}日 $hm"
+    if (prev != null && prev.year == t.year && prev.monthNumber == t.monthNumber &&
+        prev.dayOfMonth == t.dayOfMonth
+    ) {
+        return hm
+    }
+    val md = "${t.monthNumber}月${t.dayOfMonth}日 $hm"
     return if (t.year == now.year) md else "${t.year}年$md"
 }
 
