@@ -1,0 +1,26 @@
+name: fix-chatmessage
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-chatmessage.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: |
+          F=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          perl -0pi -e 's/if \(!isUserMessage && !message\.parts\.isEmptyUIMessage\(\)\) \{/if (!isUserMessage \&\& !message.parts.isEmptyUIMessage() \&\& !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {/' "$F"
+          perl -0pi -e 's/if \(isUserMessage && !message\.parts\.isEmptyUIMessage\(\)\) \{/if (isUserMessage \&\& !message.parts.isEmptyUIMessage() \&\& !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {/' "$F"
+          grep -n shouldHideSideAvatar "$F" || true
+      - name: Commit
+        run: |
+          git config user.name "he-bot"
+          git config user.email "bot@local"
+          git add app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          git commit -m "fix: hide outer side avatar when bubble split" || echo "no change"
+          git push
