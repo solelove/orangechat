@@ -1,14 +1,19 @@
 name: Apply Time UI Patch
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
-    paths:
-      - 'scripts/time_ui_patch.py'
-  workflow_dispatch:
+    paths-ignore:
+      - 'app/**'
+      - 'common/**'
 
 permissions:
   contents: write
+
+concurrency:
+  group: time-ui-patch
+  cancel-in-progress: false
 
 jobs:
   patch:
@@ -22,7 +27,17 @@ jobs:
       - name: Init needed submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
 
+      - name: Skip if already patched
+        id: check
+        run: |
+          if grep -q "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt; then
+            echo "patched=true" >> $GITHUB_OUTPUT
+          else
+            echo "patched=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Apply time ui patch
+        if: steps.check.outputs.patched != 'true'
         run: python3 scripts/time_ui_patch.py
 
       - name: Set up JDK
@@ -39,6 +54,7 @@ jobs:
             -alias androiddebugkey \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
+          ls -l app/debug.keystore
 
       - name: Gradle cache
         uses: actions/cache@v4
@@ -71,7 +87,7 @@ jobs:
           git push origin HEAD:master || true
 
       - name: Commit patched source
-        if: success()
+        if: success() && steps.check.outputs.patched != 'true'
         run: |
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
