@@ -17,7 +17,7 @@ def sub(text, old, new, tag):
     return text.replace(old, new)
 
 
-# ---------- 1. TimeReminderTransformer: 不再插入 user 消息，改为返回提示文本 ----------
+# ---------- 1. TimeReminderTransformer ----------
 TR_SRC = '''\ufeff/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
@@ -26,15 +26,12 @@ TR_SRC = '''\ufeff/*
 
 package me.rerere.rikkahub.data.ai.transformers
 
-import kotlin.time.Instant
-import kotlin.time.toJavaInstant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import me.rerere.ai.core.MessageRole
-import me.rerere.ai.ui.UIMessage
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.TextStyle
 import java.util.Locale
+import me.rerere.ai.core.MessageRole
+import me.rerere.ai.ui.UIMessage
 
 private const val TIME_GAP_THRESHOLD_SECONDS = 3600L // 1 小时
 
@@ -52,11 +49,10 @@ object TimeReminderTransformer : InputMessageTransformer {
 
     /** 生成当前时间提醒文本；不需要注入时返回 null。 */
     fun buildReminder(messages: List<UIMessage>): String? {
-        val tz = TimeZone.currentSystemDefault()
         val userMessages = messages.filter { it.role == MessageRole.USER }
         val latest = userMessages.lastOrNull() ?: return null
-        val currInstant = latest.createdAt.toInstant(tz)
-        val prevInstant = userMessages.dropLast(1).lastOrNull()?.createdAt?.toInstant(tz)
+        val currInstant = latest.createdAt
+        val prevInstant = userMessages.dropLast(1).lastOrNull()?.createdAt
         if (prevInstant == null) {
             return buildTimeReminderText(gapSeconds = null, instant = currInstant)
         }
@@ -69,13 +65,11 @@ object TimeReminderTransformer : InputMessageTransformer {
 /** 旧接口保留：把提醒以 user 消息形式注入（默认不再使用）。 */
 internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
 
-internal fun buildTimeReminderText(gapSeconds: Long?, instant: Instant): String {
-    val javaInstant = instant.toJavaInstant()
-    val zone = ZoneId.systemDefault()
-    val dayOfWeek = javaInstant.atZone(zone).dayOfWeek
-        .getDisplayName(TextStyle.FULL, Locale.getDefault())
-    val local = javaInstant.atZone(zone)
-    val timeStr = "%04d-%02d-%02d %02d:%02d".format(
+internal fun buildTimeReminderText(gapSeconds: Long?, instant: kotlin.time.Instant): String {
+    val local: ZonedDateTime = instant.toJavaInstant().atZone(ZoneId.systemDefault())
+    val dayOfWeek = local.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val timeStr = String.format(
+        Locale.US, "%04d-%02d-%02d %02d:%02d",
         local.year, local.monthValue, local.dayOfMonth, local.hour, local.minute
     )
     val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
@@ -112,7 +106,10 @@ GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
 # ---------- 3. ChatList ----------
 CL_OLD_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller'''
 CL_NEW_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
-import java.util.Calendar'''
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter'''
 
 CL_OLD_ITEM = '''            ) { index, node ->
                 Column {
@@ -131,40 +128,37 @@ CL_NEW_ITEM = '''            ) { index, node ->
                     ListSelectableItem('''
 
 CL_APPEND = '''
-/** 消息创建时间毫秒。 */
-private fun messageTimeMillis(node: MessageNode): Long =
-    node.currentMessage.createdAt.toEpochMilliseconds()
+/** 消息时间的毫秒值（与 ChatTimeHeader 展示用的是同一个已格式化字段）。 */
+private fun messageTimeMillis(node: MessageNode): Long = runCatching {
+    val raw = node.currentMessage.createdAt.toString()
+    val cleaned = raw.replace("Z", "").substringBeforeLast(":")
+    val date = LocalDateTime.parse(cleaned, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    date.toInstant(ZoneOffset.UTC).toEpochMilli()
+}.getOrDefault(0L)
 
 /** 微信式时间条：首条必显示，之后间隔 5 分钟以上才显示。 */
 private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
     if (index == 0) return true
     val prev = nodes.getOrNull(index - 1) ?: return true
     val gap = messageTimeMillis(nodes[index]) - messageTimeMillis(prev)
-    return gap >= 5 * 60 * 1000L
+    return gap >= 5 * 60 * 1000L || gap < 0L
 }
 
 private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
     val millis = messageTimeMillis(node)
-    val cal = Calendar.getInstance().apply { timeInMillis = millis }
-    val now = Calendar.getInstance()
-    val hm = "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-    val sameDay = cal.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-        cal.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-    if (sameDay) return hm
+    val t = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), ZoneId.systemDefault())
+    val now = LocalDateTime.now()
+    val hm = "%02d:%02d".format(t.hour, t.minute)
+    if (t.toLocalDate() == now.toLocalDate()) return hm
     if (prevNode != null) {
-        val prev = Calendar.getInstance().apply { timeInMillis = messageTimeMillis(prevNode) }
-        val sameAsPrev = prev.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
-            prev.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR)
-        if (sameAsPrev) return hm
+        val p = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(messageTimeMillis(prevNode)), ZoneId.systemDefault()
+        )
+        if (p.toLocalDate() == t.toLocalDate()) return hm
     }
-    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-    val isYesterday = yesterday.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
-        yesterday.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR)
-    if (isYesterday) return "昨天 $hm"
-    val md = "%d月%d日 %s".format(
-        cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH), hm
-    )
-    return if (cal.get(Calendar.YEAR) == now.get(Calendar.YEAR)) md else "${cal.get(Calendar.YEAR)}年$md"
+    if (t.toLocalDate() == now.toLocalDate().minusDays(1)) return "昨天 $hm"
+    val md = "${t.monthValue}月${t.dayOfMonth}日 $hm"
+    return if (t.year == now.year) md else "${t.year}年$md"
 }
 
 @Composable
