@@ -172,7 +172,7 @@ fun ChatMessage(
         horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Top,
     ) {
-        if (!isUserMessage && !message.parts.isEmptyUIMessage()) {
+        if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
             ChatMessageSideAvatar(
                 message = message,
                 model = model,
@@ -239,7 +239,7 @@ fun ChatMessage(
             ChatMessageNerdLine(message = message)
         }
     }
-        if (isUserMessage && !message.parts.isEmptyUIMessage()) {
+        if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
             Spacer(modifier = Modifier.width(8.dp))
             ChatMessageSideUserAvatar(
                 message = message,
