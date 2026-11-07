@@ -56,28 +56,16 @@ object TimeReminderTransformer : InputMessageTransformer {
      */
     fun buildReminder(messages: List<UIMessage>): String? {
         val tz = TimeZone.currentSystemDefault()
-        var firstUserFound = false
-        var lastUserInstant: Instant? = null
-        doc@ for (current in messages) {
-            if (current.role != MessageRole.USER) continue
-            val currInstant = current.createdAt.toInstant(tz)
-            if (!firstUserFound) {
-                firstUserFound = true
-                lastUserInstant = currInstant
-                break@doc
-            }
-        }
-        val latest = messages.lastOrNull { it.role == MessageRole.USER } ?: return null
+        val userMessages = messages.filter { it.role == MessageRole.USER }
+        val latest = userMessages.lastOrNull() ?: return null
         val currInstant = latest.createdAt.toInstant(tz)
-        val prevInstant = lastUserInstant
-        val gapSeconds = prevInstant?.let { (currInstant - it).inWholeSeconds } ?: 0L
-        if (prevInstant == null || gapSeconds > TIME_GAP_THRESHOLD_SECONDS) {
-            return buildTimeReminderText(
-                gapSeconds = if (prevInstant == null) null else gapSeconds,
-                instant = currInstant,
-            )
+        val prevInstant = userMessages.dropLast(1).lastOrNull()?.createdAt?.toInstant(tz)
+        if (prevInstant == null) {
+            return buildTimeReminderText(gapSeconds = null, instant = currInstant)
         }
-        return null
+        val gapSeconds = (currInstant - prevInstant).inWholeSeconds
+        if (gapSeconds <= TIME_GAP_THRESHOLD_SECONDS) return null
+        return buildTimeReminderText(gapSeconds = gapSeconds, instant = currInstant)
     }
 }
 
@@ -109,8 +97,7 @@ private fun formatGap(seconds: Long): String {
 # ---------- 2. GenerationHandler: 系统提示里拼入时间提醒 ----------
 GH_OLD = '''            if (system.isNotBlank()) add(UIMessage.system(prompt = system))'''
 GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
-                me.rerere.rikkahub.data.ai.transformers.TimeReminderTransformer
-                    .buildReminder(messages)
+                TimeReminderTransformer.buildReminder(messages)
             } else null
             val systemWithTime = if (timeReminder != null) {
                 "$system\\n\\n$timeReminder"
@@ -118,6 +105,12 @@ GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
             if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))'''
 
 # ---------- 3. ChatList: 微信式时间条 ----------
+CL_OLD_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller'''
+CL_NEW_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
+import me.rerere.rikkahub.utils.toLocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime'''
+
 CL_OLD_ITEM = '''            ) { index, node ->
                 Column {
                     ListSelectableItem('''
@@ -142,20 +135,21 @@ private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
     val curr = nodes[index]
     val prevTime = prev.currentMessage.createdAt
     val currTime = curr.currentMessage.createdAt
-    return currTime.toEpochMilliseconds() - prevTime.toEpochMilliseconds() > 5 * 60 * 1000L
+    val gap = currTime.toInstant(TimeZone.currentSystemDefault()) -
+        prevTime.toInstant(TimeZone.currentSystemDefault())
+    return gap.inWholeMinutes >= 5
 }
 
 private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
-    val now = kotlin.time.Clock.System.now()
-        .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val tz = TimeZone.currentSystemDefault()
+    val now = Clock.System.now().toLocalDateTime(tz)
     val t = node.currentMessage.createdAt
-    val sameDay = now.date == t.date
     val hm = "%02d:%02d".format(t.hour, t.minute)
-    if (sameDay) return hm
+    if (now.date == t.date) return hm
     val prevDate = prevNode?.currentMessage?.createdAt?.date
+    if (prevDate != null && prevDate == t.date) return hm
     val yesterday = now.date.toEpochDays() - 1
     return when {
-        prevDate != null && prevDate == t.date -> hm
         t.date.toEpochDays() == yesterday -> "昨天 $hm"
         now.date.year == t.date.year -> "${t.date.monthNumber}月${t.date.dayOfMonth}日 $hm"
         else -> "${t.date.year}年${t.date.monthNumber}月${t.date.dayOfMonth}日 $hm"
@@ -183,9 +177,7 @@ private fun ChatTimeHeader(text: String) {
 }
 '''
 
-tr = TR.read_text(encoding="utf-8")
-tr = TR_SRC
-TR.write_text(tr, encoding="utf-8")
+TR.write_text(TR_SRC, encoding="utf-8")
 print("[patch] TimeReminderTransformer rewritten")
 
 gh = GH.read_text(encoding="utf-8")
@@ -193,6 +185,7 @@ gh = sub(gh, GH_OLD, GH_NEW, "generation-handler-time")
 GH.write_text(gh, encoding="utf-8")
 
 cl = CL.read_text(encoding="utf-8")
+cl = sub(cl, CL_OLD_IMPORT, CL_NEW_IMPORT, "chatlist-import")
 cl = sub(cl, CL_OLD_ITEM, CL_NEW_ITEM, "chatlist-time-header-call")
 cl = cl.rstrip() + "\n" + CL_APPEND
 CL.write_text(cl, encoding="utf-8")
