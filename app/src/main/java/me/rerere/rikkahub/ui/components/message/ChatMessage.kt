@@ -126,3 +126,174 @@ import me.rerere.rikkahub.utils.urlDecode
 import coil3.compose.AsyncImage
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
+ 
+@Composable
+fun ChatMessage(
+    node: MessageNode,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    model: Model? = null,
+    assistant: Assistant? = null,
+    lastMessage: Boolean = false,
+    onFork: () -> Unit,
+    onRegenerate: () -> Unit,
+    onEdit: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+    onUpdate: (MessageNode) -> Unit,
+    isFavorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
+    onTranslate: ((UIMessage, Locale) -> Unit)? = null,
+    onClearTranslation: (UIMessage) -> Unit = {},
+    onToolApproval: ((toolCallId: String, approved: Boolean, reason: String) -> Unit)? = null,
+    onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
+) {
+    val message = node.messages[node.selectIndex]
+    val settings = LocalDisplaySettings.current
+    val textStyle = LocalTextStyle.current.copy(
+        fontSize = LocalTextStyle.current.fontSize * settings.fontSizeRatio,
+        color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
+        lineHeight = LocalTextStyle.current.lineHeight * settings.fontSizeRatio,
+        fontFamily = when (settings.chatFontFamily) {
+            ChatFontFamily.DEFAULT -> FontFamily.Default
+            ChatFontFamily.SERIF -> FontFamily.Serif
+            ChatFontFamily.MONOSPACE -> FontFamily.Monospace
+            ChatFontFamily.CUSTOM -> {
+                val fontPath = settings.customFontPath
+                if (fontPath.isNotBlank() && java.io.File(fontPath).exists()) {
+                    FontFamily(Font(java.io.File(fontPath)))
+                } else {
+                    FontFamily.Default
+                }
+            }
+        }
+    )
+    var showActionsSheet by remember { mutableStateOf(false) }
+    var showSelectCopySheet by remember { mutableStateOf(false) }
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
+    val isUserMessage = message.role == MessageRole.USER
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (!isUserMessage && !message.parts.isEmptyUIMessage()) {
+            ChatMessageSideAvatar(
+                message = message,
+                model = model,
+                assistant = assistant,
+                loading = loading,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Column(
+            modifier = Modifier.weight(1f, fill = false),
+            horizontalAlignment = if (isUserMessage) Alignment.End else Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+        ProvideTextStyle(textStyle) {
+            MessagePartsBlock(
+                assistant = assistant,
+                role = message.role,
+                parts = message.parts,
+                annotations = message.annotations,
+                loading = loading,
+                model = model,
+                onToolApproval = onToolApproval,
+                onToolAnswer = onToolAnswer,
+                onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
+            )
+ 
+            message.translation?.let { translation ->
+                CollapsibleTranslationText(
+                    content = translation,
+                    onClickCitation = {}
+                )
+            }
+        }
+ 
+        val showActions = if (lastMessage) {
+            !loading
+        } else {
+            message.parts.isEmptyUIMessage().not()
+        }
+ 
+        AnimatedVisibility(
+            visible = showActions,
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
+        ) {
+            Column(
+                modifier = Modifier.animateContentSize()
+            ) {
+                ChatMessageActionButtons(
+                    message = message,
+                    onRegenerate = onRegenerate,
+                    node = node,
+                    onUpdate = onUpdate,
+                    onOpenActionSheet = {
+                        showActionsSheet = true
+                    },
+                    onTranslate = onTranslate,
+                    onClearTranslation = onClearTranslation
+                )
+            }
+        }
+ 
+        ProvideTextStyle(textStyle) {
+            ChatMessageNerdLine(message = message)
+        }
+    }
+        if (isUserMessage && !message.parts.isEmptyUIMessage()) {
+            Spacer(modifier = Modifier.width(8.dp))
+            ChatMessageSideUserAvatar(
+                message = message,
+                avatar = settings.userAvatar,
+                nickname = settings.userNickname,
+            )
+        }
+    }
+    if (showActionsSheet) {
+        ChatMessageActionsSheet(
+            message = message,
+            onEdit = onEdit,
+            onDelete = onDelete,
+            onShare = onShare,
+            onFork = onFork,
+            model = model,
+            onSelectAndCopy = {
+                showSelectCopySheet = true
+            },
+            isFavorite = isFavorite,
+            onToggleFavorite = onToggleFavorite,
+            onWebViewPreview = {
+                val textContent = message.parts
+                    .filterIsInstance<UIMessagePart.Text>()
+                    .joinToString("\n\n") { it.text }
+                    .trim()
+                if (textContent.isNotBlank()) {
+                    val htmlContent = buildMarkdownPreviewHtml(
+                        context = context,
+                        markdown = textContent,
+                        colorScheme = colorScheme
+                    )
+                    navController.navigate(Screen.WebView(content = htmlContent.base64Encode()))
+                }
+            },
+            onDismissRequest = {
+                showActionsSheet = false
+            }
+        )
+    }
+ 
+    if (showSelectCopySheet) {
+        ChatMessageCopySheet(
+            message = message,
+            onDismissRequest = {
+                showSelectCopySheet = false
+            }
+        )
+    }
+}
