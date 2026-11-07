@@ -1,15 +1,7 @@
-run=42397900298 sha=ecd2b8fefc6fdb7c124f3de3d38a89a5b4c78708
+run=42398618110 sha=5bfd036d04de702ccc9b9f7afa7ac5c3e086e74b
 === kotlin errors ===
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt:546:31 Unresolved reference 'splitBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:248:45 Unresolved reference 'splitBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:252:37 No parameter with name 'splitBubbleByLine' found.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:270:45 Unresolved reference 'splitUserBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:274:37 No parameter with name 'splitUserBubbleByLine' found.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt:546:31 Unresolved reference 'splitBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:248:45 Unresolved reference 'splitBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:252:37 No parameter with name 'splitBubbleByLine' found.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:270:45 Unresolved reference 'splitUserBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:274:37 No parameter with name 'splitUserBubbleByLine' found.
 === what went wrong ===
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
@@ -72,8 +64,6 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 === tail ===
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
@@ -112,7 +102,7 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 66 more
+	... 33 more
 Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
 	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
 	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
@@ -146,9 +136,11 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
-	... 7 more
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	... 5 more
 
 ==============================================================================
 
-BUILD FAILED in 1m 43s
+BUILD FAILED in 1m 50s
 565 actionable tasks: 299 executed, 266 from cache
