@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -130,6 +129,7 @@ fun SplitBubbleColumn(
         return
     }
 
+    // 只在文本或模式变化时重新切分
     val segments = remember(text, mode) { splitByMode(text, mode) }
 
     // 扣掉头像占位后的可用宽度
@@ -142,32 +142,30 @@ fun SplitBubbleColumn(
         horizontalAlignment = alignment,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        segments.fastForEachIndexed { index, segment ->
-            key(index) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
+        segments.fastForEachIndexed { _, segment ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
+            ) {
+                if (segmentAvatar != null && !isRightSide) {
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                BubbleSurface(
+                    imagePath = imagePath,
+                    cornerRadius = cornerRadius,
+                    color = color,
+                    overlayEnabled = overlayEnabled,
+                    bubbleAlpha = bubbleAlpha,
+                    maxWidth = segmentMaxWidth,
+                    onClick = onClick,
                 ) {
-                    if (segmentAvatar != null && !isRightSide) {
-                        SegmentAvatarView(segmentAvatar, avatarLoading)
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    BubbleSurface(
-                        imagePath = imagePath,
-                        cornerRadius = cornerRadius,
-                        color = color,
-                        overlayEnabled = overlayEnabled,
-                        bubbleAlpha = bubbleAlpha,
-                        maxWidth = segmentMaxWidth,
-                        onClick = onClick,
-                    ) {
-                        content(segment)
-                    }
-                    if (segmentAvatar != null && isRightSide) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SegmentAvatarView(segmentAvatar, avatarLoading)
-                    }
+                    content(segment)
+                }
+                if (segmentAvatar != null && isRightSide) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
                 }
             }
         }
@@ -186,7 +184,10 @@ fun BubbleSurface(
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    val hasImage = imagePath.isNotBlank() && java.io.File(imagePath).exists()
+    // 文件存在性检查会走磁盘，缓存起来避免每次重组都查
+    val hasImage = remember(imagePath) {
+        imagePath.isNotBlank() && java.io.File(imagePath).exists()
+    }
     if (hasImage) {
         Box(
             modifier = Modifier
