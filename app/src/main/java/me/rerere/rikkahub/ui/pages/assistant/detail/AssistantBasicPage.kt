@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,6 +45,7 @@ import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.db.entity.WorkspaceEntity
 import me.rerere.rikkahub.data.model.Assistant
+import me.rerere.rikkahub.data.model.BubbleSplitMode
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.ReasoningButton
 import me.rerere.rikkahub.ui.components.message.BubbleSplitModeSelector
@@ -236,10 +238,11 @@ internal fun AssistantBasicContent(
  
             HorizontalDivider()
  
+            // 助手气泡：自己一条
             FormItem(
                 modifier = Modifier.padding(8.dp),
                 label = {
-                    Text("消息气泡拆分")
+                    Text("我的气泡拆分")
                 },
                 description = {
                     Text("按句子拆分：一句话一个气泡，框跟着字走")
@@ -251,6 +254,46 @@ internal fun AssistantBasicContent(
                         onUpdate(assistant.copy(bubbleSplitMode = mode))
                     },
                 )
+            }
+
+            HorizontalDivider()
+
+            // 用户气泡：单独开关，不受上面的影响
+            FormItem(
+                modifier = Modifier.padding(8.dp),
+                label = {
+                    Text("我的气泡也拆分")
+                },
+                description = {
+                    Text(
+                        if (assistant.userBubbleSplitMode != null)
+                            "已单独设置，和助手互不影响"
+                        else
+                            "还没单独设置，暂跟随助手的气泡拆分"
+                    )
+                },
+                tail = {
+                    Switch(
+                        checked = assistant.userBubbleSplitMode != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(
+                                assistant.copy(
+                                    userBubbleSplitMode = if (enabled) assistant.bubbleSplitMode else null
+                                )
+                            )
+                        }
+                    )
+                }
+            ) {
+                val mode = assistant.userBubbleSplitMode
+                if (mode != null) {
+                    BubbleSplitModeSelector(
+                        selected = mode,
+                        onSelect = { selected ->
+                            onUpdate(assistant.copy(userBubbleSplitMode = selected))
+                        },
+                    )
+                }
             }
         }
  
