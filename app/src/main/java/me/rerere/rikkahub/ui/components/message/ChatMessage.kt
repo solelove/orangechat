@@ -1,33 +1,365 @@
-                        val displayText = remember(part.text) {
-                            part.text.replace(Regex("\\[zip:[^\\]]+\\]", RegexOption.IGNORE_CASE), "")
-                        }
-                        val userSplitMode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE
-                        val assistantSplitMode = assistant?.effectiveAssistantSplitMode ?: BubbleSplitMode.NONE
-                        val userAvatarSpec: SegmentAvatarSpec? =
-                            if (displaySettings.showUserAvatar)
-                                SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
-                            else null
-                        val assistantAvatarSpec: SegmentAvatarSpec? =
-                            if (!displaySettings.showModelIcon) null
-                            else if (assistant != null && assistant.useAssistantAvatar)
-                                SegmentAvatarSpec.AssistantAvatar(assistant)
-                            else model?.let { SegmentAvatarSpec.Model(it.modelId) }
+/*
+ * 橘瓣 OrangeChat
+ * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
+ * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
+ */
+
+package me.rerere.rikkahub.ui.components.message
  
-                        SelectionContainer {
-                            Column {
-                                if (role == MessageRole.USER) {
-                                    SplitBubbleColumn(
-                                        text = displayText,
-                                        mode = userSplitMode,
-                                        imagePath = displaySettings.userBubbleImagePath,
-                                        cornerRadius = displaySettings.bubbleCornerRadius.dp,
-                                        color = displaySettings.userBubbleColor?.let { it.toComposeColor() }
-                                            ?: MaterialTheme.colorScheme.secondaryContainer,
-                                        overlayEnabled = displaySettings.bubbleImageOverlayEnabled,
-                                        bubbleAlpha = bubbleAlpha,
-                                        maxWidth = maxBubbleWidth,
-                                        alignment = Alignment.End,
-                                        onClick = { onUserMessageClick?.invoke() },
-                                        segmentAvatar = userAvatarSpec,
-                                        avatarLoading = false,
-                                    ) { segment ->
+import android.content.Intent
+import android.media.MediaPlayer
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastAll
+import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastForEachIndexed
+import androidx.core.content.FileProvider
+import androidx.core.net.toFile
+import androidx.core.net.toUri
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import me.rerere.ai.core.MessageRole
+import me.rerere.ai.provider.Model
+import me.rerere.ai.ui.UIMessage
+import me.rerere.ai.ui.UIMessageAnnotation
+import me.rerere.ai.ui.UIMessagePart
+import me.rerere.ai.ui.isEmptyUIMessage
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.File02
+import me.rerere.hugeicons.stroke.PlayCircle
+import me.rerere.hugeicons.stroke.PauseCircle
+import me.rerere.hugeicons.stroke.Video01
+import me.rerere.rikkahub.R
+import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.data.model.Assistant
+import me.rerere.rikkahub.data.model.AssistantAffectScope
+import me.rerere.rikkahub.data.model.Avatar
+import me.rerere.rikkahub.data.model.BubbleSplitMode
+import me.rerere.rikkahub.data.model.MessageNode
+import me.rerere.rikkahub.data.model.replaceRegexes
+import me.rerere.rikkahub.data.datastore.ChatFontFamily
+import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
+import me.rerere.rikkahub.ui.components.richtext.ZoomableAsyncImage
+import me.rerere.rikkahub.ui.components.richtext.buildMarkdownPreviewHtml
+import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.ChainOfThought
+import me.rerere.rikkahub.ui.components.ui.Favicon
+import me.rerere.rikkahub.ui.components.ui.UIAvatar
+import me.rerere.rikkahub.ui.components.ui.toComposeColor
+import me.rerere.rikkahub.ui.context.LocalDisplaySettings
+import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.modifier.shimmer
+import me.rerere.rikkahub.ui.theme.extendColors
+import me.rerere.rikkahub.utils.JsonInstant
+import me.rerere.rikkahub.utils.base64Encode
+import me.rerere.rikkahub.utils.openUrl
+import me.rerere.rikkahub.utils.urlDecode
+import androidx.compose.ui.text.font.Font
+import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
+ 
+@Composable
+fun ChatMessage(
+    node: MessageNode,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    model: Model? = null,
+    assistant: Assistant? = null,
+    lastMessage: Boolean = false,
+    onFork: () -> Unit,
+    onRegenerate: () -> Unit,
+    onEdit: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+    onUpdate: (MessageNode) -> Unit,
+    isFavorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
+    onTranslate: ((UIMessage, Locale) -> Unit)? = null,
+    onClearTranslation: (UIMessage) -> Unit = {},
+    onToolApproval: ((toolCallId: String, approved: Boolean, reason: String) -> Unit)? = null,
+    onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
+) {
+    val message = node.messages[node.selectIndex]
+    val settings = LocalDisplaySettings.current
+    val textStyle = LocalTextStyle.current.copy(
+        fontSize = LocalTextStyle.current.fontSize * settings.fontSizeRatio,
+        color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
+        lineHeight = LocalTextStyle.current.lineHeight * settings.fontSizeRatio,
+        fontFamily = when (settings.chatFontFamily) {
+            ChatFontFamily.DEFAULT -> FontFamily.Default
+            ChatFontFamily.SERIF -> FontFamily.Serif
+            ChatFontFamily.MONOSPACE -> FontFamily.Monospace
+            ChatFontFamily.CUSTOM -> {
+                val fontPath = settings.customFontPath
+                if (fontPath.isNotBlank() && java.io.File(fontPath).exists()) {
+                    FontFamily(Font(java.io.File(fontPath)))
+                } else {
+                    FontFamily.Default
+                }
+            }
+        }
+    )
+    var showActionsSheet by remember { mutableStateOf(false) }
+    var showSelectCopySheet by remember { mutableStateOf(false) }
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
+    val isUserMessage = message.role == MessageRole.USER
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (!isUserMessage && !message.parts.isEmptyUIMessage()) {
+            ChatMessageSideAvatar(
+                message = message,
+                model = model,
+                assistant = assistant,
+                loading = loading,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Column(
+            modifier = Modifier.weight(1f, fill = false),
+            horizontalAlignment = if (isUserMessage) Alignment.End else Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+        ProvideTextStyle(textStyle) {
+            MessagePartsBlock(
+                assistant = assistant,
+                role = message.role,
+                parts = message.parts,
+                annotations = message.annotations,
+                loading = loading,
+                model = model,
+                onToolApproval = onToolApproval,
+                onToolAnswer = onToolAnswer,
+                onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
+            )
+ 
+            message.translation?.let { translation ->
+                CollapsibleTranslationText(
+                    content = translation,
+                    onClickCitation = {}
+                )
+            }
+        }
+ 
+        val showActions = if (lastMessage) {
+            !loading
+        } else {
+            message.parts.isEmptyUIMessage().not()
+        }
+ 
+        AnimatedVisibility(
+            visible = showActions,
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
+        ) {
+            Column(
+                modifier = Modifier.animateContentSize()
+            ) {
+                ChatMessageActionButtons(
+                    message = message,
+                    onRegenerate = onRegenerate,
+                    node = node,
+                    onUpdate = onUpdate,
+                    onOpenActionSheet = {
+                        showActionsSheet = true
+                    },
+                    onTranslate = onTranslate,
+                    onClearTranslation = onClearTranslation
+                )
+            }
+        }
+ 
+        ProvideTextStyle(textStyle) {
+            ChatMessageNerdLine(message = message)
+        }
+    }
+        if (isUserMessage && !message.parts.isEmptyUIMessage()) {
+            Spacer(modifier = Modifier.width(8.dp))
+            ChatMessageSideUserAvatar(
+                message = message,
+                avatar = settings.userAvatar,
+                nickname = settings.userNickname,
+            )
+        }
+    }
+    if (showActionsSheet) {
+        ChatMessageActionsSheet(
+            message = message,
+            onEdit = onEdit,
+            onDelete = onDelete,
+            onShare = onShare,
+            onFork = onFork,
+            model = model,
+            onSelectAndCopy = {
+                showSelectCopySheet = true
+            },
+            isFavorite = isFavorite,
+            onToggleFavorite = onToggleFavorite,
+            onWebViewPreview = {
+                val textContent = message.parts
+                    .filterIsInstance<UIMessagePart.Text>()
+                    .joinToString("\n\n") { it.text }
+                    .trim()
+                if (textContent.isNotBlank()) {
+                    val htmlContent = buildMarkdownPreviewHtml(
+                        context = context,
+                        markdown = textContent,
+                        colorScheme = colorScheme
+                    )
+                    navController.navigate(Screen.WebView(content = htmlContent.base64Encode()))
+                }
+            },
+            onDismissRequest = {
+                showActionsSheet = false
+            }
+        )
+    }
+ 
+    if (showSelectCopySheet) {
+        ChatMessageCopySheet(
+            message = message,
+            onDismissRequest = {
+                showSelectCopySheet = false
+            }
+        )
+    }
+}
+
+@OptIn(FlowPreview::class)
+@Composable
+private fun MessagePartsBlock(
+    assistant: Assistant?,
+    role: MessageRole,
+    model: Model?,
+    parts: List<UIMessagePart>,
+    annotations: List<UIMessageAnnotation>,
+    loading: Boolean,
+    onToolApproval: ((toolCallId: String, approved: Boolean, reason: String) -> Unit)? = null,
+    onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
+    onUserMessageClick: (() -> Unit)? = null,
+) {
+    val context = LocalContext.current
+    val contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+ 
+    val hapticFeedback = LocalHapticFeedback.current
+    val displaySettings = LocalDisplaySettings.current
+    val bubbleAlpha = 1f - displaySettings.chatBubbleTransparency / 100f
+    val partsState by rememberUpdatedState(parts)
+
+    // 气泡最大宽度：跟随内容，但不超过屏幕宽度的 72%
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val maxBubbleWidth = (screenWidth * 0.72f).dp
+
+    // 用户和助手各用各的拆分模式
+    val userSplitMode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE
+    val assistantSplitMode = assistant?.effectiveAssistantSplitMode ?: BubbleSplitMode.NONE
+
+    // 拆分后每个气泡旁重复显示的头像
+    val userAvatarSpec: SegmentAvatarSpec? =
+        if (displaySettings.showUserAvatar)
+            SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+        else null
+
+    val assistantAvatarSpec: SegmentAvatarSpec? = when {
+        !displaySettings.showModelIcon -> null
+        assistant != null && assistant.useAssistantAvatar ->
+            SegmentAvatarSpec.AssistantAvatar(assistant)
+        model != null -> SegmentAvatarSpec.Model(model.modelId)
+        else -> null
+    }
+ 
+    val handleClickCitation: (String) -> Unit = remember {
+        handler@{ citationId ->
+            partsState.forEach { part ->
+                if (part is UIMessagePart.Tool && part.toolName == "search_web" && part.isExecuted) {
+                    val outputText = part.output.filterIsInstance<UIMessagePart.Text>().joinToString("\n") { it.text }
+                    val items =
+                        runCatching { JsonInstant.parseToJsonElement(outputText).jsonObject["items"]?.jsonArray }.getOrNull()
+                            ?: return@forEach
+                    items.forEach { item ->
+                        val id = item.jsonObject["id"]?.jsonPrimitive?.content ?: return@forEach
+                        val url = item.jsonObject["url"]?.jsonPrimitive?.content ?: return@forEach
+                        if (citationId == id) {
+                            context.openUrl(url)
+                            return@handler
+                        }
+                    }
+                }
+            }
+        }
+    }
+    LaunchedEffect(displaySettings) {
+        snapshotFlow { partsState }
+            .debounce(50.milliseconds)
+            .collect { parts ->
+                if (parts.isNotEmpty() && loading && displaySettings.enableMessageGenerationHapticEffect) {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.KeyboardTap)
+                }
+            }
+    }
