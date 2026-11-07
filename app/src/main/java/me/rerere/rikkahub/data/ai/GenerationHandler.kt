@@ -49,6 +49,7 @@ import me.rerere.rikkahub.data.ai.transformers.MessageTransformer
 import me.rerere.rikkahub.data.ai.transformers.OutputMessageTransformer
 import me.rerere.rikkahub.data.ai.transformers.onGenerationFinish
 import me.rerere.rikkahub.data.ai.transformers.transforms
+import me.rerere.rikkahub.data.ai.transformers.TimeReminderTransformer
 import me.rerere.rikkahub.data.ai.transformers.visualTransforms
 import me.rerere.rikkahub.data.ai.tools.buildMemoryTools
 import me.rerere.rikkahub.data.ai.tools.buildWriteFilesTool
@@ -550,7 +551,13 @@ class GenerationHandler(
                 }
  
             }
-            if (system.isNotBlank()) add(UIMessage.system(prompt = system))
+            val timeReminder = if (assistant.enableTimeReminder) {
+                TimeReminderTransformer.buildReminder(messages)
+            } else null
+            val systemWithTime = if (timeReminder != null) {
+                system + "\n\n" + timeReminder
+            } else system
+            if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))
             addAll(messages.limitContext(assistant.contextMessageSize))
         }.transforms(
             transformers = transformers,

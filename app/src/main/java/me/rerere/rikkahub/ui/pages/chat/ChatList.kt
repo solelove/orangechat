@@ -108,6 +108,9 @@ import me.rerere.rikkahub.ui.components.ui.ListSelectableItem
 import me.rerere.rikkahub.ui.components.ui.RabbitLoadingIndicator
 import me.rerere.rikkahub.ui.components.ui.Tooltip
 import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import me.rerere.rikkahub.utils.plus
 import kotlin.math.roundToInt
 import kotlin.uuid.Uuid
@@ -323,6 +326,14 @@ private fun ChatListNormal(
                 key = { index, item -> item.id },
             ) { index, node ->
                 Column {
+                    if (showTimeHeader(displayNodes, index)) {
+                        ChatTimeHeader(
+                            text = formatTimeHeader(
+                                node = node,
+                                prevNode = displayNodes.getOrNull(index - 1),
+                            )
+                        )
+                    }
                     ListSelectableItem(
                         key = node.id,
                         onSelectChange = {
@@ -851,5 +862,55 @@ private fun BoxScope.MessageJumper(
                 )
             }
         }
+    }
+}
+
+/** 微信式时间条：首条必显示，之后间隔 5 分钟以上才显示。 */
+private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
+    if (index == 0) return true
+    val prev = nodes.getOrNull(index - 1) ?: return true
+    val a = prev.currentMessage.createdAt
+    val b = nodes[index].currentMessage.createdAt
+    if (b.year != a.year || b.monthNumber != a.monthNumber || b.dayOfMonth != a.dayOfMonth) {
+        return true
+    }
+    val gapMinutes = (b.hour * 60 + b.minute) - (a.hour * 60 + a.minute)
+    return gapMinutes >= 5 || gapMinutes < 0
+}
+
+private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
+    val t = node.currentMessage.createdAt
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val hm = "%02d:%02d".format(t.hour, t.minute)
+    if (t.year == now.year && t.monthNumber == now.monthNumber && t.dayOfMonth == now.dayOfMonth) {
+        return hm
+    }
+    val prev = prevNode?.currentMessage?.createdAt
+    if (prev != null && prev.year == t.year && prev.monthNumber == t.monthNumber &&
+        prev.dayOfMonth == t.dayOfMonth
+    ) {
+        return hm
+    }
+    val md = "${t.monthNumber}月${t.dayOfMonth}日 $hm"
+    return if (t.year == now.year) md else "${t.year}年$md"
+}
+
+@Composable
+private fun ChatTimeHeader(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+        )
     }
 }
