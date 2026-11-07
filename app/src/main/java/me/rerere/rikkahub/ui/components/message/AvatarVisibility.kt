@@ -1,25 +1,23 @@
 /*
  * 橘瓣 OrangeChat
- * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
- * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
+ * 拆分气泡时外层头像隐藏逻辑
  */
 
 package me.rerere.rikkahub.ui.components.message
 
 import me.rerere.rikkahub.data.model.Assistant
-import me.rerere.rikkahub.data.model.BubbleSplitMode
 
-/** 该条消息是否会把气泡拆成多段 */
-internal fun isSplitOn(role: String, assistant: Assistant?): Boolean {
+/** 这条消息会不会被拆成多个小气泡 */
+internal fun willSplitIntoBubbles(isUser: Boolean, assistant: Assistant?): Boolean {
     if (assistant == null) return false
-    return if (role == "user") {
+    return if (isUser) {
         assistant.effectiveUserSplitMode.isEnabled
     } else {
         assistant.bubbleSplitMode.isEnabled
     }
 }
 
-/** 拆成多段时，外层的侧边头像就不用画了，改由第一段小气泡自己带 */
+/** 拆分后小气泡自己带头像，外层这个不用再画 */
 internal fun shouldHideSideAvatar(
     isUser: Boolean,
     showUserAvatar: Boolean,
@@ -27,10 +25,11 @@ internal fun shouldHideSideAvatar(
     showAssistantBubble: Boolean,
     assistant: Assistant?,
 ): Boolean {
-    if (assistant == null) return false
+    val split = willSplitIntoBubbles(isUser, assistant)
+    if (!split) return false
     return if (isUser) {
-        showUserAvatar && assistant.effectiveUserSplitMode.isEnabled
+        showUserAvatar
     } else {
-        showModelIcon && showAssistantBubble && assistant.bubbleSplitMode.isEnabled
+        showModelIcon && showAssistantBubble
     }
 }
