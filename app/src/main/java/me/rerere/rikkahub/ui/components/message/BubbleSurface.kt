@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
@@ -12,8 +12,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -42,10 +45,20 @@ fun splitByMode(text: String, mode: BubbleSplitMode): List<String> = when (mode)
 }
 
 /**
+ * 拆开后的每个气泡在左侧/右侧额外要渲染的东西（头像）。
+ * 只有第一段之外的段落才需要重复头像，所以参数里带上 index。
+ */
+fun interface SplitSegmentAvatar {
+    @Composable
+    fun Avatar(index: Int)
+}
+
+/**
  * 按模式渲染一个气泡组。
  *
  * - 模式为 NONE 时直接渲染一个整体气泡（保持原有行为）
  * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡，一句一框
+ * - 每个小气泡都能带上自己的头像（[segmentAvatar]）
  * - 气泡宽度跟随内容，最宽不超过 [maxWidth]
  */
 @Composable
@@ -60,6 +73,8 @@ fun SplitBubbleColumn(
     maxWidth: Dp,
     alignment: Alignment.Horizontal,
     onClick: (() -> Unit)? = null,
+    /** 每个拆出来的气泡旁的头像；只在拆分模式下生效 */
+    segmentAvatar: SplitSegmentAvatar? = null,
     content: @Composable (String) -> Unit,
 ) {
     if (!mode.isEnabled) {
@@ -78,22 +93,41 @@ fun SplitBubbleColumn(
     }
 
     val segments = remember(text, mode) { splitByMode(text, mode) }
+
+    // 气泡实际可用宽度要扣掉头像占位
+    val avatarSpace = if (segmentAvatar != null) 36.dp + 8.dp else 0.dp
+    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(80.dp)
+
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = alignment,
     ) {
         segments.fastForEachIndexed { index, segment ->
             key(index) {
-                BubbleSurface(
-                    imagePath = imagePath,
-                    cornerRadius = cornerRadius,
-                    color = color,
-                    overlayEnabled = overlayEnabled,
-                    bubbleAlpha = bubbleAlpha,
-                    maxWidth = maxWidth,
-                    onClick = onClick,
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = if (alignment == Alignment.End) Arrangement.End
+                    else Arrangement.Start,
                 ) {
-                    content(segment)
+                    if (segmentAvatar != null && alignment != Alignment.End) {
+                        segmentAvatar.Avatar(index)
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    BubbleSurface(
+                        imagePath = imagePath,
+                        cornerRadius = cornerRadius,
+                        color = color,
+                        overlayEnabled = overlayEnabled,
+                        bubbleAlpha = bubbleAlpha,
+                        maxWidth = segmentMaxWidth,
+                        onClick = onClick,
+                    ) {
+                        content(segment)
+                    }
+                    if (segmentAvatar != null && alignment == Alignment.End) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        segmentAvatar.Avatar(index)
+                    }
                 }
             }
         }
@@ -149,3 +183,6 @@ fun BubbleSurface(
         }
     }
 }
+
+/** 消息侧边头像的宽度，保持和 ChatMessage 里的占位一致 */
+internal val SegmentAvatarWidth = 36.dp
