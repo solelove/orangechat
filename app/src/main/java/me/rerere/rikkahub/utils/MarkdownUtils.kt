@@ -34,7 +34,7 @@ fun String.stripMarkdown(): String {
         // 移除水平分割线
         .replace(Regex("(?m)^(\\s*[-*_]){3,}\\s*$"), "")
         // 将多个换行符压缩，以保留段落
-        .replace(Regex("\\n{3,}"), "\\n\\n")
+        .replace(Regex("\\n{3,}"), "\n\n")
         .trim()
 }
  
@@ -70,11 +70,45 @@ fun String.extractThinkingTitle(): String? {
 private val FENCED_CODE_BLOCK_REGEX = Regex("```[\\s\\S]*?```")
  
 /**
+ * 「不可在其内部拆分气泡」的区间集合。
+ *
+ * 区间按起点升序排列，查询用二分 + 游标推进，整体是 O(n) 级别，
+ * 不再对每个字符做一次全量区间遍历（之前是 O(n²)，流式渲染时非常卡）。
+ */
+private class ProtectedRanges(ranges: List<IntRange>) {
+    private val starts: IntArray
+    private val ends: IntArray
+    private val size: Int
+
+    init {
+        val sorted = ranges.filter { !it.isEmpty() }.sortedBy { it.first }
+        size = sorted.size
+        starts = IntArray(size) { sorted[it].first }
+        ends = IntArray(size) { sorted[it].last }
+    }
+
+    /** 顺序扫描时复用游标，避免每次都二分 */
+    private var cursor = 0
+
+    fun reset() {
+        cursor = 0
+    }
+
+    fun contains(index: Int): Boolean {
+        if (size == 0) return false
+        // 游标已经越过这个区间，往前推
+        while (cursor < size && ends[cursor] < index) cursor++
+        if (cursor >= size) return false
+        return index >= starts[cursor] && index <= ends[cursor]
+    }
+}
+
+/**
  * 找出文本中「不可在其内部拆分气泡」的字符区间：
  * 1. 围栏代码块 (```...```) —— 内部换行是代码的一部分，拆开代码就碎了
  * 2. Markdown 表格 —— 连续 2 行及以上、每行都形如 "|...|" 的区块，拆开表格就散架了
  */
-private fun findProtectedRanges(text: String): List<IntRange> {
+private fun findProtectedRanges(text: String): ProtectedRanges {
     val ranges = mutableListOf<IntRange>()
  
     // 1. 围栏代码块
@@ -111,7 +145,7 @@ private fun findProtectedRanges(text: String): List<IntRange> {
         ranges.add(tableStartOffset until text.length)
     }
  
-    return ranges
+    return ProtectedRanges(ranges)
 }
  
 /**
@@ -120,14 +154,13 @@ private fun findProtectedRanges(text: String): List<IntRange> {
 fun String.splitIntoBubbleSegments(): List<String> {
     if (isBlank()) return listOf(this)
  
-    val protectedRanges = findProtectedRanges(this)
-    fun isProtectedIndex(index: Int) = protectedRanges.any { index in it }
+    val protected = findProtectedRanges(this)
  
     val segments = mutableListOf<String>()
     val current = StringBuilder()
     for (index in indices) {
         val ch = this[index]
-        if (ch == '\n' && !isProtectedIndex(index)) {
+        if (ch == '\n' && !protected.contains(index)) {
             segments.add(current.toString())
             current.clear()
         } else {
@@ -164,8 +197,7 @@ private val SENTENCE_END_CHARS = charArrayOf('。', '！', '？', '!', '?', '…
 fun String.splitIntoSentenceBubbles(): List<String> {
     if (isBlank()) return listOf(this)
 
-    val protectedRanges = findProtectedRanges(this)
-    fun isProtectedIndex(index: Int) = protectedRanges.any { index in it }
+    val protected = findProtectedRanges(this)
 
     // 需要吞进上一句的收尾符号
     val trailingChars = charArrayOf(
@@ -183,7 +215,7 @@ fun String.splitIntoSentenceBubbles(): List<String> {
         current.append(ch)
 
         val isEnd = when {
-            isProtectedIndex(i) -> false
+            protected.contains(i) -> false
             ch == '\n' -> true
             ch in SENTENCE_END_CHARS -> true
             ch == '.' -> {
@@ -197,7 +229,7 @@ fun String.splitIntoSentenceBubbles(): List<String> {
         if (isEnd) {
             i++
             // 吞掉紧跟的收尾符号（保护区内不动）
-            while (i < n && this[i] in trailingChars && !isProtectedIndex(i)) {
+            while (i < n && this[i] in trailingChars && !protected.contains(i)) {
                 current.append(this[i])
                 i++
             }
