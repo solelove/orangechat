@@ -1,10 +1,6 @@
-run=42388277479 sha=d53ff8d25ec0a82f8d9001b5dfb90727e13cb049
+run=42388956323 sha=27db5ef1dccff09a1a3ebd4a43de55e0c9ddcd87
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt:554:17 Unresolved reference 'TimeReminderTransformer'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:875:24 Unresolved reference 'toInstant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:876:18 Unresolved reference 'toInstant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:877:16 Unresolved reference 'inWholeMinutes'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:882:15 Unresolved reference 'Clock'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:868:35 Unresolved reference 'toEpochMilliseconds'.
 === tail ===
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
@@ -28,7 +24,7 @@ e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/ri
 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 61 more
+	... 30 more
 Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
 	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
 	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
@@ -64,5 +60,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 4m 16s
+BUILD FAILED in 4m 14s
 325 actionable tasks: 272 executed, 53 from cache
