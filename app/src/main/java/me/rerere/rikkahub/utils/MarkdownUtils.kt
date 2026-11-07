@@ -34,7 +34,7 @@ fun String.stripMarkdown(): String {
         // 移除水平分割线
         .replace(Regex("(?m)^(\\s*[-*_]){3,}\\s*$"), "")
         // 将多个换行符压缩，以保留段落
-        .replace(Regex("\n{3,}"), "\n\n")
+        .replace(Regex("\\n{3,}"), "\\n\\n")
         .trim()
 }
  
@@ -60,7 +60,7 @@ fun String.extractThinkingTitle(): String? {
 }
  
 // ============================================================
-// 分句气泡: 按模型自己写的换行 (\n) 把一条助手回复拆成多个气泡片段
+// 分句气泡: 把一条回复拆成若干个气泡片段
 // ============================================================
  
 /**
@@ -73,10 +73,6 @@ private val FENCED_CODE_BLOCK_REGEX = Regex("```[\\s\\S]*?```")
  * 找出文本中「不可在其内部拆分气泡」的字符区间：
  * 1. 围栏代码块 (```...```) —— 内部换行是代码的一部分，拆开代码就碎了
  * 2. Markdown 表格 —— 连续 2 行及以上、每行都形如 "|...|" 的区块，拆开表格就散架了
- *
- * 除了这两种情况，其余所有换行完全由模型自己写、自己控制，不做任何额外的"智能分段"。
- *
- * 注意：这里假设换行符为单个 "\n"（LLM 输出的常见情况），不特殊处理 "\r\n"。
  */
 private fun findProtectedRanges(text: String): List<IntRange> {
     val ranges = mutableListOf<IntRange>()
@@ -120,13 +116,6 @@ private fun findProtectedRanges(text: String): List<IntRange> {
  
 /**
  * 按模型自己写的换行符 (\n) 把一条助手回复拆分成多个"气泡"片段。
- *
- * - 拆分边界 100% 由模型输出的换行决定，客户端不做任何"按句子/按段落"的猜测式加工。
- * - 唯一的保护：围栏代码块与 Markdown 表格内部的换行不会被当作气泡边界（见 [findProtectedRanges]），
- *   因为这两种结构一旦被从中间拆开，视觉上是彻底损坏、不可读的，这是纯技术保护，不是风格判断。
- * - 拆分后每个片段会 trim 首尾空白；纯空白片段会被丢弃。
- * - 如果拆分结果为空 (例如整段文本都在保护区间内)，回退为把原文整体作为唯一一个片段返回，
- *   保证调用方任何时候都能拿到至少一个片段。
  */
 fun String.splitIntoBubbleSegments(): List<String> {
     if (isBlank()) return listOf(this)
@@ -153,4 +142,90 @@ fun String.splitIntoBubbleSegments(): List<String> {
  
     return result.ifEmpty { listOf(this.trim()) }
 }
- 
+
+// ============================================================
+// 按句子拆分: 一句一个气泡
+// ============================================================
+
+/** 句子结束符。英文标点后面必须跟空白或结尾，避免把 3.14 / a.b 拆开。 */
+private val SENTENCE_END_CHARS = charArrayOf('。', '！', '？', '!', '?', '…', '~', '～')
+
+/**
+ * 把一段文本按句子拆成多个气泡片段。
+ *
+ * 规则：
+ * - 中文句号/问号/感叹号/省略号/波浪号后面直接断句
+ * - 英文 .!? 后面必须跟空白、换行或文本结尾才断（防止拆开小数与网址）
+ * - 紧跟在结束符后的引号、括号、逗号等收尾符号会吞进同一句
+ * - 代码块与 Markdown 表格内部的换行/标点不参与断句
+ * - 换行本身也作为断句点
+ * - 过短的碎片（少于 3 个字符且不含结束符）会合并到前一句
+ */
+fun String.splitIntoSentenceBubbles(): List<String> {
+    if (isBlank()) return listOf(this)
+
+    val protectedRanges = findProtectedRanges(this)
+    fun isProtectedIndex(index: Int) = protectedRanges.any { index in it }
+
+    // 需要吞进上一句的收尾符号
+    val trailingChars = charArrayOf(
+        '"', '\'', '”', '’', '）', ')', '】', ']', '》', '」', '』',
+        '，', ',', '、', '；', ';', '：', ':'
+    )
+
+    val segments = mutableListOf<String>()
+    val current = StringBuilder()
+    var i = 0
+    val n = length
+
+    while (i < n) {
+        val ch = this[i]
+        current.append(ch)
+
+        val isEnd = when {
+            isProtectedIndex(i) -> false
+            ch == '\n' -> true
+            ch in SENTENCE_END_CHARS -> true
+            ch == '.' -> {
+                // 英文句点: 后面必须是空白或结尾
+                val next = getOrNull(i + 1)
+                next == null || next.isWhitespace()
+            }
+            else -> false
+        }
+
+        if (isEnd) {
+            i++
+            // 吞掉紧跟的收尾符号（保护区内不动）
+            while (i < n && this[i] in trailingChars && !isProtectedIndex(i)) {
+                current.append(this[i])
+                i++
+            }
+            segments.add(current.toString())
+            current.clear()
+            continue
+        }
+        i++
+    }
+    if (current.isNotEmpty()) segments.add(current.toString())
+
+    val cleaned = segments
+        .map { it.trim('\r').trim() }
+        .filter { it.isNotBlank() }
+
+    if (cleaned.isEmpty()) return listOf(this.trim())
+
+    // 合并过短的碎片到前一句，避免出现只有一个标点的气泡
+    val merged = mutableListOf<String>()
+    cleaned.forEach { seg ->
+        val last = merged.lastOrNull()
+        val tooShort = seg.length <= 2 && seg.none { it in SENTENCE_END_CHARS || it == '.' }
+        if (last != null && tooShort) {
+            merged[merged.lastIndex] = last + seg
+        } else {
+            merged.add(seg)
+        }
+    }
+
+    return merged.ifEmpty { listOf(this.trim()) }
+}
