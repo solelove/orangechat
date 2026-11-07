@@ -2,7 +2,6 @@
 package me.rerere.rikkahub.ui.components.message
 
 import me.rerere.rikkahub.data.model.Assistant
-import me.rerere.rikkahub.data.model.BubbleSplitMode
 
 /** 拆分成多个气泡时，外层的侧边头像要隐藏，改由第一段气泡自己带 */
 internal fun shouldHideSideAvatar(
