@@ -15,6 +15,27 @@ import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.core.ReasoningLevel
 import me.rerere.rikkahub.data.ai.tools.LocalToolOption
 import kotlin.uuid.Uuid
+
+/**
+ * 气泡拆分模式
+ *
+ * NONE     一条消息一个气泡（默认）
+ * LINE     按换行拆分
+ * SENTENCE 按句子拆分，一句一个气泡
+ */
+@Serializable
+enum class BubbleSplitMode {
+    @SerialName("none")
+    NONE,
+
+    @SerialName("line")
+    LINE,
+
+    @SerialName("sentence")
+    SENTENCE;
+
+    val isEnabled: Boolean get() = this != NONE
+}
  
 @Serializable
 data class Assistant(
@@ -52,8 +73,7 @@ data class Assistant(
     val allowConversationSystemPrompt: Boolean = false, // 允许对话单独重写 system prompt
     val allowSkipReply: Boolean = false,
     val externalMemoryIds: Set<Uuid> = emptySet(),      // 关联的外置记忆库 ID
-    val splitBubbleByLine: Boolean = false,             // 按模型自己写的换行拆分成多个独立气泡
-    val splitUserBubbleByLine: Boolean = false,         // 用户消息按换行拆分成多个独立气泡
+    val bubbleSplitMode: BubbleSplitMode = BubbleSplitMode.NONE, // 气泡拆分模式（用户与助手共用）
 )
  
 @Serializable
