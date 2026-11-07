@@ -96,6 +96,7 @@ private fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
  * - 模式为 NONE 时直接渲染一个整体气泡（保持原有行为）
  * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡，一句一框
  * - 每个小气泡旁边都会带上头像（[segmentAvatar]）
+ * - 只有第一段带头像，其余段留出同样的空位对齐
  * - 气泡宽度跟随内容，最宽不超过 [maxWidth]
  */
 @Composable
@@ -142,14 +143,19 @@ fun SplitBubbleColumn(
         horizontalAlignment = alignment,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        segments.fastForEachIndexed { _, segment ->
+        segments.fastForEachIndexed { index, segment ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
             ) {
                 if (segmentAvatar != null && !isRightSide) {
-                    SegmentAvatarView(segmentAvatar, avatarLoading)
+                    if (index == 0) {
+                        SegmentAvatarView(segmentAvatar, avatarLoading)
+                    } else {
+                        // 后续段留白对齐，避免一堆重复头像
+                        Spacer(modifier = Modifier.width(SegmentAvatarWidth))
+                    }
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 BubbleSurface(
@@ -165,7 +171,11 @@ fun SplitBubbleColumn(
                 }
                 if (segmentAvatar != null && isRightSide) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    SegmentAvatarView(segmentAvatar, avatarLoading)
+                    if (index == 0) {
+                        SegmentAvatarView(segmentAvatar, avatarLoading)
+                    } else {
+                        Spacer(modifier = Modifier.width(SegmentAvatarWidth))
+                    }
                 }
             }
         }
