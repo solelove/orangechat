@@ -18,6 +18,7 @@ def sub(text, old, new, tag):
 
 
 # ---------- 1. TimeReminderTransformer ----------
+# createdAt 是 LocalDateTime，不是 Instant
 TR_SRC = '''\ufeff/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
@@ -26,8 +27,8 @@ TR_SRC = '''\ufeff/*
 
 package me.rerere.rikkahub.data.ai.transformers
 
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.Duration
+import java.time.LocalDateTime
 import java.time.format.TextStyle
 import java.util.Locale
 import me.rerere.ai.core.MessageRole
@@ -51,26 +52,23 @@ object TimeReminderTransformer : InputMessageTransformer {
     fun buildReminder(messages: List<UIMessage>): String? {
         val userMessages = messages.filter { it.role == MessageRole.USER }
         val latest = userMessages.lastOrNull() ?: return null
-        val currInstant = latest.createdAt
-        val prevInstant = userMessages.dropLast(1).lastOrNull()?.createdAt
-        if (prevInstant == null) {
-            return buildTimeReminderText(gapSeconds = null, instant = currInstant)
-        }
-        val gapSeconds = (currInstant - prevInstant).inWholeSeconds
+        val curr = latest.createdAt
+        val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
+        if (prev == null) return buildTimeReminderText(null, curr)
+        val gapSeconds = Duration.between(prev, curr).seconds
         if (gapSeconds <= TIME_GAP_THRESHOLD_SECONDS) return null
-        return buildTimeReminderText(gapSeconds = gapSeconds, instant = currInstant)
+        return buildTimeReminderText(gapSeconds, curr)
     }
 }
 
 /** 旧接口保留：把提醒以 user 消息形式注入（默认不再使用）。 */
 internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
 
-internal fun buildTimeReminderText(gapSeconds: Long?, instant: kotlin.time.Instant): String {
-    val local: ZonedDateTime = instant.toJavaInstant().atZone(ZoneId.systemDefault())
-    val dayOfWeek = local.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
+    val dayOfWeek = time.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
     val timeStr = String.format(
         Locale.US, "%04d-%02d-%02d %02d:%02d",
-        local.year, local.monthValue, local.dayOfMonth, local.hour, local.minute
+        time.year, time.monthValue, time.dayOfMonth, time.hour, time.minute
     )
     val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
     return if (gapSeconds != null) {
@@ -106,10 +104,8 @@ GH_NEW = '''            val timeReminder = if (assistant.enableTimeReminder) {
 # ---------- 3. ChatList ----------
 CL_OLD_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller'''
 CL_NEW_IMPORT = '''import me.rerere.rikkahub.ui.hooks.ImeLazyListAutoScroller
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter'''
+import java.time.Duration
+import java.time.LocalDateTime'''
 
 CL_OLD_ITEM = '''            ) { index, node ->
                 Column {
@@ -128,34 +124,25 @@ CL_NEW_ITEM = '''            ) { index, node ->
                     ListSelectableItem('''
 
 CL_APPEND = '''
-/** 消息时间的毫秒值（与 ChatTimeHeader 展示用的是同一个已格式化字段）。 */
-private fun messageTimeMillis(node: MessageNode): Long = runCatching {
-    val raw = node.currentMessage.createdAt.toString()
-    val cleaned = raw.replace("Z", "").substringBeforeLast(":")
-    val date = LocalDateTime.parse(cleaned, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    date.toInstant(ZoneOffset.UTC).toEpochMilli()
-}.getOrDefault(0L)
-
 /** 微信式时间条：首条必显示，之后间隔 5 分钟以上才显示。 */
 private fun showTimeHeader(nodes: List<MessageNode>, index: Int): Boolean {
     if (index == 0) return true
     val prev = nodes.getOrNull(index - 1) ?: return true
-    val gap = messageTimeMillis(nodes[index]) - messageTimeMillis(prev)
-    return gap >= 5 * 60 * 1000L || gap < 0L
+    val curr = nodes[index]
+    val seconds = Duration.between(
+        prev.currentMessage.createdAt,
+        curr.currentMessage.createdAt,
+    ).seconds
+    return seconds >= 5 * 60 || seconds < 0
 }
 
 private fun formatTimeHeader(node: MessageNode, prevNode: MessageNode?): String {
-    val millis = messageTimeMillis(node)
-    val t = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), ZoneId.systemDefault())
+    val t = node.currentMessage.createdAt
     val now = LocalDateTime.now()
     val hm = "%02d:%02d".format(t.hour, t.minute)
     if (t.toLocalDate() == now.toLocalDate()) return hm
-    if (prevNode != null) {
-        val p = LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochMilli(messageTimeMillis(prevNode)), ZoneId.systemDefault()
-        )
-        if (p.toLocalDate() == t.toLocalDate()) return hm
-    }
+    val prev = prevNode?.currentMessage?.createdAt
+    if (prev != null && prev.toLocalDate() == t.toLocalDate()) return hm
     if (t.toLocalDate() == now.toLocalDate().minusDays(1)) return "昨天 $hm"
     val md = "${t.monthValue}月${t.dayOfMonth}日 $hm"
     return if (t.year == now.year) md else "${t.year}年$md"
