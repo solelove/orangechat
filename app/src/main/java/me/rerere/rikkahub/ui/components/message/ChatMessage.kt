@@ -363,4 +363,3 @@ private fun MessagePartsBlock(
                 }
             }
     }
-PLACEHOLDER_TAIL
