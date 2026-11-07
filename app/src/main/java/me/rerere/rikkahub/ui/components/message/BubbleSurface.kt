@@ -150,12 +150,7 @@ fun SplitBubbleColumn(
                 horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
             ) {
                 if (segmentAvatar != null && !isRightSide) {
-                    if (index == 0) {
-                        SegmentAvatarView(segmentAvatar, avatarLoading)
-                    } else {
-                        // 后续段留白对齐，避免一堆重复头像
-                        Spacer(modifier = Modifier.width(SegmentAvatarWidth))
-                    }
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 BubbleSurface(
@@ -171,11 +166,7 @@ fun SplitBubbleColumn(
                 }
                 if (segmentAvatar != null && isRightSide) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    if (index == 0) {
-                        SegmentAvatarView(segmentAvatar, avatarLoading)
-                    } else {
-                        Spacer(modifier = Modifier.width(SegmentAvatarWidth))
-                    }
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
                 }
             }
         }
