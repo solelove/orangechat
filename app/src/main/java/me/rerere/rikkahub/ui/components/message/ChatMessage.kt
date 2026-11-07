@@ -105,6 +105,9 @@ import me.rerere.rikkahub.ui.components.richtext.ZoomableAsyncImage
 import me.rerere.rikkahub.ui.components.richtext.buildMarkdownPreviewHtml
 import me.rerere.rikkahub.ui.components.ui.ChainOfThought
 import me.rerere.rikkahub.ui.components.ui.Favicon
+import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.UIAvatar
+import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.modifier.shimmer
 import me.rerere.rikkahub.ui.components.ui.toComposeColor
@@ -169,33 +172,26 @@ fun ChatMessage(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
-    Column(
+    val isUserMessage = message.role == MessageRole.USER
+    Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = if (message.role == MessageRole.USER) Alignment.End else Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Top,
     ) {
-        if (!message.parts.isEmptyUIMessage()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            ) {
-                ChatMessageAssistantAvatar(
-                    message = message,
-                    model = model,
-                    assistant = assistant,
-                    loading = loading,
-                    modifier = Modifier.weight(1f)
-                )
-                ChatMessageUserAvatar(
-                    message = message,
-                    avatar = settings.userAvatar,
-                    nickname = settings.userNickname,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+        if (!isUserMessage && !message.parts.isEmptyUIMessage()) {
+            ChatMessageSideAvatar(
+                message = message,
+                model = model,
+                assistant = assistant,
+                loading = loading,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
         }
+        Column(
+            modifier = Modifier.weight(1f, fill = false),
+            horizontalAlignment = if (isUserMessage) Alignment.End else Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
         ProvideTextStyle(textStyle) {
             MessagePartsBlock(
                 assistant = assistant,
@@ -247,6 +243,15 @@ fun ChatMessage(
  
         ProvideTextStyle(textStyle) {
             ChatMessageNerdLine(message = message)
+        }
+    }
+        if (isUserMessage && !message.parts.isEmptyUIMessage()) {
+            Spacer(modifier = Modifier.width(8.dp))
+            ChatMessageSideUserAvatar(
+                message = message,
+                avatar = settings.userAvatar,
+                nickname = settings.userNickname,
+            )
         }
     }
     if (showActionsSheet) {
@@ -1036,4 +1041,51 @@ internal fun VoiceMessageBubble(
         }
     }
 }
- 
+
+@Composable
+private fun ChatMessageSideAvatar(
+    message: UIMessage,
+    model: Model?,
+    assistant: Assistant?,
+    loading: Boolean,
+) {
+    val display = LocalDisplaySettings.current
+    if (message.role == MessageRole.ASSISTANT && display.showModelIcon) {
+        val useAssistantAvatar = assistant?.useAssistantAvatar == true
+        Box(modifier = Modifier.width(36.dp), contentAlignment = Alignment.TopCenter) {
+            if (useAssistantAvatar && assistant != null) {
+                UIAvatar(
+                    name = assistant.name,
+                    modifier = Modifier.size(36.dp),
+                    value = assistant.avatar,
+                    loading = loading,
+                )
+            } else if (model != null) {
+                AutoAIIcon(
+                    name = model.modelId,
+                    modifier = Modifier.size(36.dp),
+                    loading = loading,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatMessageSideUserAvatar(
+    message: UIMessage,
+    avatar: Avatar,
+    nickname: String,
+) {
+    val display = LocalDisplaySettings.current
+    if (message.role == MessageRole.USER && display.showUserAvatar) {
+        Box(modifier = Modifier.width(36.dp), contentAlignment = Alignment.TopCenter) {
+            UIAvatar(
+                name = nickname,
+                modifier = Modifier.size(36.dp),
+                value = avatar,
+                loading = false,
+            )
+        }
+    }
+}
