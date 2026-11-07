@@ -46,7 +46,10 @@ def sub(text, old, new, tag):
     return text.replace(old, new)
 
 
-src = sub(src, OLD_LEFT, NEW_LEFT, "left")
-src = sub(src, OLD_RIGHT, NEW_RIGHT, "right")
-P.write_text(src, encoding="utf-8")
-print("[fix] done")
+if 'if (index == 0) {' in src:
+    src = sub(src, OLD_LEFT, NEW_LEFT, "left")
+    src = sub(src, OLD_RIGHT, NEW_RIGHT, "right")
+    P.write_text(src, encoding="utf-8")
+    print("[fix] done")
+else:
+    print("[fix] already patched, skip")
