@@ -1,9 +1,16 @@
-run=42389952281 sha=e2a70631d3dc261ebd1cee23477b25d8e852ada8
+run=42390686004 sha=ec92c603c92cc957deb6ffcb7cfc79ad0ce076e6
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:37:71 Argument type mismatch: actual type is 'LocalDateTime', but 'Instant' was expected.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:39:39 Unresolved reference 'minus' for operator '-'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:41:73 Argument type mismatch: actual type is 'LocalDateTime', but 'Instant' was expected.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:49:40 Unresolved reference 'toJavaInstant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:36:62 Argument type mismatch: actual type is 'kotlinx.datetime.LocalDateTime', but 'java.time.LocalDateTime' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:37:43 Argument type mismatch: actual type is 'LocalDateTime', but 'Temporal!' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:37:49 Argument type mismatch: actual type is 'LocalDateTime', but 'Temporal!' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt:39:50 Argument type mismatch: actual type is 'kotlinx.datetime.LocalDateTime', but 'java.time.LocalDateTime' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:873:9 Argument type mismatch: actual type is 'LocalDateTime', but 'Temporal!' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:874:9 Argument type mismatch: actual type is 'LocalDateTime', but 'Temporal!' was expected.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:883:11 Unresolved reference 'toLocalDate'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:30 Unresolved reference 'toLocalDate'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:49 Unresolved reference 'toLocalDate'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:886:11 Unresolved reference 'toLocalDate'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:887:19 Unresolved reference 'monthValue'.
 === tail ===
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
@@ -63,5 +70,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 5m 48s
+BUILD FAILED in 5m 58s
 325 actionable tasks: 273 executed, 52 from cache
