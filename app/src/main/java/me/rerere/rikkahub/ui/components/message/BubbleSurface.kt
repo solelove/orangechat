@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,9 +34,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import coil3.compose.AsyncImage
+import me.rerere.rikkahub.data.model.Assistant
+import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.model.BubbleSplitMode
+import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.utils.splitIntoBubbleSegments
 import me.rerere.rikkahub.utils.splitIntoSentenceBubbles
+
+/** 气泡拆分片段旁边的头像宽度 */
+internal val SegmentAvatarWidth = 36.dp
 
 /** 按模式切分气泡文本 */
 fun splitByMode(text: String, mode: BubbleSplitMode): List<String> = when (mode) {
@@ -44,13 +52,43 @@ fun splitByMode(text: String, mode: BubbleSplitMode): List<String> = when (mode)
     BubbleSplitMode.SENTENCE -> text.splitIntoSentenceBubbles()
 }
 
-/**
- * 拆开后的每个气泡在左侧/右侧额外要渲染的东西（头像）。
- * 只有第一段之外的段落才需要重复头像，所以参数里带上 index。
- */
-fun interface SplitSegmentAvatar {
-    @Composable
-    fun Avatar(index: Int)
+/** 拆分后每个气泡要显示的头像；为 null 表示不显示 */
+sealed interface SegmentAvatarSpec {
+    /** 用户头像 */
+    data class User(val avatar: Avatar, val nickname: String) : SegmentAvatarSpec
+
+    /** 助手头像 */
+    data class AssistantAvatar(val assistant: Assistant) : SegmentAvatarSpec
+
+    /** 模型图标 */
+    data class Model(val modelId: String) : SegmentAvatarSpec
+}
+
+@Composable
+private fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
+    Box(modifier = Modifier.width(SegmentAvatarWidth), contentAlignment = Alignment.TopCenter) {
+        when (spec) {
+            is SegmentAvatarSpec.User -> UIAvatar(
+                name = spec.nickname,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                value = spec.avatar,
+                loading = false,
+            )
+
+            is SegmentAvatarSpec.AssistantAvatar -> UIAvatar(
+                name = spec.assistant.name,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                value = spec.assistant.avatar,
+                loading = loading,
+            )
+
+            is SegmentAvatarSpec.Model -> AutoAIIcon(
+                name = spec.modelId,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                loading = loading,
+            )
+        }
+    }
 }
 
 /**
@@ -58,7 +96,7 @@ fun interface SplitSegmentAvatar {
  *
  * - 模式为 NONE 时直接渲染一个整体气泡（保持原有行为）
  * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡，一句一框
- * - 每个小气泡都能带上自己的头像（[segmentAvatar]）
+ * - 每个小气泡旁边都会带上头像（[segmentAvatar]）
  * - 气泡宽度跟随内容，最宽不超过 [maxWidth]
  */
 @Composable
@@ -73,8 +111,8 @@ fun SplitBubbleColumn(
     maxWidth: Dp,
     alignment: Alignment.Horizontal,
     onClick: (() -> Unit)? = null,
-    /** 每个拆出来的气泡旁的头像；只在拆分模式下生效 */
-    segmentAvatar: SplitSegmentAvatar? = null,
+    segmentAvatar: SegmentAvatarSpec? = null,
+    avatarLoading: Boolean = false,
     content: @Composable (String) -> Unit,
 ) {
     if (!mode.isEnabled) {
@@ -94,23 +132,25 @@ fun SplitBubbleColumn(
 
     val segments = remember(text, mode) { splitByMode(text, mode) }
 
-    // 气泡实际可用宽度要扣掉头像占位
-    val avatarSpace = if (segmentAvatar != null) 36.dp + 8.dp else 0.dp
-    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(80.dp)
+    // 扣掉头像占位后的可用宽度
+    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
+    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
+    val isRightSide = alignment == Alignment.End
 
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = alignment,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         segments.fastForEachIndexed { index, segment ->
             key(index) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top,
-                    horizontalArrangement = if (alignment == Alignment.End) Arrangement.End
-                    else Arrangement.Start,
+                    horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
                 ) {
-                    if (segmentAvatar != null && alignment != Alignment.End) {
-                        segmentAvatar.Avatar(index)
+                    if (segmentAvatar != null && !isRightSide) {
+                        SegmentAvatarView(segmentAvatar, avatarLoading)
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     BubbleSurface(
@@ -124,9 +164,9 @@ fun SplitBubbleColumn(
                     ) {
                         content(segment)
                     }
-                    if (segmentAvatar != null && alignment == Alignment.End) {
+                    if (segmentAvatar != null && isRightSide) {
                         Spacer(modifier = Modifier.width(8.dp))
-                        segmentAvatar.Avatar(index)
+                        SegmentAvatarView(segmentAvatar, avatarLoading)
                     }
                 }
             }
@@ -183,6 +223,3 @@ fun BubbleSurface(
         }
     }
 }
-
-/** 消息侧边头像的宽度，保持和 ChatMessage 里的占位一致 */
-internal val SegmentAvatarWidth = 36.dp
