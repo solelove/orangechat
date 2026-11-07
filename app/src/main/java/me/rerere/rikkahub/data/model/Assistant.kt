@@ -52,12 +52,22 @@ data class Assistant(
     val allowConversationSystemPrompt: Boolean = false, // 允许对话单独重写 system prompt
     val allowSkipReply: Boolean = false,
     val externalMemoryIds: Set<Uuid> = emptySet(),      // 关联的外置记忆库 ID
-    // 气泡拆分模式：none 不拆 / line 按换行 / sentence 按句子（用户与助手共用）
+    // 助手气泡拆分模式：none 不拆 / line 按换行 / sentence 按句子
     val bubbleSplitMode: BubbleSplitMode = BubbleSplitMode.NONE,
+    // 用户气泡拆分模式：独立开关，null 表示沿用旧行为（跟随 bubbleSplitMode）
+    val userBubbleSplitMode: BubbleSplitMode? = null,
 ) {
     /** 兼容旧字段：按换行拆分时为 true */
     val splitBubbleByLine: Boolean
         get() = bubbleSplitMode == BubbleSplitMode.LINE
+
+    /** 助手侧实际生效的拆分模式 */
+    val effectiveAssistantSplitMode: BubbleSplitMode
+        get() = bubbleSplitMode
+
+    /** 用户侧实际生效的拆分模式（未设置过就沿用旧行为） */
+    val effectiveUserSplitMode: BubbleSplitMode
+        get() = userBubbleSplitMode ?: bubbleSplitMode
 }
  
 @Serializable
