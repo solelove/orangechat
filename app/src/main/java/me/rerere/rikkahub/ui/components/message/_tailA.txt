@@ -1,0 +1,112 @@
+    val groupedParts = remember(parts) { parts.groupMessageParts() }
+    groupedParts.fastForEach { block ->
+        when (block) {
+            is MessagePartBlock.ThinkingBlock -> {
+                if (block.steps.isNotEmpty()) {
+                    val isReasoningOnlyBlock = block.steps.fastAll { it is ThinkingStep.ReasoningStep }
+                    ChainOfThought(
+                        modifier = Modifier.animateContentSize(),
+                        steps = block.steps,
+                        collapsedAdaptiveWidth = isReasoningOnlyBlock,
+                    ) { step ->
+                        when (step) {
+                            is ThinkingStep.ReasoningStep -> {
+                                key(step.reasoning.createdAt) {
+                                    ChatMessageReasoningStep(
+                                        reasoning = step.reasoning,
+                                        model = model,
+                                        assistant = assistant,
+                                        collapsedAdaptiveWidth = isReasoningOnlyBlock,
+                                    )
+                                }
+                            }
+ 
+                            is ThinkingStep.ToolStep -> {
+                                key(step.tool.toolCallId.ifBlank { step.hashCode().toString() }) {
+                                    ChatMessageToolStep(
+                                        tool = step.tool,
+                                        loading = loading && !step.tool.isExecuted,
+                                        allParts = parts,
+                                        onToolApproval = onToolApproval,
+                                        onToolAnswer = onToolAnswer,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+ 
+            is MessagePartBlock.ContentBlock -> key(block.index) {
+                when (val part = block.part) {
+                    is UIMessagePart.Text -> {
+                        val displayText = remember(part.text) {
+                            part.text.replace(Regex("\\[zip:[^\\]]+\\]", RegexOption.IGNORE_CASE), "")
+                        }
+ 
+                        SelectionContainer {
+                            Column {
+                                if (role == MessageRole.USER) {
+                                    SplitBubbleColumn(
+                                        text = displayText,
+                                        mode = userSplitMode,
+                                        imagePath = displaySettings.userBubbleImagePath,
+                                        cornerRadius = displaySettings.bubbleCornerRadius.dp,
+                                        color = displaySettings.userBubbleColor?.let { it.toComposeColor() }
+                                            ?: MaterialTheme.colorScheme.secondaryContainer,
+                                        overlayEnabled = displaySettings.bubbleImageOverlayEnabled,
+                                        bubbleAlpha = bubbleAlpha,
+                                        maxWidth = maxBubbleWidth,
+                                        alignment = Alignment.End,
+                                        onClick = { onUserMessageClick?.invoke() },
+                                        segmentAvatar = userAvatarSpec,
+                                    ) { segment ->
+                                        MarkdownBlock(
+                                            content = segment.replaceRegexes(
+                                                assistant = assistant,
+                                                scope = AssistantAffectScope.USER,
+                                                visual = true,
+                                            ),
+                                            onClickCitation = handleClickCitation
+                                        )
+                                    }
+                                } else {
+                                    if (displaySettings.showAssistantBubble) {
+                                        SplitBubbleColumn(
+                                            text = displayText,
+                                            mode = assistantSplitMode,
+                                            imagePath = displaySettings.assistantBubbleImagePath,
+                                            cornerRadius = displaySettings.bubbleCornerRadius.dp,
+                                            color = displaySettings.assistantBubbleColor?.let { it.toComposeColor() }
+                                                ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            overlayEnabled = displaySettings.bubbleImageOverlayEnabled,
+                                            bubbleAlpha = bubbleAlpha,
+                                            maxWidth = maxBubbleWidth,
+                                            alignment = Alignment.Start,
+                                            segmentAvatar = assistantAvatarSpec,
+                                            avatarLoading = loading,
+                                        ) { segment ->
+                                            MarkdownBlock(
+                                                content = segment.replaceRegexes(
+                                                    assistant = assistant,
+                                                    scope = AssistantAffectScope.ASSISTANT,
+                                                    visual = true,
+                                                ),
+                                                onClickCitation = handleClickCitation,
+                                            )
+                                        }
+                                    } else {
+                                        MarkdownBlock(
+                                            content = displayText.replaceRegexes(
+                                                assistant = assistant,
+                                                scope = AssistantAffectScope.ASSISTANT,
+                                                visual = true,
+                                            ),
+                                            onClickCitation = handleClickCitation,
+                                            modifier = Modifier.animateContentSize()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
