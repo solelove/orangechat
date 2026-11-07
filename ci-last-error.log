@@ -1,7 +1,85 @@
-run=42398618110 sha=5bfd036d04de702ccc9b9f7afa7ac5c3e086e74b
+run=42402589098 sha=007c0b9193d478f803765e19b871f78033a6dab4
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt:546:31 Unresolved reference 'splitBubbleByLine'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt:546:31 Unresolved reference 'splitBubbleByLine'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:43 Unresolved reference 'remember'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:52 Unresolved reference 'part'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:2:29 Unresolved reference 'part'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:45 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:82 Unresolved reference 'BubbleSplitMode'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:50 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:92 Unresolved reference 'BubbleSplitMode'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:6:45 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:7:33 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:33 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:56 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:84 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:10:50 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:34 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:65 Null cannot be a value of a non-null type 'uninferred K (of fun <K> WHEN_CALL)'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:38 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:59 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:33 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:67 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:34 Unresolved reference 'model'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:45 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:47 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:74 Unresolved reference 'modelId'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:25 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:44 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:44 Function declaration must have a name.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:17:29 Unresolved reference 'Column'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:18:37 Unresolved reference 'role'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:18:45 Unresolved reference 'MessageRole'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:19:37 Unresolved reference 'SplitBubbleColumn'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:22:53 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:23:56 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:49 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:82 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:82 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:86 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:91 Unresolved reference 'toComposeColor'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:25:48 Unresolved reference 'MaterialTheme'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:26:58 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:27:55 Unresolved reference 'bubbleAlpha'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:28:52 Unresolved reference 'maxBubbleWidth'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:29:53 Unresolved reference 'Alignment'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:53 Unresolved reference 'onUserMessageClick'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:73 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:73 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:33:41 Cannot infer type for value parameter 'segment'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:33:51 Syntax error: Expecting '}'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:609:33 Unresolved reference 'AudioPlayerBubble'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:946:55 Unresolved reference 'AudioPlayerBubble'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantPromptPage.kt:86:49 Unresolved reference 'ChatMessage'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantPromptPage.kt:358:25 Unresolved reference 'ChatMessage'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:105:49 Unresolved reference 'ChatMessage'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:349:25 Unresolved reference 'ChatMessage'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:373:49 Unresolved reference 'it'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:43 Unresolved reference 'remember'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:52 Unresolved reference 'part'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:2:29 Unresolved reference 'part'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:45 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:82 Unresolved reference 'BubbleSplitMode'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:50 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:92 Unresolved reference 'BubbleSplitMode'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:6:45 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:7:33 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:33 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:56 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:84 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:10:50 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:34 Unresolved reference 'displaySettings'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:65 Null cannot be a value of a non-null type 'uninferred K (of fun <K> WHEN_CALL)'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:38 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:59 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:33 Unresolved reference 'SegmentAvatarSpec'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:67 Unresolved reference 'assistant'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:34 Unresolved reference 'model'.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:45 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:47 Unresolved reference 'SegmentAvatarSpec'.
 === what went wrong ===
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
@@ -142,5 +220,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 
 ==============================================================================
 
-BUILD FAILED in 1m 50s
+BUILD FAILED in 1m 47s
 565 actionable tasks: 299 executed, 266 from cache
