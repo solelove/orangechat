@@ -51,16 +51,24 @@ jobs:
 
       - name: List APKs
         run: |
-          echo "=== find result ==="
+          echo "=== all apks ==="
           find app/build/outputs -name "*.apk" -exec ls -lh {} \;
-          echo "=== dir tree ==="
-          ls -R app/build/outputs | head -50
 
-      - name: Prepare apk
+      - name: Prepare apk (arm64 preferred)
         run: |
           set -e
-          APK=$(find app/build/outputs -name "*.apk" | head -1)
-          if [ -z "$APK" ]; then echo "NO APK"; exit 1; fi
+          echo "--- pick arm64 ---"
+          APK=$(find app/build/outputs -name "*arm64*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "no arm64, try universal"
+            APK=$(find app/build/outputs -name "*universal*.apk" | head -1)
+          fi
+          if [ -z "$APK" ]; then
+            echo "no universal, exclude x86"
+            APK=$(find app/build/outputs -name "*.apk" ! -name "*x86*" | head -1)
+          fi
+          if [ -z "$APK" ]; then echo "NO APK AT ALL"; exit 1; fi
+          echo "CHOSEN=$APK"
           cp "$APK" app/build/outputs/orangechat-memory.apk
           ls -lh app/build/outputs/orangechat-memory.apk
 
