@@ -23,46 +23,46 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" complete.
 "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" finished.
 
-> Task :common:preBuild UP-TO-DATE
-> Task :ai:preBuild UP-TO-DATE
-> Task :app:preBuild UP-TO-DATE
 > Task :document:preBuild UP-TO-DATE
+> Task :ai:preBuild UP-TO-DATE
+> Task :common:preBuild UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :common:preDebugBuild UP-TO-DATE
 > Task :ai:preDebugBuild UP-TO-DATE
 > Task :document:preDebugBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
-> Task :common:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :document:extractDebugSupportedLocales FROM-CACHE
 > Task :highlight:preBuild UP-TO-DATE
 > Task :highlight:preDebugBuild UP-TO-DATE
 > Task :highlight:extractDebugSupportedLocales FROM-CACHE
-> Task :common:generateDebugResources FROM-CACHE
-> Task :common:writeDebugAarMetadata
 > Task :material3:preBuild UP-TO-DATE
 > Task :material3:preDebugBuild UP-TO-DATE
-> Task :app:generateDebugBuildConfig
 > Task :material3:extractDebugSupportedLocales FROM-CACHE
+> Task :common:generateDebugResources FROM-CACHE
+> Task :common:writeDebugAarMetadata
 > Task :search:preBuild UP-TO-DATE
 > Task :search:preDebugBuild UP-TO-DATE
 > Task :search:extractDebugSupportedLocales FROM-CACHE
-> Task :app:extractDebugSupportedLocales FROM-CACHE
+> Task :app:generateDebugBuildConfig
 > Task :speech:preBuild UP-TO-DATE
-> Task :common:packageDebugResources FROM-CACHE
 > Task :speech:preDebugBuild UP-TO-DATE
-> Task :common:processDebugNavigationResources FROM-CACHE
+> Task :common:packageDebugResources FROM-CACHE
 > Task :speech:extractDebugSupportedLocales FROM-CACHE
 > Task :web:preBuild
 > Task :web:preDebugBuild
-> Task :app:mapDebugSourceSetPaths
+> Task :common:processDebugNavigationResources FROM-CACHE
+> Task :app:extractDebugSupportedLocales FROM-CACHE
 > Task :web:extractDebugSupportedLocales FROM-CACHE
 > Task :workspace:preBuild UP-TO-DATE
 > Task :workspace:preDebugBuild UP-TO-DATE
 > Task :workspace:extractDebugSupportedLocales FROM-CACHE
+> Task :app:mapDebugSourceSetPaths
 > Task :app:generateDebugResources FROM-CACHE
-> Task :ai:mergeDebugJniLibFolders
 > Task :document:processDebugNavigationResources FROM-CACHE
 > Task :highlight:processDebugNavigationResources FROM-CACHE
 > Task :search:processDebugNavigationResources FROM-CACHE
+> Task :ai:mergeDebugJniLibFolders
 > Task :speech:processDebugNavigationResources FROM-CACHE
 > Task :web:processDebugNavigationResources FROM-CACHE
 > Task :workspace:processDebugNavigationResources FROM-CACHE
@@ -78,11 +78,11 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 > Task :ai:generateDebugResources FROM-CACHE
 > Task :ai:packageDebugResources FROM-CACHE
 > Task :ai:processDebugNavigationResources FROM-CACHE
-> Task :common:parseDebugLocalResources FROM-CACHE
-> Task :document:parseDebugLocalResources FROM-CACHE
 > Task :highlight:parseDebugLocalResources FROM-CACHE
-> Task :common:generateDebugRFile FROM-CACHE
+> Task :document:parseDebugLocalResources FROM-CACHE
+> Task :common:parseDebugLocalResources FROM-CACHE
 > Task :document:generateDebugRFile FROM-CACHE
+> Task :common:generateDebugRFile FROM-CACHE
 > Task :ai:parseDebugLocalResources FROM-CACHE
 > Task :ai:generateDebugRFile FROM-CACHE
 > Task :ai:extractDeepLinksForAarDebug FROM-CACHE
@@ -95,17 +95,17 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 > Task :ai:writeDebugAarMetadata
 > Task :ai:extractDebugSupportedLocales FROM-CACHE
 > Task :highlight:generateDebugRFile FROM-CACHE
+> Task :document:compileDebugKotlin FROM-CACHE
+> Task :document:javaPreCompileDebug FROM-CACHE
 > Task :common:compileDebugKotlin FROM-CACHE
 > Task :common:javaPreCompileDebug FROM-CACHE
 > Task :common:compileDebugJavaWithJavac NO-SOURCE
-> Task :document:compileDebugKotlin FROM-CACHE
-> Task :common:extractDebugSupportedLocales FROM-CACHE
-> Task :document:javaPreCompileDebug FROM-CACHE
-> Task :common:bundleLibCompileToJarDebug
 > Task :highlight:compileDebugKotlin FROM-CACHE
+> Task :common:extractDebugSupportedLocales FROM-CACHE
 > Task :highlight:javaPreCompileDebug FROM-CACHE
 > Task :highlight:compileDebugJavaWithJavac NO-SOURCE
 > Task :highlight:bundleLibCompileToJarDebug
+> Task :common:bundleLibCompileToJarDebug
 > Task :material3:generateDebugResources FROM-CACHE
 > Task :material3:packageDebugResources FROM-CACHE
 > Task :material3:parseDebugLocalResources FROM-CACHE
@@ -126,136 +126,136 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 > Task :speech:compileDebugKotlin FROM-CACHE
 > Task :speech:javaPreCompileDebug FROM-CACHE
 > Task :speech:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugNavigationResources FROM-CACHE
 > Task :speech:bundleLibCompileToJarDebug
 > Task :web:generateDebugResources FROM-CACHE
+> Task :app:generateDebugLocaleConfig FROM-CACHE
 > Task :web:packageDebugResources FROM-CACHE
 > Task :web:parseDebugLocalResources FROM-CACHE
-> Task :document:compileDebugJavaWithJavac FROM-CACHE
-> Task :document:bundleLibCompileToJarDebug
 > Task :web:generateDebugRFile FROM-CACHE
-> Task :workspace:generateDebugResources FROM-CACHE
-> Task :app:processDebugNavigationResources FROM-CACHE
-> Task :ai:extractDebugAnnotations FROM-CACHE
-> Task :app:generateDebugLocaleConfig FROM-CACHE
-> Task :workspace:packageDebugResources FROM-CACHE
-> Task :workspace:parseDebugLocalResources FROM-CACHE
-> Task :workspace:generateDebugRFile FROM-CACHE
 > Task :app:packageDebugResources FROM-CACHE
 > Task :app:parseDebugLocalResources FROM-CACHE
 > Task :app:generateDebugRFile FROM-CACHE
-> Task :app:javaPreCompileDebug FROM-CACHE
-> Task :app:generateDebugAssets UP-TO-DATE
+> Task :workspace:generateDebugResources FROM-CACHE
+> Task :ai:extractDebugAnnotations FROM-CACHE
+> Task :workspace:packageDebugResources FROM-CACHE
+> Task :workspace:parseDebugLocalResources FROM-CACHE
+> Task :workspace:generateDebugRFile FROM-CACHE
+> Task :document:compileDebugJavaWithJavac FROM-CACHE
+> Task :web:compileDebugKotlin FROM-CACHE
+> Task :web:javaPreCompileDebug FROM-CACHE
+> Task :web:compileDebugJavaWithJavac NO-SOURCE
+> Task :document:bundleLibCompileToJarDebug
+> Task :ai:compileDebugKotlin FROM-CACHE
+> Task :web:bundleLibCompileToJarDebug
 > Task :common:generateDebugAssets UP-TO-DATE
-> Task :workspace:compileDebugKotlin FROM-CACHE
-> Task :workspace:javaPreCompileDebug FROM-CACHE
-> Task :workspace:compileDebugJavaWithJavac NO-SOURCE
 > Task :common:mergeDebugAssets
 > Task :document:generateDebugAssets UP-TO-DATE
-> Task :workspace:bundleLibCompileToJarDebug
-> Task :highlight:generateDebugAssets UP-TO-DATE
-> Task :document:mergeDebugAssets
-> Task :material3:generateDebugAssets UP-TO-DATE
-> Task :highlight:mergeDebugAssets
-> Task :search:generateDebugAssets UP-TO-DATE
-> Task :ai:compileDebugKotlin FROM-CACHE
+> Task :workspace:compileDebugKotlin FROM-CACHE
 > Task :ai:compileDebugJavaWithJavac NO-SOURCE
-> Task :material3:mergeDebugAssets
-> Task :speech:generateDebugAssets UP-TO-DATE
 > Task :ai:mergeDebugGeneratedProguardFiles
-> Task :web:compileDebugKotlin FROM-CACHE
+> Task :workspace:javaPreCompileDebug FROM-CACHE
+> Task :workspace:compileDebugJavaWithJavac NO-SOURCE
+> Task :document:mergeDebugAssets
+> Task :highlight:generateDebugAssets UP-TO-DATE
+> Task :ai:mergeDebugConsumerProguardFiles
+> Task :highlight:mergeDebugAssets
+> Task :material3:generateDebugAssets UP-TO-DATE
+> Task :workspace:bundleLibCompileToJarDebug
+> Task :search:generateDebugAssets UP-TO-DATE
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :speech:generateDebugAssets UP-TO-DATE
 > Task :search:mergeDebugAssets
+> Task :web:generateDebugAssets UP-TO-DATE
+> Task :material3:mergeDebugAssets
 > Task :workspace:generateDebugAssets UP-TO-DATE
 > Task :speech:mergeDebugAssets
-> Task :web:javaPreCompileDebug FROM-CACHE
 > Task :workspace:mergeDebugAssets
-> Task :ai:mergeDebugConsumerProguardFiles
-> Task :web:compileDebugJavaWithJavac NO-SOURCE
-> Task :web:bundleLibCompileToJarDebug
-> Task :web:generateDebugAssets UP-TO-DATE
+> Task :web:mergeDebugAssets
 > Task :document:bundleLibRuntimeToJarDebug
 > Task :highlight:bundleLibRuntimeToJarDebug
-> Task :web:mergeDebugAssets
-> Task :ai:processDebugJavaRes
 > Task :web:bundleLibRuntimeToJarDebug
+> Task :ai:processDebugJavaRes
 > Task :speech:bundleLibRuntimeToJarDebug
 > Task :ai:bundleLibCompileToJarDebug
+> Task :ai:bundleLibRuntimeToJarDebug
 > Task :ai:mergeDebugJavaResource
 > Task :ai:syncDebugLibJars FROM-CACHE
 > Task :common:bundleLibRuntimeToJarDebug
+> Task :workspace:bundleLibRuntimeToJarDebug
 > Task :ai:bundleDebugAar
 > Task :ai:assembleDebug
-> Task :workspace:bundleLibRuntimeToJarDebug
-> Task :ai:bundleLibRuntimeToJarDebug
-> Task :search:compileDebugKotlin FROM-CACHE
 > Task :material3:bundleLibRuntimeToJarDebug
-> Task :search:compileDebugJavaWithJavac NO-SOURCE
 > Task :ai:mapDebugSourceSetPaths
-> Task :search:bundleLibCompileToJarDebug
 > Task :ai:compileDebugLibraryResources FROM-CACHE
 > Task :document:writeDebugAarMetadata
+> Task :search:compileDebugKotlin FROM-CACHE
 > Task :highlight:writeDebugAarMetadata
-> Task :search:bundleLibRuntimeToJarDebug
+> Task :search:compileDebugJavaWithJavac NO-SOURCE
 > Task :material3:writeDebugAarMetadata
-> Task :search:writeDebugAarMetadata
 > Task :speech:writeDebugAarMetadata
 > Task :web:writeDebugAarMetadata
+> Task :search:bundleLibCompileToJarDebug
+> Task :search:writeDebugAarMetadata
+> Task :search:bundleLibRuntimeToJarDebug
 > Task :workspace:writeDebugAarMetadata
 > Task :ai:extractDeepLinksDebug FROM-CACHE
 > Task :common:extractDeepLinksDebug FROM-CACHE
-> Task :document:extractDeepLinksDebug FROM-CACHE
 > Task :common:processDebugManifest FROM-CACHE
-> Task :highlight:extractDeepLinksDebug FROM-CACHE
-> Task :highlight:processDebugManifest FROM-CACHE
-> Task :material3:extractDeepLinksDebug FROM-CACHE
-> Task :material3:processDebugManifest FROM-CACHE
-> Task :search:extractDeepLinksDebug FROM-CACHE
 > Task :app:mergeDebugAssets
-> Task :speech:extractDeepLinksDebug FROM-CACHE
-> Task :search:processDebugManifest FROM-CACHE
+> Task :highlight:extractDeepLinksDebug FROM-CACHE
+> Task :material3:extractDeepLinksDebug FROM-CACHE
+> Task :document:extractDeepLinksDebug FROM-CACHE
+> Task :highlight:processDebugManifest FROM-CACHE
+> Task :material3:processDebugManifest FROM-CACHE
 > Task :document:processDebugManifest FROM-CACHE
+> Task :search:extractDeepLinksDebug FROM-CACHE
 > Task :web:extractDeepLinksDebug FROM-CACHE
-> Task :workspace:extractDeepLinksDebug FROM-CACHE
-> Task :speech:processDebugManifest FROM-CACHE
+> Task :speech:extractDeepLinksDebug FROM-CACHE
 > Task :web:processDebugManifest FROM-CACHE
+> Task :speech:processDebugManifest FROM-CACHE
 > Task :common:mapDebugSourceSetPaths
-> Task :document:mapDebugSourceSetPaths
+> Task :workspace:extractDeepLinksDebug FROM-CACHE
 > Task :common:compileDebugLibraryResources FROM-CACHE
+> Task :document:mapDebugSourceSetPaths
 > Task :document:compileDebugLibraryResources FROM-CACHE
 > Task :highlight:mapDebugSourceSetPaths
 > Task :highlight:compileDebugLibraryResources FROM-CACHE
-> Task :search:mapDebugSourceSetPaths
-> Task :search:compileDebugLibraryResources FROM-CACHE
-> Task :speech:mapDebugSourceSetPaths
 > Task :material3:mapDebugSourceSetPaths
-> Task :workspace:processDebugManifest FROM-CACHE
-> Task :speech:compileDebugLibraryResources FROM-CACHE
 > Task :material3:compileDebugLibraryResources FROM-CACHE
+> Task :search:processDebugManifest FROM-CACHE
+> Task :workspace:processDebugManifest FROM-CACHE
+> Task :search:mapDebugSourceSetPaths
+> Task :speech:mapDebugSourceSetPaths
+> Task :search:compileDebugLibraryResources FROM-CACHE
 > Task :web:mapDebugSourceSetPaths
-> Task :workspace:mapDebugSourceSetPaths
 > Task :web:compileDebugLibraryResources FROM-CACHE
+> Task :speech:compileDebugLibraryResources FROM-CACHE
+> Task :workspace:mapDebugSourceSetPaths
 > Task :workspace:compileDebugLibraryResources FROM-CACHE
-> Task :common:processDebugJavaRes
 > Task :document:processDebugJavaRes
+> Task :common:processDebugJavaRes
 > Task :highlight:processDebugJavaRes
-> Task :material3:processDebugJavaRes
-> Task :search:processDebugJavaRes
 > Task :speech:processDebugJavaRes
-> Task :web:processDebugJavaRes
+> Task :search:processDebugJavaRes
+> Task :material3:processDebugJavaRes
 > Task :workspace:processDebugJavaRes
+> Task :web:processDebugJavaRes
 > Task :web:bundleLibRuntimeToDirDebug
 > Task :ai:bundleLibRuntimeToDirDebug
 > Task :search:bundleLibRuntimeToDirDebug
 > Task :highlight:bundleLibRuntimeToDirDebug
-> Task :document:bundleLibRuntimeToDirDebug
 > Task :common:bundleLibRuntimeToDirDebug
-> Task :workspace:bundleLibRuntimeToDirDebug
+> Task :document:bundleLibRuntimeToDirDebug
 > Task :speech:bundleLibRuntimeToDirDebug
+> Task :workspace:bundleLibRuntimeToDirDebug
 > Task :ai:copyDebugJniLibsProjectOnly
 > Task :common:mergeDebugJniLibFolders
+> Task :material3:bundleLibRuntimeToDirDebug
 > Task :common:mergeDebugNativeLibs NO-SOURCE
 > Task :common:copyDebugJniLibsProjectOnly
 > Task :highlight:mergeDebugJniLibFolders
-> Task :material3:bundleLibRuntimeToDirDebug
 > Task :highlight:mergeDebugNativeLibs NO-SOURCE
 > Task :highlight:copyDebugJniLibsProjectOnly
 > Task :material3:mergeDebugJniLibFolders
@@ -266,29 +266,32 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 > Task :search:copyDebugJniLibsProjectOnly
 > Task :speech:mergeDebugJniLibFolders
 > Task :speech:mergeDebugNativeLibs NO-SOURCE
+> Task :document:mergeDebugJniLibFolders
 > Task :speech:copyDebugJniLibsProjectOnly
 > Task :web:mergeDebugJniLibFolders
-> Task :document:mergeDebugJniLibFolders
 > Task :web:mergeDebugNativeLibs NO-SOURCE
 > Task :web:copyDebugJniLibsProjectOnly
 > Task :document:mergeDebugNativeLibs
 > Task :common:checkDebugAarMetadata
 > Task :common:stripDebugDebugSymbols NO-SOURCE
+> Task :document:copyDebugJniLibsProjectOnly
 > Task :common:copyDebugJniLibsProjectAndLocalJars
 > Task :common:extractDebugAnnotations FROM-CACHE
+> Task :document:checkDebugAarMetadata
 > Task :common:extractDeepLinksForAarDebug FROM-CACHE
 > Task :common:mergeDebugGeneratedProguardFiles
-> Task :document:copyDebugJniLibsProjectOnly
 > Task :common:mergeDebugConsumerProguardFiles
 > Task :common:prepareDebugArtProfile
 > Task :common:prepareLintJarForPublish
 > Task :common:mergeDebugJavaResource
-> Task :document:checkDebugAarMetadata
 > Task :common:syncDebugLibJars FROM-CACHE
 > Task :common:bundleDebugAar
 > Task :common:assembleDebug
-> Task :highlight:checkDebugAarMetadata
+> Task :app:compressDebugAssets FROM-CACHE
+> Task :app:desugarDebugFileDependencies FROM-CACHE
+> Task :app:checkDebugAarMetadata
 > Task :document:stripDebugDebugSymbols
+> Task :app:compileDebugNavigationResources FROM-CACHE
 > Task :document:copyDebugJniLibsProjectAndLocalJars
 > Task :document:extractDebugAnnotations FROM-CACHE
 > Task :document:extractDeepLinksForAarDebug FROM-CACHE
@@ -298,28 +301,21 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 > Task :document:prepareLintJarForPublish
 > Task :document:mergeDebugJavaResource
 > Task :document:syncDebugLibJars FROM-CACHE
-> Task :app:compressDebugAssets FROM-CACHE
-> Task :app:desugarDebugFileDependencies FROM-CACHE
-> Task :app:checkDebugAarMetadata
-> Task :app:compileDebugNavigationResources FROM-CACHE
 > Task :app:mergeDebugResources FROM-CACHE
 > Task :app:createDebugCompatibleScreenManifests
 > Task :app:extractDeepLinksDebug FROM-CACHE
+> Task :app:processDebugMainManifest FROM-CACHE
+> Task :app:processDebugManifest FROM-CACHE
+> Task :app:processDebugManifestForPackage FROM-CACHE
 
 > Task :workspace:configureCMakeDebug[arm64-v8a]
 Checking the license for package CMake 3.22.1 in /usr/local/lib/android/sdk/licenses
 License for package CMake 3.22.1 accepted.
 Preparing "Install CMake 3.22.1 v.3.22.1".
-"Install CMake 3.22.1 v.3.22.1" ready.
-Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
-"Install CMake 3.22.1 v.3.22.1" complete.
-"Install CMake 3.22.1 v.3.22.1" finished.
 
-> Task :app:processDebugMainManifest FROM-CACHE
-> Task :app:processDebugManifest FROM-CACHE
-> Task :app:processDebugManifestForPackage FROM-CACHE
 > Task :document:bundleDebugAar
 > Task :document:assembleDebug
+> Task :highlight:checkDebugAarMetadata
 > Task :highlight:stripDebugDebugSymbols NO-SOURCE
 > Task :highlight:copyDebugJniLibsProjectAndLocalJars
 > Task :highlight:extractDebugAnnotations FROM-CACHE
@@ -328,6 +324,7 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 > Task :highlight:mergeDebugConsumerProguardFiles
 > Task :highlight:prepareDebugArtProfile
 > Task :highlight:prepareLintJarForPublish
+> Task :app:processDebugResources FROM-CACHE
 > Task :highlight:mergeDebugJavaResource
 > Task :highlight:syncDebugLibJars FROM-CACHE
 > Task :highlight:bundleDebugAar
@@ -336,28 +333,35 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 > Task :material3:stripDebugDebugSymbols NO-SOURCE
 > Task :material3:copyDebugJniLibsProjectAndLocalJars
 > Task :material3:extractDebugAnnotations FROM-CACHE
+> Task :app:mergeDebugJniLibFolders
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:checkDebugDuplicateClasses
+> Task :app:writeDebugSigningConfigVersions
 > Task :material3:extractDeepLinksForAarDebug FROM-CACHE
 > Task :material3:mergeDebugGeneratedProguardFiles
 > Task :material3:mergeDebugConsumerProguardFiles
 > Task :material3:prepareDebugArtProfile
 > Task :material3:prepareLintJarForPublish
+
+> Task :workspace:configureCMakeDebug[arm64-v8a]
+"Install CMake 3.22.1 v.3.22.1" ready.
+Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
+"Install CMake 3.22.1 v.3.22.1" complete.
+"Install CMake 3.22.1 v.3.22.1" finished.
+
 > Task :material3:mergeDebugJavaResource
 > Task :material3:syncDebugLibJars FROM-CACHE
 > Task :material3:bundleDebugAar
 > Task :material3:assembleDebug
-> Task :app:processDebugResources FROM-CACHE
 > Task :search:checkDebugAarMetadata
 > Task :search:stripDebugDebugSymbols NO-SOURCE
-> Task :app:checkDebugDuplicateClasses
-> Task :app:mergeDebugJniLibFolders
 > Task :search:copyDebugJniLibsProjectAndLocalJars
 > Task :search:extractDebugAnnotations FROM-CACHE
 > Task :search:extractDeepLinksForAarDebug FROM-CACHE
 > Task :search:mergeDebugGeneratedProguardFiles
 > Task :search:mergeDebugConsumerProguardFiles
 > Task :search:prepareDebugArtProfile
-> Task :workspace:buildCMakeDebug[arm64-v8a]
-> Task :workspace:configureCMakeDebug[armeabi-v7a]
 > Task :search:prepareLintJarForPublish
 > Task :search:mergeDebugJavaResource
 > Task :search:syncDebugLibJars FROM-CACHE
@@ -389,12 +393,11 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 > Task :web:syncDebugLibJars FROM-CACHE
 > Task :web:bundleDebugAar
 > Task :web:assembleDebug
-> Task :workspace:buildCMakeDebug[armeabi-v7a]
 > Task :app:mergeExtDexDebug FROM-CACHE
 > Task :app:mergeLibDexDebug FROM-CACHE
-> Task :app:validateSigningDebug
-> Task :app:writeDebugAppMetadata
-> Task :app:writeDebugSigningConfigVersions
+> Task :workspace:buildCMakeDebug[arm64-v8a]
+> Task :workspace:configureCMakeDebug[armeabi-v7a]
+> Task :workspace:buildCMakeDebug[armeabi-v7a]
 > Task :workspace:configureCMakeDebug[x86]
 > Task :workspace:buildCMakeDebug[x86]
 > Task :workspace:configureCMakeDebug[x86_64]
@@ -403,15 +406,15 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 > Task :workspace:checkDebugAarMetadata
 > Task :workspace:mergeDebugNativeLibs
 > Task :workspace:extractDebugAnnotations FROM-CACHE
+> Task :workspace:copyDebugJniLibsProjectOnly
 > Task :workspace:extractDeepLinksForAarDebug FROM-CACHE
 > Task :workspace:mergeDebugGeneratedProguardFiles
 > Task :workspace:mergeDebugConsumerProguardFiles
-> Task :workspace:copyDebugJniLibsProjectOnly
 > Task :workspace:prepareDebugArtProfile
 > Task :workspace:prepareLintJarForPublish
+> Task :workspace:stripDebugDebugSymbols
 > Task :workspace:mergeDebugJavaResource
 > Task :workspace:syncDebugLibJars FROM-CACHE
-> Task :workspace:stripDebugDebugSymbols
 > Task :workspace:copyDebugJniLibsProjectAndLocalJars
 > Task :app:mergeDebugNativeLibs
 > Task :workspace:bundleDebugAar
@@ -505,13 +508,14 @@ w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/ri
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ChatInput.kt:508:51 Experimental Haze Materials API
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ChatInput.kt:737:59 Experimental Haze Materials API
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ModelList.kt:545:14 This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' if you accept the drawback of relying on preview API
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:943:39 Condition is always 'true'.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:991:39 Condition is always 'true'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageReasoning.kt:215:53 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:77:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:94:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/SideAvatar.kt:40:35 Condition is always 'true'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/Tooltip.kt:24:44 'fun rememberTooltipPositionProvider(spacingBetweenTooltipAndAnchor: Dp = ...): PopupPositionProvider' is deprecated. Deprecated in favor of rememberTooltipPositionProvider API that takes a preferred positioning. Please use rememberTooltipPositionProvider with TooltipAnchorPosition.Above if this same behavior is desired.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/ViewText.kt:196:45 Redundant call of conversion method.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:286:66 Elvis operator (?:) always returns the left operand of non-nullable type 'BubbleSplitMode'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:31 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:48 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:65 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
@@ -564,5 +568,5 @@ w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/ri
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 3m 46s
+BUILD SUCCESSFUL in 3m 59s
 333 actionable tasks: 187 executed, 146 from cache

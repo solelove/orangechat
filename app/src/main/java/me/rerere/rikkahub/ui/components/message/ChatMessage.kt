@@ -180,7 +180,7 @@ fun ChatMessage(
         horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Top,
     ) {
-        if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
+        if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
             ChatMessageSideAvatar(
                 message = message,
                 model = model,
@@ -247,7 +247,7 @@ fun ChatMessage(
             ChatMessageNerdLine(message = message)
         }
     }
-        if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
+        if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
             Spacer(modifier = Modifier.width(8.dp))
             ChatMessageSideUserAvatar(
                 message = message,
@@ -355,6 +355,24 @@ private fun MessagePartsBlock(
     }
  
     val groupedParts = remember(parts) { parts.groupMessageParts() }
+
+    // 非文本段（图片/视频/音频/文档）旁边也画头像，不受拆分开关限制
+    val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+        if (role == MessageRole.USER) {
+            if (displaySettings.showUserAvatar) {
+                SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+            } else null
+        } else {
+            if (!displaySettings.showModelIcon) null
+            else when {
+                assistant != null && assistant.useAssistantAvatar ->
+                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                else -> null
+            }
+        }
+    }
+    val partAvatarLoading = loading
     groupedParts.fastForEach { block ->
         when (block) {
             is MessagePartBlock.ThinkingBlock -> {
@@ -477,6 +495,11 @@ private fun MessagePartsBlock(
                     }
  
                     is UIMessagePart.Video -> {
+                        PartRow(
+                            spec = partAvatarSpec,
+                            isUser = role == MessageRole.USER,
+                            loading = partAvatarLoading,
+                        ) {
                         Surface(
                             tonalElevation = 2.dp,
                             onClick = {
@@ -497,20 +520,38 @@ private fun MessagePartsBlock(
                                 Icon(HugeIcons.Video01, null)
                             }
                         }
-                    }
+                    
+                    }}
  
                     is UIMessagePart.Audio -> {
+                        PartRow(
+                            spec = partAvatarSpec,
+                            isUser = role == MessageRole.USER,
+                            loading = partAvatarLoading,
+                        ) {
                         AudioPlayerBubble(url = part.url)
-                    }
+                    
+                    }}
  
                     is UIMessagePart.VoiceMessage -> {
+                        PartRow(
+                            spec = partAvatarSpec,
+                            isUser = role == MessageRole.USER,
+                            loading = partAvatarLoading,
+                        ) {
                         VoiceMessageBubble(
                             voiceMessage = part,
                             isUser = role == MessageRole.USER,
                         )
-                    }
+                    
+                    }}
  
                     is UIMessagePart.Image -> {
+                        PartRow(
+                            spec = partAvatarSpec,
+                            isUser = role == MessageRole.USER,
+                            loading = partAvatarLoading,
+                        ) {
                         val isImageLoading =
                             part.url.isBlank() || part.url.matches(Regex("^data:image/[^;]*;base64,\\s*$"))
                         if (isImageLoading) {
@@ -530,9 +571,15 @@ private fun MessagePartsBlock(
                                     .height(72.dp)
                             )
                         }
-                    }
+                    
+                    }}
  
                     is UIMessagePart.Document -> {
+                        PartRow(
+                            spec = partAvatarSpec,
+                            isUser = role == MessageRole.USER,
+                            loading = partAvatarLoading,
+                        ) {
                         Surface(
                             tonalElevation = 2.dp,
                             onClick = {
@@ -591,7 +638,8 @@ private fun MessagePartsBlock(
                                 }
                             }
                         }
-                    }
+                    
+                    }}
  
                     else -> {
                         // 跳过未知类型
@@ -972,6 +1020,62 @@ private fun ChatMessageSideUserAvatar(
                 modifier = Modifier.size(36.dp),
                 value = avatar,
                 loading = false,
+            )
+        }
+    }
+}
+
+
+/** 非文本段（图片/视频/文档）外框：带上头像并保证最大宽度 */
+@Composable
+private fun PartRow(
+    spec: SegmentAvatarSpec?,
+    isUser: Boolean,
+    loading: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+    ) {
+        if (spec != null && !isUser) {
+            PartAvatarView(spec, loading)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        content()
+        if (spec != null && isUser) {
+            Spacer(modifier = Modifier.width(8.dp))
+            PartAvatarView(spec, loading)
+        }
+    }
+}
+
+@Composable
+private fun PartAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
+    Box(
+        modifier = Modifier.width(SegmentAvatarWidth),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        when (spec) {
+            is SegmentAvatarSpec.User -> UIAvatar(
+                name = spec.nickname,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                value = spec.avatar,
+                loading = false,
+            )
+
+            is SegmentAvatarSpec.AssistantAvatar -> UIAvatar(
+                name = spec.assistant.name,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                value = spec.assistant.avatar,
+                loading = loading,
+            )
+
+            is SegmentAvatarSpec.Model -> AutoAIIcon(
+                name = spec.modelId,
+                modifier = Modifier.size(SegmentAvatarWidth),
+                loading = loading,
             )
         }
     }

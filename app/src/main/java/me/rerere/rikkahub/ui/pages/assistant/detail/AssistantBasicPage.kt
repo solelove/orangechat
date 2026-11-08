@@ -258,43 +258,39 @@ internal fun AssistantBasicContent(
 
             HorizontalDivider()
 
-            // 用户气泡：单独开关，不受上面的影响
+            // 用户气泡：独立开关，不受上面的影响
             FormItem(
                 modifier = Modifier.padding(8.dp),
                 label = {
                     Text("我的气泡也拆分")
                 },
                 description = {
-                    Text(
-                        if (assistant.userBubbleSplitMode != null)
-                            "已单独设置，和助手互不影响"
-                        else
-                            "还没单独设置，暂跟随助手的气泡拆分"
-                    )
+                    Text("关掉就一整条不拆，只看这里，不跟助手联动")
                 },
                 tail = {
                     Switch(
-                        checked = assistant.userBubbleSplitMode != null,
+                        checked = assistant.userBubbleSplitMode?.isEnabled == true,
                         onCheckedChange = { enabled ->
                             onUpdate(
                                 assistant.copy(
-                                    userBubbleSplitMode = if (enabled) assistant.bubbleSplitMode else null
+                                    userBubbleSplitMode = if (enabled) BubbleSplitMode.SENTENCE
+                                    else BubbleSplitMode.NONE
                                 )
                             )
                         }
                     )
                 }
             ) {
-                val mode = assistant.userBubbleSplitMode
-                if (mode != null) {
+                if (assistant.userBubbleSplitMode?.isEnabled == true) {
                     BubbleSplitModeSelector(
-                        selected = mode,
+                        selected = assistant.userBubbleSplitMode ?: BubbleSplitMode.SENTENCE,
                         onSelect = { selected ->
                             onUpdate(assistant.copy(userBubbleSplitMode = selected))
                         },
                     )
                 }
             }
+
         }
  
         Card(
