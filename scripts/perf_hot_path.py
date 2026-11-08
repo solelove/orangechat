@@ -1,50 +1,25 @@
 # -*- coding: utf-8 -*-
-"""热路径优化：字体 / 正则 / 时间条 / 模型查找 / 气泡动画"""
+"""热路径优化 v2：用行号定位，避开字面误差"""
 
 import pathlib
-import re
 import sys
 
 BASE = pathlib.Path("app/src/main/java/me/rerere/rikkahub")
-
 MSG = BASE / "ui/components/message/ChatMessage.kt"
 BUBBLE = BASE / "ui/components/message/BubbleSurface.kt"
 LIST = BASE / "ui/pages/chat/ChatList.kt"
 
 
-def read(p):
-    return p.read_text(encoding="utf-8")
+def lines(p):
+    return p.read_text(encoding="utf-8").split("\n")
 
 
-def write(p, s):
-    p.write_text(s, encoding="utf-8")
-    print("patched:", p)
+def save(p, ls):
+    p.write_text("\n".join(ls), encoding="utf-8")
+    print("saved:", p)
 
 
-def patch_chat_message():
-    s = read(MSG)
-    changed = False
-
-    old_font = """    val textStyle = LocalTextStyle.current.copy(
-        fontSize = LocalTextStyle.current.fontSize * settings.fontSizeRatio,
-        color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
-        lineHeight = LocalTextStyle.current.lineHeight * settings.fontSizeRatio,
-        fontFamily = when (settings.chatFontFamily) {
-            ChatFontFamily.DEFAULT -> FontFamily.Default
-            ChatFontFamily.SERIF -> FontFamily.Serif
-            ChatFontFamily.MONOSPACE -> FontFamily.Monospace
-            ChatFontFamily.CUSTOM -> {
-                val fontPath = settings.customFontPath
-                if (fontPath.isNotBlank() && java.io.File(fontPath).exists()) {
-                    FontFamily(Font(java.io.File(fontPath)))
-                } else {
-                    FontFamily.Default
-                }
-            }
-        }
-    )"""
-
-    new_font = """    val fontFamily = remember(settings.chatFontFamily, settings.customFontPath) {
+NEW_FONT = """    val fontFamily = remember(settings.chatFontFamily, settings.customFontPath) {
         when (settings.chatFontFamily) {
             ChatFontFamily.DEFAULT -> FontFamily.Default
             ChatFontFamily.SERIF -> FontFamily.Serif
@@ -76,180 +51,149 @@ def patch_chat_message():
             lineHeight = baseTextStyle.lineHeight * settings.fontSizeRatio,
             fontFamily = fontFamily,
         )
-    }"""
+    }""".split("\n")
 
-    if old_font in s:
-        s = s.replace(old_font, new_font)
-        changed = True
-        print("  font -> remember")
-
-    if "private val ZipMarkRegex = Regex(" not in s:
-        anchor = "@Composable\nfun ChatMessage("
-        const = 'private val ZipMarkRegex = Regex("\\\\[zip:[^\\\\]]+\\\\]", RegexOption.IGNORE_CASE)\n\n'
-        if anchor in s:
-            s = s.replace(anchor, const + anchor, 1)
-            changed = True
-            print("  zip regex -> const")
-
-    s2 = re.sub(
-        r'part\.text\.replace\(\s*Regex\("\\\\\[zip:\[\^\\\\\]\]\+\\\\\]",\s*RegexOption\.IGNORE_CASE\),\s*""\s*\)',
-        'part.text.replace(ZipMarkRegex, "")',
-        s,
-    )
-    if s2 != s:
-        s = s2
-        changed = True
-        print("  zip regex call -> const")
-
-    old_max = """    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val maxBubbleWidth = (screenWidth * 0.72f).dp"""
-    new_max = """    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val maxBubbleWidth = remember(screenWidth) { (screenWidth * 0.72f).dp }"""
-    if old_max in s:
-        s = s.replace(old_max, new_max)
-        changed = True
-        print("  bubble max width -> remember")
-
-    if changed:
-        write(MSG, s)
-    else:
-        print("ChatMessage.kt: nothing matched")
+ZIP_CONST = 'private val ZipMarkRegex = Regex("\\\\[zip:[^\\\\]]+\\\\]", RegexOption.IGNORE_CASE)'
 
 
-def patch_bubble_surface():
-    s = read(BUBBLE)
-    orig = s
-    changed = False
-
-    old_sig = """    maxWidth: Dp,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
-) {"""
-    new_sig = """    maxWidth: Dp,
-    onClick: (() -> Unit)? = null,
-    animate: Boolean = false,
-    content: @Composable () -> Unit,
-) {"""
-    if old_sig in s:
-        s = s.replace(old_sig, new_sig, 1)
-        changed = True
-        print("  BubbleSurface animate param")
-
-    s = s.replace(
-        """            modifier = Modifier
-                .animateContentSize()
-                .widthIn(max = maxWidth)
-                .clip(RoundedCornerShape(cornerRadius))""",
-        """            modifier = Modifier
-                .widthIn(max = maxWidth)
-                .clip(RoundedCornerShape(cornerRadius))""",
-    )
-
-    if """            modifier = Modifier
-                .then(if (animate) Modifier.animateContentSize() else Modifier)
-                .widthIn(max = maxWidth),""" not in s:
-        s = s.replace(
-            """            modifier = Modifier
-                .animateContentSize()
-                .widthIn(max = maxWidth),""",
-            """            modifier = Modifier
-                .then(if (animate) Modifier.animateContentSize() else Modifier)
-                .widthIn(max = maxWidth),""",
-            1,
-        )
-
-    old_single = """        BubbleSurface(
-            imagePath = imagePath,
-            cornerRadius = cornerRadius,
-            color = color,
-            overlayEnabled = overlayEnabled,
-            bubbleAlpha = bubbleAlpha,
-            maxWidth = maxWidth,
-            onClick = onClick,
-        ) {"""
-    new_single = """        BubbleSurface(
-            imagePath = imagePath,
-            cornerRadius = cornerRadius,
-            color = color,
-            overlayEnabled = overlayEnabled,
-            bubbleAlpha = bubbleAlpha,
-            maxWidth = maxWidth,
-            onClick = onClick,
-            animate = true,
-        ) {"""
-    if old_single in s:
-        s = s.replace(old_single, new_single, 1)
-        changed = True
-        print("  single bubble keeps animate")
-
-    if changed and s != orig:
-        write(BUBBLE, s)
-    else:
-        print("BubbleSurface.kt: nothing matched")
+def find(ls, needle, start=0):
+    for i in range(start, len(ls)):
+        if needle in ls[i]:
+            return i
+    return -1
 
 
-def patch_chat_list():
-    s = read(LIST)
-    changed = False
+def patch_msg():
+    ls = lines(MSG)
+    i = find(ls, "val textStyle = LocalTextStyle.current.copy(")
+    if i < 0:
+        print("font NOT FOUND")
+        return False
+    # 找闭合: 从 i 往下，遇到单独一行 "    )" 结束
+    j = i + 1
+    while j < len(ls) and ls[j].strip() != ")":
+        j += 1
+    assert ls[j].strip() == ")", "font block end not found"
+    ls[i:j + 1] = NEW_FONT
+    print("font replaced lines", i + 1, "-", j + 1)
 
-    old_time = """                    if (showTimeHeader(displayNodes, index)) {
-                        ChatTimeHeader(
-                            text = formatTimeHeader(
-                                node = node,
-                                prevNode = displayNodes.getOrNull(index - 1),
-                            )
-                        )
-                    }"""
-    new_time = """                    val timeHeader = remember(node.id, index) {
-                        if (showTimeHeader(displayNodes, index)) {
-                            formatTimeHeader(
-                                node = node,
-                                prevNode = displayNodes.getOrNull(index - 1),
-                            )
-                        } else null
-                    }
-                    if (timeHeader != null) {
-                        ChatTimeHeader(text = timeHeader)
-                    }"""
-    if old_time in s:
-        s = s.replace(old_time, new_time)
-        changed = True
-        print("  time header -> remember")
+    k = find(ls, "val maxBubbleWidth = (screenWidth * 0.72f).dp")
+    if k >= 0:
+        ls[k] = "    val maxBubbleWidth = remember(screenWidth) { (screenWidth * 0.72f).dp }"
+        print("maxBubbleWidth patched")
 
-    old_call = """                        ChatMessage(
-                            node = node,
-                            model = node.currentMessage.modelId?.let { settings.findModelById(it) },
-                            assistant = settings.getAssistantById(conversation.assistantId),"""
-    new_call = """                        val modelById = remember(node.currentMessage.modelId) {
-                            node.currentMessage.modelId?.let { settings.findModelById(it) }
-                        }
-                        val assistantById = remember(conversation.assistantId) {
-                            settings.getAssistantById(conversation.assistantId)
-                        }
-                        ChatMessage(
-                            node = node,
-                            model = modelById,
-                            assistant = assistantById,"""
-    if old_call in s:
-        s = s.replace(old_call, new_call)
-        changed = True
-        print("  model/assistant lookup -> remember")
+    z = find(ls, 'part.text.replace(Regex("\\\\[zip:')
+    if z < 0:
+        z = find(ls, "part.text.replace(Regex(")
+    if z >= 0:
+        indent = ls[z][:len(ls[z]) - len(ls[z].lstrip())]
+        ls[z] = indent + 'part.text.replace(ZipMarkRegex, "")'
+        print("zip call patched")
 
-    if changed:
-        write(LIST, s)
-    else:
-        print("ChatList.kt: nothing matched")
+    a = find(ls, "fun ChatMessage(")
+    if a >= 0:
+        # 往回到 @Composable 上面插常量
+        while a > 0 and ls[a - 1].strip() != "":
+            a -= 1
+        ls.insert(a, ZIP_CONST)
+        ls.insert(a + 1, "")
+        print("zip const inserted at", a + 1)
+
+    save(MSG, ls)
+    return True
+
+
+def patch_bubble():
+    ls = lines(BUBBLE)
+    # 参数表加 animate
+    i = find(ls, "onClick: (() -> Unit)? = null,")
+    cnt = 0
+    while i >= 0:
+        cnt += 1
+        if cnt == 2:
+            ls.insert(i + 1, "    animate: Boolean = false,")
+            print("animate param added")
+            break
+        i = find(ls, "onClick: (() -> Unit)? = null,", i + 1)
+
+    # 去掉有图分支的 animateContentSize
+    j = find(ls, ".animateContentSize()")
+    if j >= 0 and ".clip(RoundedCornerShape(cornerRadius))" in ls[j + 1]:
+        del ls[j]
+        print("image branch animate removed")
+
+    # 普通分支按 animate 判断
+    j = find(ls, ".animateContentSize()")
+    if j >= 0:
+        indent = ls[j][:len(ls[j]) - len(ls[j].lstrip())]
+        ls[j] = indent + ".then(if (animate) Modifier.animateContentSize() else Modifier)"
+        print("plain branch conditional")
+
+    # 单气泡传 animate = true
+    j = find(ls, "maxWidth = maxWidth,")
+    if j >= 0:
+        indent = ls[j][:len(ls[j]) - len(ls[j].lstrip())]
+        ls.insert(j + 1, indent + "animate = true,")
+        print("single bubble animate=true")
+
+    save(BUBBLE, ls)
+    return True
+
+
+def patch_list():
+    ls = lines(LIST)
+    i = find(ls, "if (showTimeHeader(displayNodes, index)) {")
+    if i < 0:
+        print("time header NOT FOUND")
+        return False
+    indent = ls[i][:len(ls[i]) - len(ls[i].lstrip())]
+    # 找 if 块结束
+    j = i + 1
+    depth = 1
+    while j < len(ls) and depth > 0:
+        depth += ls[j].count("{") - ls[j].count("}")
+        j += 1
+    block = [
+        indent + "val timeHeader = remember(node.id, index) {",
+        indent + "    if (showTimeHeader(displayNodes, index)) {",
+        indent + "        formatTimeHeader(",
+        indent + "            node = node,",
+        indent + "            prevNode = displayNodes.getOrNull(index - 1),",
+        indent + "        )",
+        indent + "    } else null",
+        indent + "}",
+        indent + "if (timeHeader != null) {",
+        indent + "    ChatTimeHeader(text = timeHeader)",
+        indent + "}",
+    ]
+    ls[i:j] = block
+    print("time header replaced")
+
+    m = find(ls, "model = node.currentMessage.modelId?.let { settings.findModelById(it) },")
+    if m >= 0:
+        ind = ls[m][:len(ls[m]) - len(ls[m].lstrip())]
+        ls[m] = ind + "model = remember(node.currentMessage.modelId) {"
+        ls.insert(m + 1, ind + "    node.currentMessage.modelId?.let { settings.findModelById(it) }")
+        ls.insert(m + 2, ind + "},")
+        print("model remember")
+
+    n = find(ls, "assistant = settings.getAssistantById(conversation.assistantId),")
+    if n >= 0:
+        ind = ls[n][:len(ls[n]) - len(ls[n].lstrip())]
+        ls[n] = ind + "assistant = remember(conversation.assistantId) {"
+        ls.insert(n + 1, ind + "    settings.getAssistantById(conversation.assistantId)")
+        ls.insert(n + 2, ind + "},")
+        print("assistant remember")
+
+    save(LIST, ls)
+    return True
 
 
 def main():
-    for f in (MSG, BUBBLE, LIST):
-        if not f.exists():
-            print("missing:", f)
-            sys.exit(1)
-    patch_chat_message()
-    patch_bubble_surface()
-    patch_chat_list()
-    print("done")
+    ok = patch_msg() and patch_bubble() and patch_list()
+    if not ok:
+        sys.exit(1)
+    print("all patched")
 
 
 if __name__ == "__main__":
