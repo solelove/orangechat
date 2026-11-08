@@ -1,224 +1,63 @@
-run=42402589098 sha=007c0b9193d478f803765e19b871f78033a6dab4
+run=42450583406 sha=5ddcfb6ee08326f8604a3fc98831b16b8db2c4bb
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:43 Unresolved reference 'remember'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:52 Unresolved reference 'part'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:2:29 Unresolved reference 'part'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:45 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:82 Unresolved reference 'BubbleSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:50 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:92 Unresolved reference 'BubbleSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:6:45 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:7:33 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:33 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:56 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:84 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:10:50 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:34 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:65 Null cannot be a value of a non-null type 'uninferred K (of fun <K> WHEN_CALL)'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:38 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:59 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:33 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:67 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:34 Unresolved reference 'model'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:45 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:47 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:74 Unresolved reference 'modelId'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:25 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:44 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:16:44 Function declaration must have a name.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:17:29 Unresolved reference 'Column'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:18:37 Unresolved reference 'role'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:18:45 Unresolved reference 'MessageRole'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:19:37 Unresolved reference 'SplitBubbleColumn'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:22:53 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:23:56 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:49 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:82 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:82 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:86 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:24:91 Unresolved reference 'toComposeColor'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:25:48 Unresolved reference 'MaterialTheme'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:26:58 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:27:55 Unresolved reference 'bubbleAlpha'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:28:52 Unresolved reference 'maxBubbleWidth'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:29:53 Unresolved reference 'Alignment'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:53 Unresolved reference 'onUserMessageClick'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:73 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:30:73 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:33:41 Cannot infer type for value parameter 'segment'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:33:51 Syntax error: Expecting '}'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:609:33 Unresolved reference 'AudioPlayerBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:946:55 Unresolved reference 'AudioPlayerBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantPromptPage.kt:86:49 Unresolved reference 'ChatMessage'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantPromptPage.kt:358:25 Unresolved reference 'ChatMessage'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:105:49 Unresolved reference 'ChatMessage'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:349:25 Unresolved reference 'ChatMessage'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:373:49 Unresolved reference 'it'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:43 Unresolved reference 'remember'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:1:52 Unresolved reference 'part'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:2:29 Unresolved reference 'part'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:45 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:4:82 Unresolved reference 'BubbleSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:50 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:5:92 Unresolved reference 'BubbleSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:6:45 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:7:33 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:33 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:56 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:8:84 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:10:50 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:34 Unresolved reference 'displaySettings'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:11:65 Null cannot be a value of a non-null type 'uninferred K (of fun <K> WHEN_CALL)'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:38 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:12:59 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:33 Unresolved reference 'SegmentAvatarSpec'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:13:67 Unresolved reference 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:34 Unresolved reference 'model'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:41 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:45 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:14:47 Unresolved reference 'SegmentAvatarSpec'.
-=== what went wrong ===
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
-	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
-	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:289)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
-	at org.gradle.internal.Factories$1.create(Factories.java:30)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withoutLocks$2(DefaultWorkerLeaseService.java:350)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:348)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:332)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:337)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 === tail ===
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
-	at java.base/java.util.Optional.orElseGet(Optional.java:364)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 33 more
-Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
-	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
-	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
-	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
-	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
-	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:176)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:194)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:127)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:169)
-	at org.gradle.internal.Factories$1.create(Factories.java:30)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withLocksAcquired$0(DefaultWorkerLeaseService.java:275)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:273)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:265)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	... 5 more
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:77:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:94:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/SideAvatar.kt:40:35 Condition is always 'true'.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/Tooltip.kt:24:44 'fun rememberTooltipPositionProvider(spacingBetweenTooltipAndAnchor: Dp = ...): PopupPositionProvider' is deprecated. Deprecated in favor of rememberTooltipPositionProvider API that takes a preferred positioning. Please use rememberTooltipPositionProvider with TooltipAnchorPosition.Above if this same behavior is desired.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/ViewText.kt:196:45 Redundant call of conversion method.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/assistant/detail/AssistantBasicPage.kt:286:66 Elvis operator (?:) always returns the left operand of non-nullable type 'BubbleSplitMode'.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:31 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:48 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:65 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:81 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:33 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:52 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:69 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:87 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:896:53 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:896:70 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:897:14 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:897:30 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:901:19 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:901:36 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatPage.kt:122:30 'fun currentWindowDpSize(): DpSize' is deprecated. Going to be removed in the next version. Prefer LocalWindowInfo instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/extensions/workspace/WorkspaceTerminalSession.kt:229:71 'static field SHOW_IMPLICIT: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/imggen/ImgGenPage.kt:527:28 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/miniapp/MiniAppPage.kt:180:33 'var databaseEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/miniapp/MiniAppPage.kt:465:9 'static fun startActivity(p0: Context, p1: Intent, p2: Bundle?): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/miniapp/MiniAppPage.kt:475:9 'static fun startActivity(p0: Context, p1: Intent, p2: Bundle?): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/search/SearchVM.kt:40:18 This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' if you accept the drawback of relying on preview API
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/SettingMcpPage.kt:26:8 'class FlowRowOverflow : FlowLayoutOverflow' is deprecated. FlowLayout overflow is no longer maintained.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/SettingWebPage.kt:86:28 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:17:8 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:74:37 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:255:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:425:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:466:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:688:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:729:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:821:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:904:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:964:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/setting/components/TTSProviderConfigure.kt:1052:33 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/translator/TranslatorPage.kt:39:8 'typealias MenuAnchorType = ExposedDropdownMenuAnchorType' is deprecated. Renamed to ExposedDropdownMenuAnchorType.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/translator/TranslatorPage.kt:223:9 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/translator/TranslatorPage.kt:245:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/utils/ContextUtil.kt:161:49 'static field ACTION_MEDIA_SCANNER_SCAN_FILE: String' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/utils/ContextUtil.kt:214:49 'static field ACTION_MEDIA_SCANNER_SCAN_FILE: String' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/web/NsdServiceRegistrar.kt:124:41 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/web/NsdServiceRegistrar.kt:125:35 'val ipAddress: Int' is deprecated. Deprecated in Java.
 
-==============================================================================
+> Task :app:compileDebugJavaWithJavac
+> Task :app:dexBuilderDebug
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:mergeDebugJavaResource
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
 
-BUILD FAILED in 1m 47s
-565 actionable tasks: 299 executed, 266 from cache
+BUILD SUCCESSFUL in 3m 59s
+333 actionable tasks: 187 executed, 146 from cache
