@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.ArrowLeft01
+import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.hugeicons.stroke.CheckmarkCircle01
 import me.rerere.hugeicons.stroke.Database02
 import me.rerere.hugeicons.stroke.DatabaseSync
 import me.rerere.hugeicons.stroke.Delete02
@@ -78,16 +80,20 @@ fun MemoryBankPage(
     val loading by vm.loading.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
 
+    val pendingMemories by vm.pendingMemories.collectAsStateWithLifecycle()
+    val pendingBusy by vm.pendingBusy.collectAsStateWithLifecycle()
+    val pendingMessage by vm.pendingMessage.collectAsStateWithLifecycle()
+    val pendingAvailable by vm.pendingPluginAvailable.collectAsStateWithLifecycle()
+
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showDeleteDialog by remember { mutableStateOf<MemoryBankEntity?>(null) }
+    var editingPending by remember { mutableStateOf<PendingMemory?>(null) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = {
-                    Text("记忆库")
-                },
+                title = { Text("记忆库") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(HugeIcons.ArrowLeft01, contentDescription = "返回")
@@ -95,10 +101,7 @@ fun MemoryBankPage(
                 },
                 actions = {
                     if (loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     IconButton(onClick = { vm.rebuildIndex() }) {
@@ -107,7 +110,7 @@ fun MemoryBankPage(
                     IconButton(onClick = { vm.processPendingVectors() }) {
                         Icon(HugeIcons.DatabaseSync, contentDescription = "处理向量化")
                     }
-                    IconButton(onClick = { vm.loadMemories() }) {
+                    IconButton(onClick = { vm.loadMemories(); vm.loadPending() }) {
                         Icon(HugeIcons.Refresh01, contentDescription = "刷新")
                     }
                 },
@@ -116,43 +119,56 @@ fun MemoryBankPage(
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 统计卡片 - 消息只显示条数
-            item {
-                StatsRow(stats)
+            if (pendingAvailable) {
+                item {
+                    PendingHeader(
+                        count = pendingMemories.size,
+                        busy = pendingBusy != null,
+                        onSummarize = { vm.summarizeNow() },
+                    )
+                }
+                items(pendingMemories, key = { "pending_" + it.id }) { item ->
+                    PendingCard(
+                        item = item,
+                        busy = pendingBusy == item.id,
+                        onAccept = { editingPending = it },
+                        onDrop = { vm.dropPending(it) },
+                    )
+                }
+                if (pendingMemories.isEmpty()) {
+                    item {
+                        Text(
+                            text = "暂无候选记忆 聊够了会自动生成",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
+                    }
+                }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
 
+            item { StatsRow(stats) }
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // 助手筛选
             if (assistantIds.isNotEmpty()) {
                 item {
                     AssistantFilterRow(
                         selectedAssistantId = selectedAssistantId,
                         assistantIds = assistantIds,
-                        onAssistantSelected = { vm.setSelectedAssistantId(it) }
+                        onAssistantSelected = { vm.setSelectedAssistantId(it) },
                     )
                 }
             }
 
             item { Spacer(modifier = Modifier.height(4.dp)) }
-
-            // 类型筛选
-            item {
-                TypeFilterRow(
-                    selectedType = selectedType,
-                    onTypeSelected = { vm.setSelectedType(it) }
-                )
-            }
-
+            item { TypeFilterRow(selectedType = selectedType, onTypeSelected = { vm.setSelectedType(it) }) }
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            // 搜索栏 (only when type filter is active)
             if (selectedType.isNotEmpty()) {
                 item {
                     OutlinedTextField(
@@ -160,17 +176,13 @@ fun MemoryBankPage(
                         onValueChange = { vm.setSearchQuery(it) },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("搜索记忆...") },
-                        leadingIcon = {
-                            Icon(HugeIcons.Search01, contentDescription = null)
-                        },
+                        leadingIcon = { Icon(HugeIcons.Search01, contentDescription = null) },
                         singleLine = true,
                     )
                 }
             }
 
-            // Default view: today's phase summaries + daily summaries
             if (selectedType.isEmpty()) {
-                // 今日阶段总结
                 if (todayPhaseSummaries.isNotEmpty()) {
                     item {
                         Text(
@@ -180,16 +192,12 @@ fun MemoryBankPage(
                         )
                     }
                     items(todayPhaseSummaries, key = { it.id }) { memory ->
-                        MemoryCard(
-                            memory = memory,
-                            onDelete = { showDeleteDialog = memory }
-                        )
+                        MemoryCard(memory = memory, onDelete = { showDeleteDialog = memory })
                     }
                 }
 
                 item { Spacer(modifier = Modifier.height(8.dp)) }
 
-                // 每日总结（日记）
                 if (dailySummaries.isNotEmpty()) {
                     item {
                         Text(
@@ -199,10 +207,7 @@ fun MemoryBankPage(
                         )
                     }
                     items(dailySummaries, key = { it.id }) { memory ->
-                        DiaryCard(
-                            memory = memory,
-                            onDelete = { showDeleteDialog = memory }
-                        )
+                        DiaryCard(memory = memory, onDelete = { showDeleteDialog = memory })
                     }
                 }
 
@@ -210,30 +215,21 @@ fun MemoryBankPage(
                     item {
                         Text(
                             text = "暂无总结数据",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             } else {
-                // Type filter active: show filtered memories list
                 items(memories, key = { it.id }) { memory ->
-                    MemoryCard(
-                        memory = memory,
-                        onDelete = { showDeleteDialog = memory }
-                    )
+                    MemoryCard(memory = memory, onDelete = { showDeleteDialog = memory })
                 }
-
                 if (memories.isEmpty() && !loading) {
                     item {
                         Text(
                             text = "暂无数据",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -243,7 +239,6 @@ fun MemoryBankPage(
         }
     }
 
-    // 删除确认对话框
     showDeleteDialog?.let { memory ->
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
@@ -258,11 +253,119 @@ fun MemoryBankPage(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("取消")
+                TextButton(onClick = { showDeleteDialog = null }) { Text("取消") }
+            },
+        )
+    }
+
+    editingPending?.let { item ->
+        var text by remember(item.id) { mutableStateOf(item.content) }
+        AlertDialog(
+            onDismissRequest = { editingPending = null },
+            title = { Text(item.title.ifBlank { "候选记忆" }) },
+            text = {
+                Column {
+                    if (item.tags.isNotEmpty()) {
+                        Text(
+                            text = "标签 " + item.tags.joinToString(", "),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 4,
+                        label = { Text("存进记忆库的内容") },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.acceptPending(item, text)
+                    editingPending = null
+                }) { Text("存进记忆库") }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingPending = null }) { Text("取消") }
+            },
+        )
+    }
+
+    pendingMessage?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { vm.clearPendingMessage() },
+            confirmButton = {
+                TextButton(onClick = { vm.clearPendingMessage() }) { Text("好") }
+            },
+            text = { Text(msg) },
+        )
+    }
+}
+
+@Composable
+private fun PendingHeader(count: Int, busy: Boolean, onSummarize: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "候选记忆 · $count",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.weight(1f),
+        )
+        if (busy) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            TextButton(onClick = onSummarize) { Text("立即总结") }
+        }
+    }
+}
+
+@Composable
+private fun PendingCard(
+    item: PendingMemory,
+    busy: Boolean,
+    onAccept: (PendingMemory) -> Unit,
+    onDrop: (PendingMemory) -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
+        ),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Text(item.title.ifBlank { "未命名" }, style = MaterialTheme.typography.titleSmall)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.content,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (item.tags.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = item.tags.joinToString("  ") { "#$it" },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = { onAccept(item) }, enabled = !busy) {
+                    Icon(HugeIcons.CheckmarkCircle01, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("存")
+                }
+                TextButton(onClick = { onDrop(item) }, enabled = !busy) {
+                    Icon(HugeIcons.Cancel01, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("丢")
                 }
             }
-        )
+        }
     }
 }
 
@@ -421,7 +524,6 @@ private fun MemoryCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
-                    // Show assistant ID if available
                     if (memory.assistantId != null) {
                         Text(
                             text = memory.assistantId.take(12),
