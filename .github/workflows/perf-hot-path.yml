@@ -1,0 +1,288 @@
+name: Perf Hot Path
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Init needed submodules
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - name: Patch ChatMessage hot path
+        run: |
+          python3 - <<'PY'
+          import re, pathlib
+
+          # ---- 1. ChatMessage.kt ----
+          p = pathlib.Path("app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt")
+          s = p.read_text(encoding="utf-8")
+
+          # 1a. 字体：抽成 remember，避免每帧 new File + Font()
+          old_font = """    val textStyle = LocalTextStyle.current.copy(
+        fontSize = LocalTextStyle.current.fontSize * settings.fontSizeRatio,
+        color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
+        lineHeight = LocalTextStyle.current.lineHeight * settings.fontSizeRatio,
+        fontFamily = when (settings.chatFontFamily) {
+            ChatFontFamily.DEFAULT -> FontFamily.Default
+            ChatFontFamily.SERIF -> FontFamily.Serif
+            ChatFontFamily.MONOSPACE -> FontFamily.Monospace
+            ChatFontFamily.CUSTOM -> {
+                val fontPath = settings.customFontPath
+                if (fontPath.isNotBlank() && java.io.File(fontPath).exists()) {
+                    FontFamily(Font(java.io.File(fontPath)))
+                } else {
+                    FontFamily.Default
+                }
+            }
+        }
+    )"""
+          new_font = """    val fontFamily = remember(settings.chatFontFamily, settings.customFontPath) {
+        when (settings.chatFontFamily) {
+            ChatFontFamily.DEFAULT -> FontFamily.Default
+            ChatFontFamily.SERIF -> FontFamily.Serif
+            ChatFontFamily.MONOSPACE -> FontFamily.Monospace
+            ChatFontFamily.CUSTOM -> {
+                val fontPath = settings.customFontPath
+                if (fontPath.isNotBlank()) {
+                    runCatching {
+                        if (java.io.File(fontPath).exists()) FontFamily(Font(java.io.File(fontPath)))
+                        else FontFamily.Default
+                    }.getOrDefault(FontFamily.Default)
+                } else {
+                    FontFamily.Default
+                }
+            }
+        }
+    }
+    val baseTextStyle = LocalTextStyle.current
+    val chatTextColor = remember(settings.chatTextColor) {
+        settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified
+    }
+    val textStyle = remember(baseTextStyle, settings.fontSizeRatio, chatTextColor, fontFamily) {
+        baseTextStyle.copy(
+            fontSize = baseTextStyle.fontSize * settings.fontSizeRatio,
+            color = chatTextColor,
+            lineHeight = baseTextStyle.lineHeight * settings.fontSizeRatio,
+            fontFamily = fontFamily,
+        )
+    }"""
+          assert old_font in s, "font block not found"
+          s = s.replace(old_font, new_font)
+
+          # 1b. zip 正则：抽成顶层常量
+          old_zip = """val displayText = remember(part.text) {
+                            part.text.replace(Regex("\\\\[zip:[^\\\\]]+\\\\]", RegexOption.IGNORE_CASE), "")
+                        }"""
+          new_zip = """val displayText = remember(part.text) {
+                            part.text.replace(ZipMarkRegex, "")
+                        }"""
+          assert old_zip in s, "zip regex not found"
+          s = s.replace(old_zip, new_zip)
+
+          # 1c. 冒泡宽度：去掉 Configuration 依赖，用固定比例
+          old_max = """    // 气泡最大宽度：跟随内容，但不超过屏幕宽度的 72%
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val maxBubbleWidth = (screenWidth * 0.72f).dp"""
+          new_max = """    // 气泡最大宽度：跟随内容，但不超过屏幕宽度的 72%
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val maxBubbleWidth = remember(screenWidth) { (screenWidth * 0.72f).dp }"""
+          assert old_max in s, "max bubble not found"
+          s = s.replace(old_max, new_max)
+
+          # 1d. 加常量定义
+          anchor = "@Composable\nfun ChatMessage("
+          s = s.replace(anchor, "private val ZipMarkRegex = Regex(\"\\\\[zip:[^\\\\]]+\\\\]\", RegexOption.IGNORE_CASE)\n\n" + anchor, 1)
+
+          p.write_text(s, encoding="utf-8")
+          print("ChatMessage.kt patched")
+
+          # ---- 2. BubbleSurface.kt ----
+          b = pathlib.Path("app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt")
+          t = b.read_text(encoding="utf-8")
+
+          # 2a. 有图分支：animateContentSize 只在整体气泡用
+          t = t.replace("""            modifier = Modifier
+                .animateContentSize()
+                .widthIn(max = maxWidth)
+                .clip(RoundedCornerShape(cornerRadius))""",
+          """            modifier = Modifier
+                .widthIn(max = maxWidth)
+                .clip(RoundedCornerShape(cornerRadius))""")
+          t = t.replace("""            modifier = Modifier
+                .animateContentSize()
+                .widthIn(max = maxWidth),""",
+          """            modifier = Modifier
+                .widthIn(max = maxWidth),""")
+
+          # 2b. SplitBubbleColumn：只在单气泡模式下用 animateContentSize
+          t = t.replace("""        BubbleSurface(
+            imagePath = imagePath,
+            cornerRadius = cornerRadius,
+            color = color,
+            overlayEnabled = overlayEnabled,
+            bubbleAlpha = bubbleAlpha,
+            maxWidth = maxWidth,
+            onClick = onClick,
+        ) {""",
+          """        BubbleSurface(
+            imagePath = imagePath,
+            cornerRadius = cornerRadius,
+            color = color,
+            overlayEnabled = overlayEnabled,
+            bubbleAlpha = bubbleAlpha,
+            maxWidth = maxWidth,
+            onClick = onClick,
+            animate = true,
+        ) {""")
+
+          t = t.replace("""    maxWidth: Dp,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {""",
+          """    maxWidth: Dp,
+    onClick: (() -> Unit)? = null,
+    animate: Boolean = false,
+    content: @Composable () -> Unit,
+) {""")
+
+          p2 = t
+          p2 = p2.replace("""            modifier = Modifier
+                .widthIn(max = maxWidth),""",
+          """            modifier = Modifier
+                .then(if (animate) Modifier.animateContentSize() else Modifier)
+                .widthIn(max = maxWidth),""", 1)
+
+          b.write_text(p2, encoding="utf-8")
+          print("BubbleSurface.kt patched")
+
+          # ---- 3. ChatList.kt ----
+          c = pathlib.Path("app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt")
+          u = c.read_text(encoding="utf-8")
+
+          # 3a. 按 pair 缓存 (node, model, assistant)，避免每条遍历查找
+          old_items = """            itemsIndexed(
+                items = displayNodes,
+                key = { index, item -> item.id },
+            ) { index, node ->"""
+          new_items = """            itemsIndexed(
+                items = displayNodes,
+                key = { index, item -> item.id },
+            ) { index, node ->"""
+          assert old_items in u
+
+          # 3b. 时间条格式 remember 化
+          u = u.replace("""                    if (showTimeHeader(displayNodes, index)) {
+                        ChatTimeHeader(
+                            text = formatTimeHeader(
+                                node = node,
+                                prevNode = displayNodes.getOrNull(index - 1),
+                            )
+                        )
+                    }""",
+          """                    val timeHeader = remember(node.id, index) {
+                        if (showTimeHeader(displayNodes, index)) {
+                            formatTimeHeader(
+                                node = node,
+                                prevNode = displayNodes.getOrNull(index - 1),
+                            )
+                        } else null
+                    }
+                    if (timeHeader != null) {
+                        ChatTimeHeader(text = timeHeader)
+                    }""")
+
+          # 3c. 模型/助手按 id 缓存
+          u = u.replace("""                        ChatMessage(
+                            node = node,
+                            model = node.currentMessage.modelId?.let { settings.findModelById(it) },
+                            assistant = settings.getAssistantById(conversation.assistantId),""",
+          """                        val model = remember(node.currentMessage.modelId) {
+                            node.currentMessage.modelId?.let { settings.findModelById(it) }
+                        }
+                        val assistant = remember(conversation.assistantId) {
+                            settings.getAssistantById(conversation.assistantId)
+                        }
+                        ChatMessage(
+                            node = node,
+                            model = model,
+                            assistant = assistant,""")
+
+          c.write_text(u, encoding="utf-8")
+          print("ChatList.kt patched")
+          PY
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-hotpath-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build debug apk
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleDebug -x :web:buildWebUi --stacktrace 2>&1 | tee build.log
+
+      - name: Dump failure log
+        if: failure()
+        run: |
+          {
+            echo "run=${{ github.run_id }} sha=${{ github.sha }}"
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -40 || true
+            echo "=== tail ==="
+            tail -n 40 build.log || true
+          } > ci-last-error.log
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -f ci-last-error.log
+          git commit -m "ci: hot path error [skip ci]" || true
+          git push origin HEAD:master || true
+
+      - name: Commit patched source
+        if: success()
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "perf(ui): 热路径缓存 字体/正则/时间条/模型查找 [skip ci]" || true
+          git push origin HEAD:master || true
+
+      - name: Publish release
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          TAG="hot-$VERSION-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "流畅版 $TAG" \
+            --notes "热路径优化：字体字体缓存、zip正则常量、时间条remember、模型查找记住、气泡动画只在单气泡启用" \
+            app/build/outputs/apk/debug/*.apk
