@@ -1,0 +1,64 @@
+name: Publish Memory APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Init needed submodules
+        run: |
+          git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build arm64 only
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug -x :web:buildWebUi -Pandroid.injected.build.abi=arm64-v8a --stacktrace
+
+      - name: Find APK
+        run: |
+          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+
+      - name: Publish release with arm64 apk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="memory-$(date +%Y%m%d%H%M)"
+          APK=$(find app/build/outputs/apk -name "*arm64*.apk" | head -1)
+          if [ -z "$APK" ]; then APK=$(find app/build/outputs/apk -name "*.apk" | head -1); fi
+          echo "apk=$APK"
+          gh release create "$TAG" \
+            --title "记忆库候选区 $TAG" \
+            --notes "记忆库页面新增候选记忆区" \
+            "$APK"
