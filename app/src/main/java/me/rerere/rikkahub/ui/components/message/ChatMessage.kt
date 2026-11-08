@@ -120,6 +120,8 @@ import androidx.compose.ui.text.font.Font
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
  
+private val ZipMarkRegex = Regex("\\[zip:[^\\]]+\\]", RegexOption.IGNORE_CASE)
+
 @Composable
 fun ChatMessage(
     node: MessageNode,
@@ -143,24 +145,30 @@ fun ChatMessage(
 ) {
     val message = node.messages[node.selectIndex]
     val settings = LocalDisplaySettings.current
-    val textStyle = LocalTextStyle.current.copy(
-        fontSize = LocalTextStyle.current.fontSize * settings.fontSizeRatio,
-        color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
-        lineHeight = LocalTextStyle.current.lineHeight * settings.fontSizeRatio,
-        fontFamily = when (settings.chatFontFamily) {
+    val fontFamily = remember(settings.chatFontFamily, settings.customFontPath) {
+        when (settings.chatFontFamily) {
             ChatFontFamily.DEFAULT -> FontFamily.Default
             ChatFontFamily.SERIF -> FontFamily.Serif
             ChatFontFamily.MONOSPACE -> FontFamily.Monospace
             ChatFontFamily.CUSTOM -> {
-                val fontPath = settings.customFontPath
-                if (fontPath.isNotBlank() && java.io.File(fontPath).exists()) {
-                    FontFamily(Font(java.io.File(fontPath)))
+                val customPath = settings.customFontPath
+                if (customPath.isNotBlank() && java.io.File(customPath).exists()) {
+                    FontFamily(Font(java.io.File(customPath)))
                 } else {
                     FontFamily.Default
                 }
             }
         }
-    )
+    }
+    val baseTextStyle = LocalTextStyle.current
+    val textStyle = remember(baseTextStyle, settings.fontSizeRatio, settings.chatTextColor, fontFamily) {
+        baseTextStyle.copy(
+            fontSize = baseTextStyle.fontSize * settings.fontSizeRatio,
+            color = settings.chatTextColor?.let { it.toComposeColor() } ?: Color.Unspecified,
+            lineHeight = baseTextStyle.lineHeight * settings.fontSizeRatio,
+            fontFamily = fontFamily,
+        )
+    }
     var showActionsSheet by remember { mutableStateOf(false) }
     var showSelectCopySheet by remember { mutableStateOf(false) }
     val navController = LocalNavController.current
@@ -314,7 +322,7 @@ private fun MessagePartsBlock(
 
     // 气泡最大宽度：跟随内容，但不超过屏幕宽度的 72%
     val screenWidth = LocalConfiguration.current.screenWidthDp
-    val maxBubbleWidth = (screenWidth * 0.72f).dp
+    val maxBubbleWidth = remember(screenWidth) { (screenWidth * 0.72f).dp }
  
     val handleClickCitation: (String) -> Unit = remember {
         handler@{ citationId ->
@@ -389,7 +397,7 @@ private fun MessagePartsBlock(
                 when (val part = block.part) {
                     is UIMessagePart.Text -> {
                         val displayText = remember(part.text) {
-                            part.text.replace(Regex("\\[zip:[^\\]]+\\]", RegexOption.IGNORE_CASE), "")
+                            part.text.replace(ZipMarkRegex, "")
                         }
                         val splitMode = assistant?.bubbleSplitMode ?: BubbleSplitMode.NONE
  

@@ -123,6 +123,7 @@ fun SplitBubbleColumn(
             overlayEnabled = overlayEnabled,
             bubbleAlpha = bubbleAlpha,
             maxWidth = maxWidth,
+            animate = true,
             onClick = onClick,
         ) {
             content(text)
@@ -183,6 +184,7 @@ fun BubbleSurface(
     bubbleAlpha: Float,
     maxWidth: Dp,
     onClick: (() -> Unit)? = null,
+    animate: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     // 文件存在性检查会走磁盘，缓存起来避免每次重组都查
@@ -192,7 +194,7 @@ fun BubbleSurface(
     if (hasImage) {
         Box(
             modifier = Modifier
-                .animateContentSize()
+                .then(if (animate) Modifier.animateContentSize() else Modifier)
                 .widthIn(max = maxWidth)
                 .clip(RoundedCornerShape(cornerRadius))
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)

@@ -326,13 +326,16 @@ private fun ChatListNormal(
                 key = { index, item -> item.id },
             ) { index, node ->
                 Column {
-                    if (showTimeHeader(displayNodes, index)) {
-                        ChatTimeHeader(
-                            text = formatTimeHeader(
+                    val timeHeader = remember(node.id, index) {
+                        if (showTimeHeader(displayNodes, index)) {
+                            formatTimeHeader(
                                 node = node,
                                 prevNode = displayNodes.getOrNull(index - 1),
                             )
-                        )
+                        } else null
+                    }
+                    if (timeHeader != null) {
+                        ChatTimeHeader(text = timeHeader)
                     }
                     ListSelectableItem(
                         key = node.id,
@@ -348,8 +351,12 @@ private fun ChatListNormal(
                     ) {
                         ChatMessage(
                             node = node,
-                            model = node.currentMessage.modelId?.let { settings.findModelById(it) },
-                            assistant = settings.getAssistantById(conversation.assistantId),
+                            model = remember(node.currentMessage.modelId) {
+                                node.currentMessage.modelId?.let { settings.findModelById(it) }
+                            },
+                            assistant = remember(conversation.assistantId) {
+                                settings.getAssistantById(conversation.assistantId)
+                            },
                             loading = loading && index == displayNodes.lastIndex,
                             onRegenerate = {
                                 onRegenerate(node.currentMessage)

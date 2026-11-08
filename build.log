@@ -1,5 +1,3 @@
-Downloading https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
-.............10%.............20%.............30%.............40%.............50%.............60%..............70%.............80%.............90%.............100%
 
 Welcome to Gradle 9.4.1!
 
@@ -16,12 +14,6 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 WARNING: The option setting 'android.overridePathCheck=true' is experimental.
 The current default is 'false'.
 
-> Configure project :app
-w: file:///home/runner/work/orangechat/orangechat/app/build.gradle.kts:135:41: 'fun srcDirs(vararg srcDirs: Any): Any' is deprecated. Use `directories` mutable set instead.
-
-> Configure project :material3
-w: file:///home/runner/work/orangechat/orangechat/material3/build.gradle.kts:25:20: 'fun srcDir(srcDir: Any): Any' is deprecated. Use `directories` mutable set instead.
-
 > Configure project :workspace
 Checking the license for package NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/licenses
 License for package NDK (Side by side) 28.2.13676358 accepted.
@@ -31,305 +23,239 @@ Installing NDK (Side by side) 28.2.13676358 in /usr/local/lib/android/sdk/ndk/28
 "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" complete.
 "Install NDK (Side by side) 28.2.13676358 v.28.2.13676358" finished.
 
-> Task :document:preBuild UP-TO-DATE
-> Task :app:preBuild UP-TO-DATE
-> Task :ai:preBuild UP-TO-DATE
 > Task :common:preBuild UP-TO-DATE
+> Task :ai:preBuild UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :document:preBuild UP-TO-DATE
 > Task :ai:preDebugBuild UP-TO-DATE
-> Task :common:preDebugBuild UP-TO-DATE
-> Task :app:preDebugBuild UP-TO-DATE
 > Task :document:preDebugBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :common:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:generateDebugBuildConfig
-> Task :document:extractDebugSupportedLocales
-> Task :common:writeDebugAarMetadata
+> Task :document:extractDebugSupportedLocales FROM-CACHE
 > Task :highlight:preBuild UP-TO-DATE
 > Task :highlight:preDebugBuild UP-TO-DATE
-> Task :common:generateDebugResources
-> Task :highlight:extractDebugSupportedLocales
+> Task :highlight:extractDebugSupportedLocales FROM-CACHE
+> Task :common:generateDebugResources FROM-CACHE
+> Task :common:writeDebugAarMetadata
 > Task :material3:preBuild UP-TO-DATE
 > Task :material3:preDebugBuild UP-TO-DATE
-> Task :ai:mergeDebugJniLibFolders
+> Task :app:generateDebugBuildConfig
 > Task :material3:extractDebugSupportedLocales FROM-CACHE
 > Task :search:preBuild UP-TO-DATE
 > Task :search:preDebugBuild UP-TO-DATE
-> Task :app:extractDebugSupportedLocales
-> Task :search:extractDebugSupportedLocales
+> Task :search:extractDebugSupportedLocales FROM-CACHE
+> Task :app:extractDebugSupportedLocales FROM-CACHE
 > Task :speech:preBuild UP-TO-DATE
+> Task :common:packageDebugResources FROM-CACHE
 > Task :speech:preDebugBuild UP-TO-DATE
+> Task :common:processDebugNavigationResources FROM-CACHE
 > Task :speech:extractDebugSupportedLocales FROM-CACHE
 > Task :web:preBuild
 > Task :web:preDebugBuild
-> Task :common:packageDebugResources
 > Task :app:mapDebugSourceSetPaths
+> Task :web:extractDebugSupportedLocales FROM-CACHE
 > Task :workspace:preBuild UP-TO-DATE
 > Task :workspace:preDebugBuild UP-TO-DATE
-> Task :web:extractDebugSupportedLocales FROM-CACHE
 > Task :workspace:extractDebugSupportedLocales FROM-CACHE
-> Task :common:processDebugNavigationResources
+> Task :app:generateDebugResources FROM-CACHE
+> Task :ai:mergeDebugJniLibFolders
 > Task :document:processDebugNavigationResources FROM-CACHE
-> Task :app:generateDebugResources
-> Task :material3:processDebugNavigationResources FROM-CACHE
-> Task :highlight:processDebugNavigationResources
-> Task :search:processDebugNavigationResources
+> Task :highlight:processDebugNavigationResources FROM-CACHE
+> Task :search:processDebugNavigationResources FROM-CACHE
 > Task :speech:processDebugNavigationResources FROM-CACHE
 > Task :web:processDebugNavigationResources FROM-CACHE
 > Task :workspace:processDebugNavigationResources FROM-CACHE
 > Task :document:generateDebugResources FROM-CACHE
-> Task :highlight:generateDebugResources
-> Task :document:packageDebugResources
-> Task :highlight:packageDebugResources
-> Task :common:parseDebugLocalResources
-> Task :document:parseDebugLocalResources
-> Task :highlight:parseDebugLocalResources
-> Task :highlight:generateDebugRFile
-> Task :common:generateDebugRFile
-> Task :document:generateDebugRFile
-> Task :common:javaPreCompileDebug
-> Task :document:javaPreCompileDebug
+> Task :document:packageDebugResources FROM-CACHE
+> Task :material3:processDebugNavigationResources FROM-CACHE
+> Task :highlight:generateDebugResources FROM-CACHE
+> Task :highlight:packageDebugResources FROM-CACHE
 > Task :ai:checkDebugAarMetadata
 > Task :ai:mergeDebugNativeLibs NO-SOURCE
 > Task :ai:stripDebugDebugSymbols NO-SOURCE
 > Task :ai:copyDebugJniLibsProjectAndLocalJars
 > Task :ai:generateDebugResources FROM-CACHE
-> Task :ai:packageDebugResources
+> Task :ai:packageDebugResources FROM-CACHE
 > Task :ai:processDebugNavigationResources FROM-CACHE
+> Task :common:parseDebugLocalResources FROM-CACHE
+> Task :document:parseDebugLocalResources FROM-CACHE
+> Task :highlight:parseDebugLocalResources FROM-CACHE
+> Task :common:generateDebugRFile FROM-CACHE
+> Task :document:generateDebugRFile FROM-CACHE
 > Task :ai:parseDebugLocalResources FROM-CACHE
-> Task :ai:generateDebugRFile
-> Task :ai:extractDeepLinksForAarDebug
+> Task :ai:generateDebugRFile FROM-CACHE
+> Task :ai:extractDeepLinksForAarDebug FROM-CACHE
 > Task :ai:generateDebugAssets UP-TO-DATE
 > Task :ai:mergeDebugAssets
 > Task :ai:javaPreCompileDebug FROM-CACHE
 > Task :ai:prepareDebugArtProfile
 > Task :ai:prepareLintJarForPublish
-> Task :ai:processDebugManifest
+> Task :ai:processDebugManifest FROM-CACHE
 > Task :ai:writeDebugAarMetadata
 > Task :ai:extractDebugSupportedLocales FROM-CACHE
+> Task :highlight:generateDebugRFile FROM-CACHE
+> Task :common:compileDebugKotlin FROM-CACHE
+> Task :common:javaPreCompileDebug FROM-CACHE
+> Task :common:compileDebugJavaWithJavac NO-SOURCE
+> Task :document:compileDebugKotlin FROM-CACHE
 > Task :common:extractDebugSupportedLocales FROM-CACHE
-
-> Task :common:compileDebugKotlin
-w: file:///home/runner/work/orangechat/orangechat/common/src/main/java/me/rerere/common/http/AcceptLang.kt:67:28 'field locale: Locale!' is deprecated. Deprecated in Java.
-w: file:///home/runner/work/orangechat/orangechat/common/src/main/java/me/rerere/common/http/JsonExpression.kt:365:13 'when' is exhaustive so 'else' is redundant here.
-
-> Task :highlight:compileDebugKotlin
+> Task :document:javaPreCompileDebug FROM-CACHE
+> Task :common:bundleLibCompileToJarDebug
+> Task :highlight:compileDebugKotlin FROM-CACHE
 > Task :highlight:javaPreCompileDebug FROM-CACHE
 > Task :highlight:compileDebugJavaWithJavac NO-SOURCE
 > Task :highlight:bundleLibCompileToJarDebug
-> Task :document:compileDebugKotlin
 > Task :material3:generateDebugResources FROM-CACHE
-> Task :material3:packageDebugResources
-> Task :common:compileDebugJavaWithJavac NO-SOURCE
+> Task :material3:packageDebugResources FROM-CACHE
 > Task :material3:parseDebugLocalResources FROM-CACHE
-> Task :common:bundleLibCompileToJarDebug
-> Task :material3:generateDebugRFile
-> Task :ai:extractDebugAnnotations
-> Task :document:compileDebugJavaWithJavac
-> Task :document:bundleLibCompileToJarDebug
+> Task :material3:generateDebugRFile FROM-CACHE
+> Task :material3:compileDebugKotlin FROM-CACHE
 > Task :material3:javaPreCompileDebug FROM-CACHE
-> Task :search:generateDebugResources
-> Task :search:packageDebugResources
-> Task :search:parseDebugLocalResources
-> Task :search:generateDebugRFile
-> Task :search:javaPreCompileDebug FROM-CACHE
-> Task :speech:generateDebugResources FROM-CACHE
-> Task :speech:packageDebugResources
-> Task :speech:parseDebugLocalResources FROM-CACHE
-> Task :speech:generateDebugRFile
-> Task :app:generateDebugLocaleConfig
-> Task :app:packageDebugResources
-
-> Task :material3:compileDebugKotlin
-w: file:///home/runner/work/orangechat/orangechat/material3/material-color-utilities/kotlin/dynamiccolor/ColorSpec2025.kt:904:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'DynamicColor'.
-w: file:///home/runner/work/orangechat/orangechat/material3/material-color-utilities/kotlin/dynamiccolor/ColorSpec2025.kt:1107:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'DynamicColor'.
-w: file:///home/runner/work/orangechat/orangechat/material3/material-color-utilities/kotlin/dynamiccolor/ColorSpec2025.kt:1253:33 Unnecessary non-null assertion (!!) on a non-null receiver of type 'DynamicColor'.
-
 > Task :material3:compileDebugJavaWithJavac NO-SOURCE
 > Task :material3:bundleLibCompileToJarDebug
+> Task :search:generateDebugResources FROM-CACHE
+> Task :search:packageDebugResources FROM-CACHE
+> Task :search:parseDebugLocalResources FROM-CACHE
+> Task :search:generateDebugRFile FROM-CACHE
+> Task :search:javaPreCompileDebug FROM-CACHE
+> Task :speech:generateDebugResources FROM-CACHE
+> Task :speech:packageDebugResources FROM-CACHE
+> Task :speech:parseDebugLocalResources FROM-CACHE
+> Task :speech:generateDebugRFile FROM-CACHE
+> Task :speech:compileDebugKotlin FROM-CACHE
 > Task :speech:javaPreCompileDebug FROM-CACHE
-> Task :web:generateDebugResources FROM-CACHE
-> Task :web:packageDebugResources
-> Task :web:parseDebugLocalResources FROM-CACHE
-> Task :web:generateDebugRFile
-
-> Task :speech:compileDebugKotlin
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/asr/providers/MiMoASRController.kt:262:41 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/asr/providers/SiliconFlowASRController.kt:209:49 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/tts/provider/providers/GroqTTSProvider.kt:57:56 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/tts/provider/providers/SystemTTSProvider.kt:85:34 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/tts/provider/providers/SystemTTSProvider.kt:118:16 Unnecessary safe call on a non-null receiver of type 'TextToSpeech'.
-w: file:///home/runner/work/orangechat/orangechat/speech/src/main/java/me/rerere/tts/provider/providers/XAITTSProvider.kt:55:42 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-
-> Task :app:processDebugNavigationResources
-> Task :app:parseDebugLocalResources
-> Task :app:generateDebugRFile
-> Task :web:javaPreCompileDebug FROM-CACHE
-> Task :workspace:generateDebugResources FROM-CACHE
-> Task :workspace:packageDebugResources
-> Task :workspace:parseDebugLocalResources FROM-CACHE
-> Task :workspace:generateDebugRFile
 > Task :speech:compileDebugJavaWithJavac NO-SOURCE
 > Task :speech:bundleLibCompileToJarDebug
-
-> Task :ai:compileDebugKotlin
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/ClaudeProvider.kt:85:78 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/ClaudeProvider.kt:88:40 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/ClaudeProvider.kt:130:86 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/ClaudeProvider.kt:133:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/GoogleProvider.kt:136:41 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/GoogleProvider.kt:193:86 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/GoogleProvider.kt:196:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:71:78 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:74:40 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:103:75 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:184:82 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:187:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:239:78 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:242:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:318:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/OpenAIProvider.kt:321:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/openai/ChatCompletionsAPI.kt:103:42 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/openai/ChatCompletionsAPI.kt:110:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/openai/ChatCompletionsAPI.kt:356:81 Unnecessary safe call on a non-null receiver of type 'Response'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/provider/providers/openai/ResponseAPI.kt:103:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:434:26 'data class ToolCall : UIMessagePart' is deprecated. Use UIMessagePart.Tool instead.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:434:37 'data class ToolCall : UIMessagePart' is deprecated. Use UIMessagePart.Tool instead.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:435:20 'constructor(toolCallId: String, toolName: String, arguments: String, approvalState: ToolApprovalState = ..., metadata: JsonObject? = ...): UIMessagePart.ToolCall' is deprecated. Use UIMessagePart.Tool instead.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:519:30 'data class ToolCall : UIMessagePart' is deprecated. Use UIMessagePart.Tool instead.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:520:30 'data class ToolResult : UIMessagePart' is deprecated. Use UIMessagePart.Tool instead.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/ui/Message.kt:521:30 'data object Search : UIMessagePart' is deprecated. Deprecated.
-w: file:///home/runner/work/orangechat/orangechat/ai/src/main/java/me/rerere/ai/util/ErrorParser.kt:52:9 'when' is exhaustive so 'else' is redundant here.
-
-> Task :web:compileDebugKotlin
-> Task :web:compileDebugJavaWithJavac NO-SOURCE
-> Task :web:bundleLibCompileToJarDebug
-> Task :workspace:javaPreCompileDebug FROM-CACHE
+> Task :web:generateDebugResources FROM-CACHE
+> Task :web:packageDebugResources FROM-CACHE
+> Task :web:parseDebugLocalResources FROM-CACHE
+> Task :document:compileDebugJavaWithJavac FROM-CACHE
+> Task :document:bundleLibCompileToJarDebug
+> Task :web:generateDebugRFile FROM-CACHE
+> Task :workspace:generateDebugResources FROM-CACHE
+> Task :app:processDebugNavigationResources FROM-CACHE
+> Task :ai:extractDebugAnnotations FROM-CACHE
+> Task :app:generateDebugLocaleConfig FROM-CACHE
+> Task :workspace:packageDebugResources FROM-CACHE
+> Task :workspace:parseDebugLocalResources FROM-CACHE
+> Task :workspace:generateDebugRFile FROM-CACHE
+> Task :app:packageDebugResources FROM-CACHE
+> Task :app:parseDebugLocalResources FROM-CACHE
+> Task :app:generateDebugRFile FROM-CACHE
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :app:generateDebugAssets UP-TO-DATE
 > Task :common:generateDebugAssets UP-TO-DATE
+> Task :workspace:compileDebugKotlin FROM-CACHE
+> Task :workspace:javaPreCompileDebug FROM-CACHE
+> Task :workspace:compileDebugJavaWithJavac NO-SOURCE
 > Task :common:mergeDebugAssets
 > Task :document:generateDebugAssets UP-TO-DATE
-> Task :document:mergeDebugAssets
+> Task :workspace:bundleLibCompileToJarDebug
 > Task :highlight:generateDebugAssets UP-TO-DATE
-> Task :highlight:mergeDebugAssets
+> Task :document:mergeDebugAssets
 > Task :material3:generateDebugAssets UP-TO-DATE
-> Task :material3:mergeDebugAssets
+> Task :highlight:mergeDebugAssets
 > Task :search:generateDebugAssets UP-TO-DATE
-> Task :search:mergeDebugAssets
-> Task :speech:generateDebugAssets UP-TO-DATE
+> Task :ai:compileDebugKotlin FROM-CACHE
 > Task :ai:compileDebugJavaWithJavac NO-SOURCE
+> Task :material3:mergeDebugAssets
+> Task :speech:generateDebugAssets UP-TO-DATE
 > Task :ai:mergeDebugGeneratedProguardFiles
-> Task :ai:mergeDebugConsumerProguardFiles
-> Task :ai:processDebugJavaRes
-> Task :speech:mergeDebugAssets
-> Task :ai:mergeDebugJavaResource
-> Task :ai:bundleLibCompileToJarDebug
-> Task :web:generateDebugAssets UP-TO-DATE
-> Task :web:mergeDebugAssets
+> Task :web:compileDebugKotlin FROM-CACHE
+> Task :search:mergeDebugAssets
 > Task :workspace:generateDebugAssets UP-TO-DATE
+> Task :speech:mergeDebugAssets
+> Task :web:javaPreCompileDebug FROM-CACHE
 > Task :workspace:mergeDebugAssets
+> Task :ai:mergeDebugConsumerProguardFiles
+> Task :web:compileDebugJavaWithJavac NO-SOURCE
+> Task :web:bundleLibCompileToJarDebug
+> Task :web:generateDebugAssets UP-TO-DATE
+> Task :document:bundleLibRuntimeToJarDebug
+> Task :highlight:bundleLibRuntimeToJarDebug
+> Task :web:mergeDebugAssets
+> Task :ai:processDebugJavaRes
 > Task :web:bundleLibRuntimeToJarDebug
-> Task :ai:syncDebugLibJars
+> Task :speech:bundleLibRuntimeToJarDebug
+> Task :ai:bundleLibCompileToJarDebug
+> Task :ai:mergeDebugJavaResource
+> Task :ai:syncDebugLibJars FROM-CACHE
+> Task :common:bundleLibRuntimeToJarDebug
 > Task :ai:bundleDebugAar
 > Task :ai:assembleDebug
-> Task :app:javaPreCompileDebug
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets
-> Task :ai:bundleLibRuntimeToJarDebug
-> Task :workspace:compileDebugKotlin
-> Task :workspace:compileDebugJavaWithJavac NO-SOURCE
-> Task :workspace:bundleLibCompileToJarDebug
-> Task :document:bundleLibRuntimeToJarDebug
-> Task :app:compressDebugAssets
-> Task :highlight:bundleLibRuntimeToJarDebug
-> Task :speech:bundleLibRuntimeToJarDebug
-> Task :common:bundleLibRuntimeToJarDebug
 > Task :workspace:bundleLibRuntimeToJarDebug
+> Task :ai:bundleLibRuntimeToJarDebug
+> Task :search:compileDebugKotlin FROM-CACHE
 > Task :material3:bundleLibRuntimeToJarDebug
-> Task :app:desugarDebugFileDependencies
+> Task :search:compileDebugJavaWithJavac NO-SOURCE
 > Task :ai:mapDebugSourceSetPaths
-> Task :ai:compileDebugLibraryResources
+> Task :search:bundleLibCompileToJarDebug
+> Task :ai:compileDebugLibraryResources FROM-CACHE
 > Task :document:writeDebugAarMetadata
 > Task :highlight:writeDebugAarMetadata
+> Task :search:bundleLibRuntimeToJarDebug
 > Task :material3:writeDebugAarMetadata
 > Task :search:writeDebugAarMetadata
 > Task :speech:writeDebugAarMetadata
 > Task :web:writeDebugAarMetadata
 > Task :workspace:writeDebugAarMetadata
-> Task :app:checkDebugAarMetadata
-> Task :app:compileDebugNavigationResources
-> Task :ai:extractDeepLinksDebug
+> Task :ai:extractDeepLinksDebug FROM-CACHE
 > Task :common:extractDeepLinksDebug FROM-CACHE
-> Task :common:processDebugManifest
 > Task :document:extractDeepLinksDebug FROM-CACHE
-> Task :document:processDebugManifest
+> Task :common:processDebugManifest FROM-CACHE
 > Task :highlight:extractDeepLinksDebug FROM-CACHE
-> Task :highlight:processDebugManifest
+> Task :highlight:processDebugManifest FROM-CACHE
 > Task :material3:extractDeepLinksDebug FROM-CACHE
-> Task :material3:processDebugManifest
+> Task :material3:processDebugManifest FROM-CACHE
 > Task :search:extractDeepLinksDebug FROM-CACHE
-> Task :search:processDebugManifest
+> Task :app:mergeDebugAssets
 > Task :speech:extractDeepLinksDebug FROM-CACHE
-> Task :speech:processDebugManifest
+> Task :search:processDebugManifest FROM-CACHE
+> Task :document:processDebugManifest FROM-CACHE
 > Task :web:extractDeepLinksDebug FROM-CACHE
-> Task :web:processDebugManifest
 > Task :workspace:extractDeepLinksDebug FROM-CACHE
-> Task :workspace:processDebugManifest
+> Task :speech:processDebugManifest FROM-CACHE
+> Task :web:processDebugManifest FROM-CACHE
 > Task :common:mapDebugSourceSetPaths
-> Task :common:compileDebugLibraryResources FROM-CACHE
 > Task :document:mapDebugSourceSetPaths
+> Task :common:compileDebugLibraryResources FROM-CACHE
 > Task :document:compileDebugLibraryResources FROM-CACHE
 > Task :highlight:mapDebugSourceSetPaths
-> Task :highlight:compileDebugLibraryResources
-> Task :material3:mapDebugSourceSetPaths
-> Task :material3:compileDebugLibraryResources FROM-CACHE
+> Task :highlight:compileDebugLibraryResources FROM-CACHE
 > Task :search:mapDebugSourceSetPaths
-> Task :search:compileDebugLibraryResources
+> Task :search:compileDebugLibraryResources FROM-CACHE
 > Task :speech:mapDebugSourceSetPaths
+> Task :material3:mapDebugSourceSetPaths
+> Task :workspace:processDebugManifest FROM-CACHE
 > Task :speech:compileDebugLibraryResources FROM-CACHE
+> Task :material3:compileDebugLibraryResources FROM-CACHE
 > Task :web:mapDebugSourceSetPaths
-> Task :web:compileDebugLibraryResources FROM-CACHE
 > Task :workspace:mapDebugSourceSetPaths
+> Task :web:compileDebugLibraryResources FROM-CACHE
 > Task :workspace:compileDebugLibraryResources FROM-CACHE
 > Task :common:processDebugJavaRes
 > Task :document:processDebugJavaRes
 > Task :highlight:processDebugJavaRes
 > Task :material3:processDebugJavaRes
+> Task :search:processDebugJavaRes
 > Task :speech:processDebugJavaRes
 > Task :web:processDebugJavaRes
 > Task :workspace:processDebugJavaRes
-
-> Task :search:compileDebugKotlin
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/GrokSearchService.kt:142:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/LinkUpService.kt:113:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/LinkUpService.kt:157:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/MetasoSearchService.kt:82:44 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/MetasoSearchService.kt:103:46 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/PerplexitySearchService.kt:123:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/RikkaHubSearchService.kt:91:74 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/SearXNGService.kt:120:46 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/ZhipuSearchService.kt:81:44 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere/search/ZhipuSearchService.kt:101:38 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
-
-> Task :ai:bundleLibRuntimeToDirDebug
-> Task :search:compileDebugJavaWithJavac NO-SOURCE
-> Task :search:bundleLibCompileToJarDebug
-> Task :search:bundleLibRuntimeToJarDebug
-> Task :search:processDebugJavaRes
-> Task :search:bundleLibRuntimeToDirDebug
 > Task :web:bundleLibRuntimeToDirDebug
-> Task :document:bundleLibRuntimeToDirDebug
+> Task :ai:bundleLibRuntimeToDirDebug
+> Task :search:bundleLibRuntimeToDirDebug
 > Task :highlight:bundleLibRuntimeToDirDebug
-> Task :speech:bundleLibRuntimeToDirDebug
+> Task :document:bundleLibRuntimeToDirDebug
 > Task :common:bundleLibRuntimeToDirDebug
-> Task :app:mergeDebugResources
 > Task :workspace:bundleLibRuntimeToDirDebug
-> Task :material3:bundleLibRuntimeToDirDebug
+> Task :speech:bundleLibRuntimeToDirDebug
 > Task :ai:copyDebugJniLibsProjectOnly
 > Task :common:mergeDebugJniLibFolders
 > Task :common:mergeDebugNativeLibs NO-SOURCE
 > Task :common:copyDebugJniLibsProjectOnly
-> Task :document:mergeDebugJniLibFolders
-> Task :document:mergeDebugNativeLibs
-> Task :document:copyDebugJniLibsProjectOnly
 > Task :highlight:mergeDebugJniLibFolders
+> Task :material3:bundleLibRuntimeToDirDebug
 > Task :highlight:mergeDebugNativeLibs NO-SOURCE
 > Task :highlight:copyDebugJniLibsProjectOnly
 > Task :material3:mergeDebugJniLibFolders
@@ -342,21 +268,43 @@ w: file:///home/runner/work/orangechat/orangechat/search/src/main/java/me/rerere
 > Task :speech:mergeDebugNativeLibs NO-SOURCE
 > Task :speech:copyDebugJniLibsProjectOnly
 > Task :web:mergeDebugJniLibFolders
+> Task :document:mergeDebugJniLibFolders
 > Task :web:mergeDebugNativeLibs NO-SOURCE
 > Task :web:copyDebugJniLibsProjectOnly
+> Task :document:mergeDebugNativeLibs
 > Task :common:checkDebugAarMetadata
 > Task :common:stripDebugDebugSymbols NO-SOURCE
 > Task :common:copyDebugJniLibsProjectAndLocalJars
-> Task :common:extractDebugAnnotations
+> Task :common:extractDebugAnnotations FROM-CACHE
 > Task :common:extractDeepLinksForAarDebug FROM-CACHE
 > Task :common:mergeDebugGeneratedProguardFiles
+> Task :document:copyDebugJniLibsProjectOnly
 > Task :common:mergeDebugConsumerProguardFiles
 > Task :common:prepareDebugArtProfile
 > Task :common:prepareLintJarForPublish
 > Task :common:mergeDebugJavaResource
-> Task :common:syncDebugLibJars
+> Task :document:checkDebugAarMetadata
+> Task :common:syncDebugLibJars FROM-CACHE
 > Task :common:bundleDebugAar
 > Task :common:assembleDebug
+> Task :highlight:checkDebugAarMetadata
+> Task :document:stripDebugDebugSymbols
+> Task :document:copyDebugJniLibsProjectAndLocalJars
+> Task :document:extractDebugAnnotations FROM-CACHE
+> Task :document:extractDeepLinksForAarDebug FROM-CACHE
+> Task :document:mergeDebugGeneratedProguardFiles
+> Task :document:mergeDebugConsumerProguardFiles
+> Task :document:prepareDebugArtProfile
+> Task :document:prepareLintJarForPublish
+> Task :document:mergeDebugJavaResource
+> Task :document:syncDebugLibJars FROM-CACHE
+> Task :app:compressDebugAssets FROM-CACHE
+> Task :app:desugarDebugFileDependencies FROM-CACHE
+> Task :app:checkDebugAarMetadata
+> Task :app:compileDebugNavigationResources FROM-CACHE
+> Task :app:mergeDebugResources FROM-CACHE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug FROM-CACHE
 
 > Task :workspace:configureCMakeDebug[arm64-v8a]
 Checking the license for package CMake 3.22.1 in /usr/local/lib/android/sdk/licenses
@@ -367,123 +315,109 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 "Install CMake 3.22.1 v.3.22.1" complete.
 "Install CMake 3.22.1 v.3.22.1" finished.
 
-> Task :document:checkDebugAarMetadata
-> Task :workspace:buildCMakeDebug[arm64-v8a]
-> Task :workspace:configureCMakeDebug[armeabi-v7a]
-> Task :document:stripDebugDebugSymbols
-> Task :highlight:checkDebugAarMetadata
-> Task :document:extractDebugAnnotations
-> Task :document:extractDeepLinksForAarDebug FROM-CACHE
-> Task :document:mergeDebugGeneratedProguardFiles
-> Task :document:mergeDebugConsumerProguardFiles
-> Task :document:prepareDebugArtProfile
-> Task :document:prepareLintJarForPublish
-> Task :document:mergeDebugJavaResource
-> Task :document:copyDebugJniLibsProjectAndLocalJars
+> Task :app:processDebugMainManifest FROM-CACHE
+> Task :app:processDebugManifest FROM-CACHE
+> Task :app:processDebugManifestForPackage FROM-CACHE
+> Task :document:bundleDebugAar
+> Task :document:assembleDebug
 > Task :highlight:stripDebugDebugSymbols NO-SOURCE
 > Task :highlight:copyDebugJniLibsProjectAndLocalJars
-> Task :highlight:extractDebugAnnotations
+> Task :highlight:extractDebugAnnotations FROM-CACHE
 > Task :highlight:extractDeepLinksForAarDebug FROM-CACHE
 > Task :highlight:mergeDebugGeneratedProguardFiles
-> Task :document:syncDebugLibJars
-> Task :workspace:buildCMakeDebug[armeabi-v7a]
 > Task :highlight:mergeDebugConsumerProguardFiles
 > Task :highlight:prepareDebugArtProfile
 > Task :highlight:prepareLintJarForPublish
 > Task :highlight:mergeDebugJavaResource
-> Task :highlight:syncDebugLibJars
+> Task :highlight:syncDebugLibJars FROM-CACHE
 > Task :highlight:bundleDebugAar
 > Task :highlight:assembleDebug
-> Task :workspace:configureCMakeDebug[x86]
-> Task :app:createDebugCompatibleScreenManifests
-> Task :app:extractDeepLinksDebug
 > Task :material3:checkDebugAarMetadata
-> Task :document:bundleDebugAar
-> Task :document:assembleDebug
 > Task :material3:stripDebugDebugSymbols NO-SOURCE
 > Task :material3:copyDebugJniLibsProjectAndLocalJars
-> Task :material3:extractDebugAnnotations
+> Task :material3:extractDebugAnnotations FROM-CACHE
 > Task :material3:extractDeepLinksForAarDebug FROM-CACHE
 > Task :material3:mergeDebugGeneratedProguardFiles
 > Task :material3:mergeDebugConsumerProguardFiles
 > Task :material3:prepareDebugArtProfile
 > Task :material3:prepareLintJarForPublish
-> Task :workspace:buildCMakeDebug[x86]
 > Task :material3:mergeDebugJavaResource
-> Task :material3:syncDebugLibJars
+> Task :material3:syncDebugLibJars FROM-CACHE
 > Task :material3:bundleDebugAar
 > Task :material3:assembleDebug
-> Task :app:processDebugMainManifest
+> Task :app:processDebugResources FROM-CACHE
 > Task :search:checkDebugAarMetadata
 > Task :search:stripDebugDebugSymbols NO-SOURCE
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugJniLibFolders
 > Task :search:copyDebugJniLibsProjectAndLocalJars
-> Task :search:extractDebugAnnotations
+> Task :search:extractDebugAnnotations FROM-CACHE
 > Task :search:extractDeepLinksForAarDebug FROM-CACHE
 > Task :search:mergeDebugGeneratedProguardFiles
 > Task :search:mergeDebugConsumerProguardFiles
 > Task :search:prepareDebugArtProfile
+> Task :workspace:buildCMakeDebug[arm64-v8a]
+> Task :workspace:configureCMakeDebug[armeabi-v7a]
 > Task :search:prepareLintJarForPublish
-> Task :workspace:configureCMakeDebug[x86_64]
-> Task :app:processDebugManifest
 > Task :search:mergeDebugJavaResource
-> Task :app:processDebugManifestForPackage
-> Task :search:syncDebugLibJars
+> Task :search:syncDebugLibJars FROM-CACHE
 > Task :search:bundleDebugAar
 > Task :search:assembleDebug
-> Task :workspace:buildCMakeDebug[x86_64]
-> Task :workspace:mergeDebugJniLibFolders
 > Task :speech:checkDebugAarMetadata
 > Task :speech:stripDebugDebugSymbols NO-SOURCE
-> Task :workspace:mergeDebugNativeLibs
 > Task :speech:copyDebugJniLibsProjectAndLocalJars
-> Task :workspace:copyDebugJniLibsProjectOnly
-> Task :web:checkDebugAarMetadata
-> Task :web:stripDebugDebugSymbols NO-SOURCE
-> Task :web:copyDebugJniLibsProjectAndLocalJars
-> Task :speech:extractDebugAnnotations
+> Task :speech:extractDebugAnnotations FROM-CACHE
 > Task :speech:extractDeepLinksForAarDebug FROM-CACHE
 > Task :speech:mergeDebugGeneratedProguardFiles
 > Task :speech:mergeDebugConsumerProguardFiles
 > Task :speech:prepareDebugArtProfile
 > Task :speech:prepareLintJarForPublish
 > Task :speech:mergeDebugJavaResource
-> Task :web:extractDebugAnnotations
-> Task :speech:syncDebugLibJars
+> Task :speech:syncDebugLibJars FROM-CACHE
 > Task :speech:bundleDebugAar
 > Task :speech:assembleDebug
+> Task :web:checkDebugAarMetadata
+> Task :web:stripDebugDebugSymbols NO-SOURCE
+> Task :web:copyDebugJniLibsProjectAndLocalJars
+> Task :web:extractDebugAnnotations FROM-CACHE
 > Task :web:extractDeepLinksForAarDebug FROM-CACHE
 > Task :web:mergeDebugGeneratedProguardFiles
 > Task :web:mergeDebugConsumerProguardFiles
 > Task :web:prepareDebugArtProfile
 > Task :web:prepareLintJarForPublish
 > Task :web:mergeDebugJavaResource
-> Task :web:syncDebugLibJars
+> Task :web:syncDebugLibJars FROM-CACHE
 > Task :web:bundleDebugAar
 > Task :web:assembleDebug
-> Task :app:checkDebugDuplicateClasses
-> Task :workspace:checkDebugAarMetadata
-> Task :workspace:stripDebugDebugSymbols
-> Task :workspace:copyDebugJniLibsProjectAndLocalJars
-> Task :workspace:extractDebugAnnotations
-> Task :workspace:extractDeepLinksForAarDebug FROM-CACHE
-> Task :workspace:mergeDebugGeneratedProguardFiles
-> Task :workspace:mergeDebugConsumerProguardFiles
-> Task :workspace:prepareDebugArtProfile
-> Task :app:kspDebugKotlin
-> Task :app:processDebugResources
-> Task :app:mergeExtDexDebug
-> Task :workspace:prepareLintJarForPublish
-> Task :workspace:mergeDebugJavaResource
-> Task :workspace:syncDebugLibJars
-> Task :workspace:bundleDebugAar
-> Task :workspace:assembleDebug
-> Task :app:mergeDebugJniLibFolders
-> Task :app:mergeLibDexDebug
+> Task :workspace:buildCMakeDebug[armeabi-v7a]
+> Task :app:mergeExtDexDebug FROM-CACHE
+> Task :app:mergeLibDexDebug FROM-CACHE
 > Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
+> Task :workspace:configureCMakeDebug[x86]
+> Task :workspace:buildCMakeDebug[x86]
+> Task :workspace:configureCMakeDebug[x86_64]
+> Task :workspace:buildCMakeDebug[x86_64]
+> Task :workspace:mergeDebugJniLibFolders
+> Task :workspace:checkDebugAarMetadata
+> Task :workspace:mergeDebugNativeLibs
+> Task :workspace:extractDebugAnnotations FROM-CACHE
+> Task :workspace:extractDeepLinksForAarDebug FROM-CACHE
+> Task :workspace:mergeDebugGeneratedProguardFiles
+> Task :workspace:mergeDebugConsumerProguardFiles
+> Task :workspace:copyDebugJniLibsProjectOnly
+> Task :workspace:prepareDebugArtProfile
+> Task :workspace:prepareLintJarForPublish
+> Task :workspace:mergeDebugJavaResource
+> Task :workspace:syncDebugLibJars FROM-CACHE
+> Task :workspace:stripDebugDebugSymbols
+> Task :workspace:copyDebugJniLibsProjectAndLocalJars
 > Task :app:mergeDebugNativeLibs
+> Task :workspace:bundleDebugAar
+> Task :workspace:assembleDebug
 > Task :app:stripDebugDebugSymbols
+> Task :app:kspDebugKotlin
 > Task :app:compileDebugKotlin
 w: Opt-in requirement marker 'androidx.navigation3.runtime.ExperimentalNavigation3Api' is unresolved. Make sure it's present in the module dependencies.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/RouteActivity.kt:235:33 This declaration needs opt-in. Its usage should be marked with '@coil3.annotation.ExperimentalCoilApi' or '@OptIn(coil3.annotation.ExperimentalCoilApi::class)'
@@ -571,27 +505,27 @@ w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/ri
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ChatInput.kt:508:51 Experimental Haze Materials API
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ChatInput.kt:737:59 Experimental Haze Materials API
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ai/ModelList.kt:545:14 This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' if you accept the drawback of relying on preview API
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:935:39 Condition is always 'true'.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:943:39 Condition is always 'true'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageReasoning.kt:215:53 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:77:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTranslation.kt:94:13 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/SideAvatar.kt:40:35 Condition is always 'true'.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/Tooltip.kt:24:44 'fun rememberTooltipPositionProvider(spacingBetweenTooltipAndAnchor: Dp = ...): PopupPositionProvider' is deprecated. Deprecated in favor of rememberTooltipPositionProvider API that takes a preferred positioning. Please use rememberTooltipPositionProvider with TooltipAnchorPosition.Above if this same behavior is desired.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/ui/ViewText.kt:196:45 Redundant call of conversion method.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:874:31 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:874:48 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:874:65 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:874:81 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:33 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:52 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:69 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:885:87 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:889:53 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:889:70 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:890:14 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:890:30 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:894:19 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
-w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:894:36 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:31 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:48 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:65 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:881:81 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:33 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:52 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:69 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:892:87 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:896:53 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:896:70 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:897:14 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:897:30 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:901:19 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt:901:36 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatPage.kt:122:30 'fun currentWindowDpSize(): DpSize' is deprecated. Going to be removed in the next version. Prefer LocalWindowInfo instead.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/extensions/workspace/WorkspaceTerminalSession.kt:229:71 'static field SHOW_IMPLICIT: Int' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/pages/imggen/ImgGenPage.kt:527:28 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
@@ -624,11 +558,11 @@ w: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/ri
 > Task :app:dexBuilderDebug
 > Task :app:processDebugJavaRes
 > Task :app:mergeDebugGlobalSynthetics
-> Task :app:mergeProjectDexDebug
 > Task :app:mergeDebugJavaResource
+> Task :app:mergeProjectDexDebug
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 7m 31s
-333 actionable tasks: 281 executed, 52 from cache
+BUILD SUCCESSFUL in 3m 46s
+333 actionable tasks: 187 executed, 146 from cache
