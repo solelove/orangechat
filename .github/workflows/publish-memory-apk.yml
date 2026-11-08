@@ -51,14 +51,30 @@ jobs:
 
       - name: List APKs
         run: |
-          set -e
-          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+          echo "=== find result ==="
+          find app/build/outputs -name "*.apk" -exec ls -lh {} \;
+          echo "=== dir tree ==="
+          ls -R app/build/outputs | head -50
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-apk
+          path: app/build/outputs/**/*.apk
+          if-no-files-found: warn
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="memory-$(date +%Y%m%d%H%M%S)"
-          APK=$(find app/build/outputs/apk -name "*.apk" | head -1)
-          echo "TAG=$TAG APK=$APK"
+          APK=$(find app/build/outputs -name "*.apk" | head -1)
+          echo "TAG=$TAG"
+          echo "APK=$APK"
+          if [ -z "$APK" ]; then
+            echo "NO APK FOUND - build failed silently"
+            exit 1
+          fi
           gh release create "$TAG" --title "记忆库候选区 $TAG" --notes "记忆库页面新增候选记忆区" "$APK"
+          echo "RELEASE OK: $TAG"
