@@ -1,3 +1,3 @@
-trigger 2026-11-08 19:44 build memory bank apk
+trigger 2026-11-08 19:53 second attempt
 
-reason: 记忆库页面新增候选记忆区，需要产出可安装的 debug APK 供安装验证。
+加了详细日志 排查 gh release 为什么没产出。
