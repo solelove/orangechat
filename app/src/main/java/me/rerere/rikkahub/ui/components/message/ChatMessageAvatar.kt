@@ -49,8 +49,10 @@ private fun AvatarFrameOverlay(
     scale: Float,
     baseSize: Float,
 ) {
-    if (framePath.isNotBlank() && File(framePath).exists()) {
-        val context = LocalContext.current
+    val frameExists = remember(framePath) {
+        framePath.isNotBlank() && File(framePath).exists()
+    }
+    if (frameExists) {
         val bitmap = remember(framePath) {
             runCatching {
                 BitmapFactory.decodeFile(framePath)?.asImageBitmap()

@@ -187,7 +187,7 @@ fun BubbleSurface(
 ) {
     // 文件存在性检查会走磁盘，缓存起来避免每次重组都查
     val hasImage = remember(imagePath) {
-        imagePath.isNotBlank() && java.io.File(imagePath).exists()
+        imagePath.isNotBlank() && runCatching { java.io.File(imagePath).exists() }.getOrDefault(false)
     }
     if (hasImage) {
         Box(
