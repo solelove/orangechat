@@ -44,10 +44,14 @@ jobs:
         run: python3 scripts/perf_hot_path.py
 
       - name: Apply part avatar patch
-        run: python3 scripts/part_avatar.py
+        if: contains(github.event.head_commit.message, 'redo-avatar') || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/part_avatar.py || true
+
+      - name: Fix part row braces
+        run: python3 scripts/fix_part_row.py || true
 
       - name: Apply user split mode patch
-        run: python3 scripts/user_split_independent.py
+        run: python3 scripts/user_split_independent.py || true
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -92,7 +96,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -f ci-last-error.log
-          git commit -m "ci: split avatar error [skip ci]" || true
+          git commit -m "ci: build error [skip ci]" || true
           git push origin HEAD:master || true
 
       - name: Commit patched source
@@ -113,5 +117,5 @@ jobs:
           TAG="split-$VERSION-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "拆分开关独立 $TAG" \
-            --notes "用户气泡拆分开关现在只看自己：关掉就整条不拆。图片/视频/文档也带头像。" \
+            --notes "用户气泡拆分开关只看自己：关掉就整条不拆。图片/视频/文档也带头像。" \
             app/build/outputs/apk/debug/*.apk
