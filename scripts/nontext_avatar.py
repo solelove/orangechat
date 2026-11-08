@@ -4,15 +4,32 @@
 import sys
 
 PATH = "app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt"
+BUBBLE = "app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt"
 
-OLD_IMAGE = """                    is UIMessagePart.Image -> {
-                        val isImageLoading =
-                            part.url.isBlank() || part.url.matches(Regex("^data:image/[^;]*;base64,\\\\s*$"))
-                        if (isImageLoading) {"""
 
-NEW_IMAGE = """                    is UIMessagePart.Image -> {
-                        val isImageLoading =
-                            part.url.isBlank() || part.url.matches(Regex("^data:image/[^;]*;base64,\\\\s*$"))
+def main() -> int:
+    # 1. SegmentAvatarView 改成 internal，供 ChatMessage 用
+    with open(BUBBLE, "r", encoding="utf-8") as f:
+        b = f.read()
+    b = b.replace(
+        "@Composable\nprivate fun SegmentAvatarView(",
+        "@Composable\ninternal fun SegmentAvatarView(",
+        1,
+    )
+    with open(BUBBLE, "w", encoding="utf-8") as f:
+        f.write(b)
+
+    with open(PATH, "r", encoding="utf-8") as f:
+        src = f.read()
+
+    if "NonTextPartRow(" in src:
+        print("already patched")
+        return 0
+
+    # 2. 图片段外包一层
+    OLD_IMAGE = '''                    is UIMessagePart.Image -> {
+                        val isImageLoading ='''
+    NEW_IMAGE = '''                    is UIMessagePart.Image -> {
                         NonTextPartRow(
                             isUser = role == MessageRole.USER,
                             segmentAvatar = segmentAvatarFor(
@@ -27,54 +44,27 @@ NEW_IMAGE = """                    is UIMessagePart.Image -> {
                             ),
                             avatarLoading = loading,
                         ) {
-                        if (isImageLoading) {"""
-
-OLD_DOC_END = """                                }
-                            }
-                        }
-                    }
-
-                    is UIMessagePart.Document -> {"""
-
-NEW_DOC_END = """                                }
-                            }
-                        }
-                        }
-                    }
-
-                    is UIMessagePart.Document -> {"""
-
-
-def main() -> int:
-    with open(PATH, "r", encoding="utf-8") as f:
-        src = f.read()
-
-    if "NonTextPartRow(" in src:
-        print("already patched")
-        return 0
+                        val isImageLoading ='''
 
     if OLD_IMAGE not in src:
         print("anchor: image not found", file=sys.stderr)
         return 1
-
     src = src.replace(OLD_IMAGE, NEW_IMAGE, 1)
 
-    if OLD_DOC_END not in src:
-        print("anchor: image tail not found", file=sys.stderr)
+    # 3. 图片段结束处补一个闭括号（原来 Image 分支结束后直接是 Document）
+    OLD_SEAM = '''                        }
+                    }
+
+                    is UIMessagePart.Document -> {'''
+    NEW_SEAM = '''                        }
+                        }
+                    }
+
+                    is UIMessagePart.Document -> {'''
+    if OLD_SEAM not in src:
+        print("anchor: seam not found", file=sys.stderr)
         return 1
-
-    src = src.replace(OLD_DOC_END, NEW_DOC_END, 1)
-
-    # 关闭文档段前的括号补齐：Document 分支结束处补一个右括号
-    OLD_TAIL = """                    else -> {
-                        // 跳过未知类型
-                    }"""
-    NEW_TAIL = """                    }
-                    else -> {
-                        // 跳过未知类型
-                    }"""
-    if OLD_TAIL in src:
-        src = src.replace(OLD_TAIL, NEW_TAIL, 1)
+    src = src.replace(OLD_SEAM, NEW_SEAM, 1)
 
     helper = '''
 /** 非文本段（图片/视频/文档）：拆分模式下跟着一个头像，保持和文字气泡对齐 */
@@ -94,24 +84,19 @@ private fun NonTextPartRow(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
     ) {
-        if (segmentAvatar != null && !isUser) {
-            SegmentAvatarView(segmentAvatar, avatarLoading)
-            Spacer(modifier = Modifier.width(8.dp))
-        }
+        SegmentAvatarView(segmentAvatar, avatarLoading)
+        Spacer(modifier = Modifier.width(8.dp))
         content()
-        if (segmentAvatar != null && isUser) {
-            Spacer(modifier = Modifier.width(8.dp))
-            SegmentAvatarView(segmentAvatar, avatarLoading)
-        }
     }
 }
+
 '''
 
-    anchor = "@Composable\n@Suppress(\"UnusedCrossTarget\")\ninternal fun AudioPlayerBubble"
+    anchor = '@Composable\n@Suppress("UnusedCrossTarget")\ninternal fun AudioPlayerBubble'
     if anchor not in src:
         print("anchor: AudioPlayerBubble not found", file=sys.stderr)
         return 1
-    src = src.replace(anchor, helper + "\n" + anchor, 1)
+    src = src.replace(anchor, helper + anchor, 1)
 
     with open(PATH, "w", encoding="utf-8") as f:
         f.write(src)
