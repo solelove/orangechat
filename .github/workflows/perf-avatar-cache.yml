@@ -1,18 +1,10 @@
 name: Perf Avatar Cache
 
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - 'scripts/perf_avatar_cache.py'
   workflow_dispatch:
 
 permissions:
   contents: write
-
-concurrency:
-  group: perf-avatar-cache
-  cancel-in-progress: false
 
 jobs:
   patch:
@@ -64,9 +56,9 @@ jobs:
           {
             echo "run=${{ github.run_id }} sha=${{ github.sha }}"
             echo "=== kotlin errors ==="
-            grep -E "^e: " build.log | head -60 || true
+            grep -E "^e: " build.log | head -40 || true
             echo "=== tail ==="
-            tail -n 60 build.log || true
+            tail -n 40 build.log || true
           } > ci-last-error.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
