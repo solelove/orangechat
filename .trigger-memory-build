@@ -1,3 +1,1 @@
-trigger 2026-11-08 19:53 second attempt
-
-加了详细日志 排查 gh release 为什么没产出。
+trigger 2026-11-08 20:03 fix abi param removed
