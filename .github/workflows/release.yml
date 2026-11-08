@@ -21,6 +21,27 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: Install web deps
+        run: |
+          if [ -f web-ui/pnpm-lock.yaml ]; then
+            pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then
+            pnpm --dir web-ui install
+          else
+            echo "没找到 web-ui 目录，跳过"
+          fi
+
       - name: Gradle cache
         uses: actions/cache@v4
         with:
