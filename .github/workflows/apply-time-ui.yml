@@ -43,6 +43,9 @@ jobs:
       - name: Apply perf hot path patch
         run: python3 scripts/perf_hot_path.py
 
+      - name: Apply part avatar patch
+        run: python3 scripts/part_avatar.py
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -86,7 +89,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -f ci-last-error.log
-          git commit -m "ci: time ui error [skip ci]" || true
+          git commit -m "ci: part avatar error [skip ci]" || true
           git push origin HEAD:master || true
 
       - name: Commit patched source
@@ -95,7 +98,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -A
-          git commit -m "feat(ui): 时间条 + 热路径优化 [skip ci]" || true
+          git commit -m "feat(ui): 图片/视频/文档也带头像 [skip ci]" || true
           git push origin HEAD:master || true
 
       - name: Publish release
@@ -104,8 +107,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
-          TAG="time-$VERSION-$(date +%Y%m%d%H%M)"
+          TAG="avatar-$VERSION-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "时间条+流畅版 $TAG" \
-            --notes "时间条：间隔5分钟以上才显示；时间提醒改为系统提示注入。热路径：字体缓存、zip正则常量、时间条remember、模型查找缓存、分段气泡不再逐段动画" \
+            --title "图片带头像 $TAG" \
+            --notes "非文本段（图片/视频/音频/文档）也会显示头像；外层不再重复画头像" \
             app/build/outputs/apk/debug/*.apk
