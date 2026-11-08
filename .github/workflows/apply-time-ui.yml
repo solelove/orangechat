@@ -43,10 +43,6 @@ jobs:
       - name: Apply perf hot path patch
         run: python3 scripts/perf_hot_path.py
 
-      - name: Apply part avatar patch
-        if: contains(github.event.head_commit.message, 'redo-avatar') || github.event_name == 'workflow_dispatch'
-        run: python3 scripts/part_avatar.py || true
-
       - name: Fix part row braces
         run: python3 scripts/fix_part_row.py || true
 
@@ -91,7 +87,7 @@ jobs:
             echo "=== kotlin errors ==="
             grep -E "^e: " build.log | head -60 || true
             echo "=== tail ==="
-            tail -n 60 build.log || true
+            tail -n 40 build.log || true
           } > ci-last-error.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
@@ -99,22 +95,15 @@ jobs:
           git commit -m "ci: build error [skip ci]" || true
           git push origin HEAD:master || true
 
-      - name: Commit patched source
-        if: success()
-        run: |
-          git config user.name "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          git add -A
-          git commit -m "feat(ui): 用户拆分独立 + 非文本段带头像 [skip ci]" || true
-          git push origin HEAD:master || true
-
       - name: Publish release
         if: success()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
-          TAG="split-$VERSION-$(date +%Y%m%d%H%M)"
+          set -e
+          ls -l app/build/outputs/apk/debug/
+          TAG="split-$(date +%Y%m%d%H%M)"
+          echo "tag=$TAG"
           gh release create "$TAG" \
             --title "拆分开关独立 $TAG" \
             --notes "用户气泡拆分开关只看自己：关掉就整条不拆。图片/视频/文档也带头像。" \
