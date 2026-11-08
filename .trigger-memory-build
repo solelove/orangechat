@@ -1,0 +1,3 @@
+trigger 2026-11-08 19:44 build memory bank apk
+
+reason: 记忆库页面新增候选记忆区，需要产出可安装的 debug APK 供安装验证。
