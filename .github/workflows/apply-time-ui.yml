@@ -46,6 +46,9 @@ jobs:
       - name: Apply part avatar patch
         run: python3 scripts/part_avatar.py
 
+      - name: Apply user split mode patch
+        run: python3 scripts/user_split_independent.py
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -89,7 +92,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -f ci-last-error.log
-          git commit -m "ci: part avatar error [skip ci]" || true
+          git commit -m "ci: split avatar error [skip ci]" || true
           git push origin HEAD:master || true
 
       - name: Commit patched source
@@ -98,7 +101,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -A
-          git commit -m "feat(ui): 图片/视频/文档也带头像 [skip ci]" || true
+          git commit -m "feat(ui): 用户拆分独立 + 非文本段带头像 [skip ci]" || true
           git push origin HEAD:master || true
 
       - name: Publish release
@@ -107,8 +110,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
-          TAG="avatar-$VERSION-$(date +%Y%m%d%H%M)"
+          TAG="split-$VERSION-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "图片带头像 $TAG" \
-            --notes "非文本段（图片/视频/音频/文档）也会显示头像；外层不再重复画头像" \
+            --title "拆分开关独立 $TAG" \
+            --notes "用户气泡拆分开关现在只看自己：关掉就整条不拆。图片/视频/文档也带头像。" \
             app/build/outputs/apk/debug/*.apk
