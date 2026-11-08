@@ -44,24 +44,26 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      - name: Build
+      - name: Build arm64 debug
         run: |
           chmod +x gradlew
+          ./gradlew assembleDebug -x :web:buildWebUi -Pandroid.injected.build.abi=arm64-v8a --stacktrace || \
           ./gradlew assembleDebug -x :web:buildWebUi --stacktrace
 
       - name: List APKs
-        run: |
-          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+        run: find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
 
-      - name: Publish release
+      - name: Publish release verbose
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -x
           TAG="memory-$(date +%Y%m%d%H%M%S)"
+          echo "TAG=$TAG"
           APK=$(find app/build/outputs/apk -name "*arm64*.apk" | head -1)
           if [ -z "$APK" ]; then APK=$(find app/build/outputs/apk -name "*.apk" | head -1); fi
-          echo "publishing $APK as $TAG"
-          gh release create "$TAG" \
-            --title "记忆库候选区 $TAG" \
-            --notes "记忆库页面新增候选记忆区，可查看和决定插件产出的候选记忆" \
-            "$APK"
+          echo "APK=$APK"
+          gh --version
+          gh release create "$TAG" --title "记忆库候选区 $TAG" --notes "记忆库页面新增候选记忆区" "$APK"
+          echo "exit=$?"
+          gh release list | head -5
