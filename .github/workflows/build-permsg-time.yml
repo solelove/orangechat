@@ -1,6 +1,6 @@
 name: Time Inject Per Message
 
-on:
+"on":
   workflow_dispatch:
 
 permissions:
