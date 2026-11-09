@@ -1,0 +1,52 @@
+name: fix-avatar-ci
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: patch ChatMessage.kt
+        run: |
+          python3 - <<'PYEOF'
+          import io, sys
+          p = 'app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt'
+          s = io.open(p, encoding='utf-8').read()
+
+          # 1) 外层助手头像：只要有可见内容就画，不再要求全部是纯文本
+          old1 = "if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+          new1 = "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+          # 2) 外层用户头像同理
+          old2 = "if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+          new2 = "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+          # 3) PartRow 内不再单独画头像，避免和气泡头像重复
+          old3 = """        if (spec != null && !isUser) {
+            PartAvatarView(spec, loading)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        content()
+        if (spec != null && isUser) {
+            Spacer(modifier = Modifier.width(8.dp))
+            PartAvatarView(spec, loading)
+        }"""
+          new3 = "        content()"
+
+          for o, n in ((old1, new1), (old2, new2), (old3, new3)):
+              if o not in s:
+                  print('MISS:' + o[:50]); sys.exit(1)
+              s = s.replace(o, n, 1)
+
+          io.open(p, 'w', encoding='utf-8').write(s)
+          print('patched ok')
+          PYEOF
+
+      - name: commit
+        run: |
+          git config user.name solelove
+          git config user.email 19372340679@163.com
+          git add -A
+          git diff --cached --quiet && echo "no change" || git commit -m "fix(ui): 头像只画一份，图片行不再重复 [skip ci]"
+          git push
