@@ -70,13 +70,8 @@ private fun splitIntoSentences(text: String): List<String> {
 
 /** 拆分后每个气泡要显示的头像；为 null 表示不显示 */
 sealed interface SegmentAvatarSpec {
-    /** 用户头像 */
     data class User(val avatar: Avatar, val nickname: String) : SegmentAvatarSpec
-
-    /** 助手头像 */
     data class AssistantAvatar(val assistant: Assistant) : SegmentAvatarSpec
-
-    /** 模型图标 */
     data class Model(val modelId: String) : SegmentAvatarSpec
 }
 
@@ -110,8 +105,9 @@ internal fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
 /**
  * 按模式渲染一个气泡组。
  *
- * 每个气泡旁边都带一个头像，且只带这一个；外层不再重复画，
- * 图片行自己画自己的，保证一个气泡后面只有一个头像。
+ * 不拆分时这里完全不画头像，交给外层 ChatMessage 画那一个；
+ * 拆分时每段自己带一个，外层因为见下 hideSideAvatar 为 true 而让位。
+ * 两种情况下每条消息都只有一个头像。
  */
 @Composable
 fun SplitBubbleColumn(
@@ -129,41 +125,26 @@ fun SplitBubbleColumn(
     avatarLoading: Boolean = false,
     content: @Composable (String) -> Unit,
 ) {
-    val isRight = alignment == Alignment.End
-    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
-    val bodyMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
-
     if (!mode.isEnabled) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = if (isRight) Arrangement.End else Arrangement.Start,
+        BubbleSurface(
+            imagePath = imagePath,
+            cornerRadius = cornerRadius,
+            color = color,
+            overlayEnabled = overlayEnabled,
+            bubbleAlpha = bubbleAlpha,
+            maxWidth = maxWidth,
+            animate = true,
+            onClick = onClick,
         ) {
-            if (segmentAvatar != null && !isRight) {
-                SegmentAvatarView(segmentAvatar, avatarLoading)
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            BubbleSurface(
-                imagePath = imagePath,
-                cornerRadius = cornerRadius,
-                color = color,
-                overlayEnabled = overlayEnabled,
-                bubbleAlpha = bubbleAlpha,
-                maxWidth = bodyMaxWidth,
-                animate = true,
-                onClick = onClick,
-            ) {
-                content(text)
-            }
-            if (segmentAvatar != null && isRight) {
-                Spacer(modifier = Modifier.width(8.dp))
-                SegmentAvatarView(segmentAvatar, avatarLoading)
-            }
+            content(text)
         }
         return
     }
 
     val segments = remember(text, mode) { splitByMode(text, mode) }
+    val isRightSide = alignment == Alignment.End
+    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
+    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -174,9 +155,9 @@ fun SplitBubbleColumn(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
-                horizontalArrangement = if (isRight) Arrangement.End else Arrangement.Start,
+                horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
             ) {
-                if (segmentAvatar != null && !isRight) {
+                if (segmentAvatar != null && !isRightSide) {
                     SegmentAvatarView(segmentAvatar, avatarLoading)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -186,12 +167,12 @@ fun SplitBubbleColumn(
                     color = color,
                     overlayEnabled = overlayEnabled,
                     bubbleAlpha = bubbleAlpha,
-                    maxWidth = bodyMaxWidth,
+                    maxWidth = segmentMaxWidth,
                     onClick = onClick,
                 ) {
                     content(segment)
                 }
-                if (segmentAvatar != null && isRight) {
+                if (segmentAvatar != null && isRightSide) {
                     Spacer(modifier = Modifier.width(8.dp))
                     SegmentAvatarView(segmentAvatar, avatarLoading)
                 }
