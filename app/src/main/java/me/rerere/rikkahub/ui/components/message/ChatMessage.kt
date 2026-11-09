@@ -5,18 +5,15 @@
  */
 
 package me.rerere.rikkahub.ui.components.message
- 
+
 import android.content.Intent
-import android.media.MediaPlayer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Icon
@@ -39,11 +35,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -64,11 +58,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
@@ -88,15 +80,12 @@ import me.rerere.ai.ui.UIMessagePart
 import me.rerere.ai.ui.isEmptyUIMessage
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.File02
-import me.rerere.hugeicons.stroke.PlayCircle
-import me.rerere.hugeicons.stroke.PauseCircle
 import me.rerere.hugeicons.stroke.Video01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.AssistantAffectScope
 import me.rerere.rikkahub.data.model.Avatar
-import me.rerere.rikkahub.data.model.BubbleSplitMode
 import me.rerere.rikkahub.data.model.MessageNode
 import me.rerere.rikkahub.data.model.replaceRegexes
 import me.rerere.rikkahub.data.datastore.ChatFontFamily
@@ -119,7 +108,7 @@ import me.rerere.rikkahub.utils.urlDecode
 import androidx.compose.ui.text.font.Font
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
- 
+
 private val ZipMarkRegex = Regex("\\[zip:[^\\]]+\\]", RegexOption.IGNORE_CASE)
 
 @Composable
@@ -175,12 +164,20 @@ fun ChatMessage(
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     val isUserMessage = message.role == MessageRole.USER
+
+    // 纯文本、且没开拆分时才由外层画那唯一一个头像
+    val sideAvatarVisible = remember(message.parts, assistant) {
+        message.parts.all { it is UIMessagePart.Text } &&
+            !message.parts.isEmptyUIMessage() &&
+            !shouldHideSideAvatar(isUserMessage, assistant)
+    }
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Top,
     ) {
-        if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
+        if (!isUserMessage && sideAvatarVisible) {
             ChatMessageSideAvatar(
                 message = message,
                 model = model,
@@ -194,60 +191,56 @@ fun ChatMessage(
             horizontalAlignment = if (isUserMessage) Alignment.End else Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-        ProvideTextStyle(textStyle) {
-            MessagePartsBlock(
-                assistant = assistant,
-                role = message.role,
-                parts = message.parts,
-                annotations = message.annotations,
-                loading = loading,
-                model = model,
-                onToolApproval = onToolApproval,
-                onToolAnswer = onToolAnswer,
-                onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
-            )
- 
-            message.translation?.let { translation ->
-                CollapsibleTranslationText(
-                    content = translation,
-                    onClickCitation = {}
+            ProvideTextStyle(textStyle) {
+                MessagePartsBlock(
+                    assistant = assistant,
+                    role = message.role,
+                    parts = message.parts,
+                    annotations = message.annotations,
+                    loading = loading,
+                    model = model,
+                    onToolApproval = onToolApproval,
+                    onToolAnswer = onToolAnswer,
+                    onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
                 )
+
+                message.translation?.let { translation ->
+                    CollapsibleTranslationText(
+                        content = translation,
+                        onClickCitation = {}
+                    )
+                }
             }
-        }
- 
-        val showActions = if (lastMessage) {
-            !loading
-        } else {
-            message.parts.isEmptyUIMessage().not()
-        }
- 
-        AnimatedVisibility(
-            visible = showActions,
-            enter = slideInVertically { it / 2 } + fadeIn(),
-            exit = slideOutVertically { it / 2 } + fadeOut()
-        ) {
-            Column(
-                modifier = Modifier.animateContentSize()
+
+            val showActions = if (lastMessage) {
+                !loading
+            } else {
+                message.parts.isEmptyUIMessage().not()
+            }
+
+            AnimatedVisibility(
+                visible = showActions,
+                enter = slideInVertically { it / 2 } + fadeIn(),
+                exit = slideOutVertically { it / 2 } + fadeOut()
             ) {
-                ChatMessageActionButtons(
-                    message = message,
-                    onRegenerate = onRegenerate,
-                    node = node,
-                    onUpdate = onUpdate,
-                    onOpenActionSheet = {
-                        showActionsSheet = true
-                    },
-                    onTranslate = onTranslate,
-                    onClearTranslation = onClearTranslation
-                )
+                Column(modifier = Modifier.animateContentSize()) {
+                    ChatMessageActionButtons(
+                        message = message,
+                        onRegenerate = onRegenerate,
+                        node = node,
+                        onUpdate = onUpdate,
+                        onOpenActionSheet = { showActionsSheet = true },
+                        onTranslate = onTranslate,
+                        onClearTranslation = onClearTranslation
+                    )
+                }
+            }
+
+            ProvideTextStyle(textStyle) {
+                ChatMessageNerdLine(message = message)
             }
         }
- 
-        ProvideTextStyle(textStyle) {
-            ChatMessageNerdLine(message = message)
-        }
-    }
-        if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {
+        if (isUserMessage && sideAvatarVisible) {
             Spacer(modifier = Modifier.width(8.dp))
             ChatMessageSideUserAvatar(
                 message = message,
@@ -264,9 +257,7 @@ fun ChatMessage(
             onShare = onShare,
             onFork = onFork,
             model = model,
-            onSelectAndCopy = {
-                showSelectCopySheet = true
-            },
+            onSelectAndCopy = { showSelectCopySheet = true },
             isFavorite = isFavorite,
             onToggleFavorite = onToggleFavorite,
             onWebViewPreview = {
@@ -283,18 +274,14 @@ fun ChatMessage(
                     navController.navigate(Screen.WebView(content = htmlContent.base64Encode()))
                 }
             },
-            onDismissRequest = {
-                showActionsSheet = false
-            }
+            onDismissRequest = { showActionsSheet = false }
         )
     }
- 
+
     if (showSelectCopySheet) {
         ChatMessageCopySheet(
             message = message,
-            onDismissRequest = {
-                showSelectCopySheet = false
-            }
+            onDismissRequest = { showSelectCopySheet = false }
         )
     }
 }
@@ -314,16 +301,14 @@ private fun MessagePartsBlock(
 ) {
     val context = LocalContext.current
     val contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
- 
     val hapticFeedback = LocalHapticFeedback.current
     val displaySettings = LocalDisplaySettings.current
     val bubbleAlpha = 1f - displaySettings.chatBubbleTransparency / 100f
     val partsState by rememberUpdatedState(parts)
 
-    // 气泡最大宽度：跟随内容，但不超过屏幕宽度的 72%
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val maxBubbleWidth = remember(screenWidth) { (screenWidth * 0.72f).dp }
- 
+
     val handleClickCitation: (String) -> Unit = remember {
         handler@{ citationId ->
             partsState.forEach { part ->
@@ -353,10 +338,10 @@ private fun MessagePartsBlock(
                 }
             }
     }
- 
+
     val groupedParts = remember(parts) { parts.groupMessageParts() }
 
-    // 非文本段（图片/视频/音频/文档）旁边也画头像，不受拆分开关限制
+    // 图片/视频/音频/文档旁边的头像，不受拆分开关影响
     val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
         if (role == MessageRole.USER) {
             if (displaySettings.showUserAvatar) {
@@ -372,7 +357,21 @@ private fun MessagePartsBlock(
             }
         }
     }
-    val partAvatarLoading = loading
+
+    // 文本气泡内的头像：只有开了拆分才由气泡自画，否则交给外层
+    val textSegmentAvatar: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+        segmentAvatarFor(
+            isUser = role == MessageRole.USER,
+            assistant = assistant,
+            model = model,
+            userAvatar = displaySettings.userAvatar,
+            userNickname = displaySettings.userNickname,
+            showUserAvatar = displaySettings.showUserAvatar,
+            showModelIcon = displaySettings.showModelIcon,
+            showAssistantBubble = displaySettings.showAssistantBubble,
+        )
+    }
+
     groupedParts.fastForEach { block ->
         when (block) {
             is MessagePartBlock.ThinkingBlock -> {
@@ -394,7 +393,7 @@ private fun MessagePartsBlock(
                                     )
                                 }
                             }
- 
+
                             is ThinkingStep.ToolStep -> {
                                 key(step.tool.toolCallId.ifBlank { step.hashCode().toString() }) {
                                     ChatMessageToolStep(
@@ -410,21 +409,21 @@ private fun MessagePartsBlock(
                     }
                 }
             }
- 
+
             is MessagePartBlock.ContentBlock -> key(block.index) {
                 when (val part = block.part) {
                     is UIMessagePart.Text -> {
                         val displayText = remember(part.text) {
                             part.text.replace(ZipMarkRegex, "")
                         }
-                        val splitMode = assistant?.bubbleSplitMode ?: BubbleSplitMode.NONE
- 
+                        val splitMode = resolveSplitMode(role == MessageRole.USER, assistant)
+
                         SelectionContainer {
                             Column {
                                 if (role == MessageRole.USER) {
                                     SplitBubbleColumn(
                                         text = displayText,
-                                        mode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE,
+                                        mode = splitMode,
                                         imagePath = displaySettings.userBubbleImagePath,
                                         cornerRadius = displaySettings.bubbleCornerRadius.dp,
                                         color = displaySettings.userBubbleColor?.let { it.toComposeColor() }
@@ -434,9 +433,7 @@ private fun MessagePartsBlock(
                                         maxWidth = maxBubbleWidth,
                                         alignment = Alignment.End,
                                         onClick = { onUserMessageClick?.invoke() },
-                                        segmentAvatar = if (displaySettings.showUserAvatar)
-                                            SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
-                                        else null,
+                                        segmentAvatar = textSegmentAvatar,
                                     ) { segment ->
                                         MarkdownBlock(
                                             content = segment.replaceRegexes(
@@ -460,13 +457,7 @@ private fun MessagePartsBlock(
                                             bubbleAlpha = bubbleAlpha,
                                             maxWidth = maxBubbleWidth,
                                             alignment = Alignment.Start,
-                                            segmentAvatar = when {
-                                                !displaySettings.showModelIcon -> null
-                                                assistant != null && assistant.useAssistantAvatar ->
-                                                    SegmentAvatarSpec.AssistantAvatar(assistant)
-                                                model != null -> SegmentAvatarSpec.Model(model.modelId)
-                                                else -> null
-                                            },
+                                            segmentAvatar = textSegmentAvatar,
                                             avatarLoading = loading,
                                         ) { segment ->
                                             MarkdownBlock(
@@ -493,154 +484,125 @@ private fun MessagePartsBlock(
                             }
                         }
                     }
- 
+
                     is UIMessagePart.Video -> {
-                        PartRow(
-                            spec = partAvatarSpec,
-                            isUser = role == MessageRole.USER,
-                            loading = partAvatarLoading,
-                        ) {
-                        Surface(
-                            tonalElevation = 2.dp,
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.data = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.fileprovider",
-                                    part.url.toUri().toFile()
-                                )
-                                val chooserIndent = Intent.createChooser(intent, null)
-                                context.startActivity(chooserIndent)
-                            },
-                            modifier = Modifier,
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
-                                Icon(HugeIcons.Video01, null)
+                        PartRow(partAvatarSpec, role == MessageRole.USER, loading) {
+                            Surface(
+                                tonalElevation = 2.dp,
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.data = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        part.url.toUri().toFile()
+                                    )
+                                    context.startActivity(Intent.createChooser(intent, null))
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+                                    Icon(HugeIcons.Video01, null)
+                                }
                             }
                         }
-                    
-                    }}
- 
+                    }
+
                     is UIMessagePart.Audio -> {
-                        PartRow(
-                            spec = partAvatarSpec,
-                            isUser = role == MessageRole.USER,
-                            loading = partAvatarLoading,
-                        ) {
-                        AudioPlayerBubble(url = part.url)
-                    
-                    }}
- 
+                        PartRow(partAvatarSpec, role == MessageRole.USER, loading) {
+                            AudioPlayerBubble(url = part.url)
+                        }
+                    }
+
                     is UIMessagePart.VoiceMessage -> {
-                        PartRow(
-                            spec = partAvatarSpec,
-                            isUser = role == MessageRole.USER,
-                            loading = partAvatarLoading,
-                        ) {
-                        VoiceMessageBubble(
-                            voiceMessage = part,
-                            isUser = role == MessageRole.USER,
-                        )
-                    
-                    }}
- 
-                    is UIMessagePart.Image -> {
-                        PartRow(
-                            spec = partAvatarSpec,
-                            isUser = role == MessageRole.USER,
-                            loading = partAvatarLoading,
-                        ) {
-                        val isImageLoading =
-                            part.url.isBlank() || part.url.matches(Regex("^data:image/[^;]*;base64,\\s*$"))
-                        if (isImageLoading) {
-                            Box(
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .shimmer(isLoading = true)
-                            )
-                        } else {
-                            ZoomableAsyncImage(
-                                model = part.url,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .height(72.dp)
+                        PartRow(partAvatarSpec, role == MessageRole.USER, loading) {
+                            VoiceMessageBubble(
+                                voiceMessage = part,
+                                isUser = role == MessageRole.USER,
                             )
                         }
-                    
-                    }}
- 
-                    is UIMessagePart.Document -> {
-                        PartRow(
-                            spec = partAvatarSpec,
-                            isUser = role == MessageRole.USER,
-                            loading = partAvatarLoading,
-                        ) {
-                        Surface(
-                            tonalElevation = 2.dp,
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.data = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.fileprovider",
-                                    part.url.toUri().toFile()
+                    }
+
+                    is UIMessagePart.Image -> {
+                        PartRow(partAvatarSpec, role == MessageRole.USER, loading) {
+                            val isImageLoading =
+                                part.url.isBlank() || part.url.matches(Regex("^data:image/[^;]*;base64,\\s*$"))
+                            if (isImageLoading) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .shimmer(isLoading = true)
                                 )
-                                val chooserIndent = Intent.createChooser(intent, null)
-                                context.startActivity(chooserIndent)
-                            },
-                            modifier = Modifier,
-                            shape = RoundedCornerShape(50),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
-                        ) {
-                            ProvideTextStyle(MaterialTheme.typography.labelSmall) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    when (part.mime) {
-                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> {
-                                            Icon(
-                                                painter = painterResource(R.drawable.docx),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
- 
-                                        "application/pdf" -> {
-                                            Icon(
+                            } else {
+                                ZoomableAsyncImage(
+                                    model = part.url,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .height(72.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    is UIMessagePart.Document -> {
+                        PartRow(partAvatarSpec, role == MessageRole.USER, loading) {
+                            Surface(
+                                tonalElevation = 2.dp,
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.data = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        part.url.toUri().toFile()
+                                    )
+                                    context.startActivity(Intent.createChooser(intent, null))
+                                },
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                ProvideTextStyle(MaterialTheme.typography.labelSmall) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        when (part.mime) {
+                                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ->
+                                                Icon(
+                                                    painter = painterResource(R.drawable.docx),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+
+                                            "application/pdf" -> Icon(
                                                 painter = painterResource(R.drawable.pdf),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(20.dp)
                                             )
-                                        }
- 
-                                        else -> {
-                                            Icon(
+
+                                            else -> Icon(
                                                 imageVector = HugeIcons.File02,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
+
+                                        Text(
+                                            text = part.fileName,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.widthIn(max = 200.dp)
+                                        )
                                     }
- 
-                                    Text(
-                                        text = part.fileName,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.widthIn(max = 200.dp)
-                                    )
                                 }
                             }
                         }
-                    
-                    }}
- 
+                    }
+
                     else -> {
                         // 跳过未知类型
                     }
@@ -648,11 +610,9 @@ private fun MessagePartsBlock(
             }
         }
     }
- 
+
     if (annotations.isNotEmpty()) {
-        Column(
-            modifier = Modifier.animateContentSize(),
-        ) {
+        Column(modifier = Modifier.animateContentSize()) {
             var expand by remember { mutableStateOf(false) }
             if (expand) {
                 ProvideTextStyle(
@@ -676,9 +636,7 @@ private fun MessagePartsBlock(
                         annotations.fastForEachIndexed { index, annotation ->
                             when (annotation) {
                                 is UIMessageAnnotation.UrlCitation -> {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Favicon(annotation.url, modifier = Modifier.size(20.dp))
                                         Text(
                                             text = buildAnnotatedString {
@@ -695,285 +653,14 @@ private fun MessagePartsBlock(
                     }
                 }
             }
-            TextButton(
-                onClick = {
-                    expand = !expand
-                }
-            ) {
+            TextButton(onClick = { expand = !expand }) {
                 Text(stringResource(R.string.citations_count, annotations.size))
             }
         }
     }
- 
+
     if (role == MessageRole.ASSISTANT) {
         EditedFilesList(parts = parts, assistant = assistant)
-    }
-}
-
-@Composable
-@Suppress("UnusedCrossTarget")
-internal fun AudioPlayerBubble(url: String) {
-    val context = LocalContext.current
-    var isPlaying by remember { mutableStateOf(false) }
-    var durationMs by remember { mutableIntStateOf(0) }
-    var currentMs by remember { mutableIntStateOf(0) }
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-    var isPrepared by remember { mutableStateOf(false) }
- 
-    val waveformBars = remember(url) {
-        val rnd = java.util.Random(url.hashCode().toLong())
-        List(40) { 0.15f + rnd.nextFloat() * 0.85f }
-    }
- 
-    val progress = if (durationMs > 0) currentMs.toFloat() / durationMs else 0f
- 
-    DisposableEffect(Unit) {
-        onDispose {
-            mediaPlayer?.release()
-            mediaPlayer = null
-        }
-    }
- 
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    currentMs = it.currentPosition
-                }
-            }
-            kotlinx.coroutines.delay(50)
-        }
-    }
- 
-    val animatedBars = remember { mutableStateOf(waveformBars) }
-    LaunchedEffect(isPlaying, progress) {
-        if (isPlaying) {
-            val rnd = java.util.Random()
-            val newBars = waveformBars.mapIndexed { index, base ->
-                val playedRatio = if (progress > 0f) index.toFloat() / waveformBars.size else 0f
-                if (playedRatio <= progress) {
-                    base
-                } else {
-                    base * (0.85f + rnd.nextFloat() * 0.3f)
-                }
-            }
-            animatedBars.value = newBars
-        } else {
-            animatedBars.value = waveformBars
-        }
-    }
- 
-    val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
- 
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(start = 4.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable {
-                    if (isPlaying) {
-                        mediaPlayer?.pause()
-                        isPlaying = false
-                    } else {
-                        if (mediaPlayer == null || !isPrepared) {
-                            val mp = MediaPlayer()
-                            try {
-                                val uri = android.net.Uri.parse(url)
-                                mp.setDataSource(context, uri)
-                                mp.prepare()
-                                durationMs = mp.duration
-                                mp.setOnCompletionListener {
-                                    isPlaying = false
-                                    currentMs = 0
-                                }
-                                mp.start()
-                                isPlaying = true
-                                isPrepared = true
-                                mediaPlayer = mp
-                            } catch (e: Exception) {
-                                mp.release()
-                            }
-                        } else {
-                            mediaPlayer?.start()
-                            isPlaying = true
-                        }
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = if (isPlaying) HugeIcons.PauseCircle else HugeIcons.PlayCircle,
-                contentDescription = if (isPlaying) "Pause" else "Play",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(22.dp)
-            )
-        }
- 
-        Spacer(modifier = Modifier.width(8.dp))
- 
-        Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .height(28.dp)
-                .clickable { }
-        ) {
-            val barCount = animatedBars.value.size
-            val totalWidth = size.width
-            val barWidth = 2.5f
-            val gap = (totalWidth - barWidth * barCount) / (barCount - 1).coerceAtLeast(1)
-            val playedBarCount = (progress * barCount).toInt()
- 
-            animatedBars.value.forEachIndexed { index, barRatio ->
-                val barHeight = size.height * barRatio.coerceIn(0.15f, 1f)
-                val x = index * (barWidth + gap)
-                val y = (size.height - barHeight) / 2f
-                drawRoundRect(
-                    color = if (index < playedBarCount) activeColor else inactiveColor,
-                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                    size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.5f, 1.5f)
-                )
-            }
-        }
- 
-        Spacer(modifier = Modifier.width(6.dp))
- 
-        val displaySec = if (isPlaying || currentMs > 0) {
-            val remaining = (durationMs - currentMs) / 1000
-            remaining.coerceAtLeast(0)
-        } else {
-            durationMs / 1000
-        }
-        Text(
-            text = String.format("%d:%02d", displaySec / 60, displaySec % 60),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            fontSize = 13.sp,
-            modifier = Modifier.width(36.dp),
-            textAlign = TextAlign.End
-        )
-    }
-}
- 
-@Composable
-internal fun VoiceMessageBubble(
-    voiceMessage: UIMessagePart.VoiceMessage,
-    isUser: Boolean,
-) {
-    val context = LocalContext.current
-    var isPlaying by remember { mutableStateOf(false) }
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
- 
-    val durationSec = (voiceMessage.duration / 1000).coerceAtLeast(1)
- 
-    DisposableEffect(voiceMessage.url) {
-        onDispose {
-            mediaPlayer?.release()
-            mediaPlayer = null
-        }
-    }
- 
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            mediaPlayer?.let {
-                if (!it.isPlaying) {
-                    isPlaying = false
-                }
-            }
-            kotlinx.coroutines.delay(50)
-        }
-    }
- 
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (isUser) MaterialTheme.colorScheme.secondaryContainer
-        else MaterialTheme.colorScheme.tertiaryContainer,
-        onClick = {
-            if (isPlaying) {
-                mediaPlayer?.let {
-                    it.stop()
-                    it.reset()
-                }
-                isPlaying = false
-            } else {
-                try {
-                    val mp = MediaPlayer()
-                    mp.setDataSource(voiceMessage.url)
-                    mp.prepare()
-                    mp.setOnCompletionListener {
-                        isPlaying = false
-                    }
-                    mp.start()
-                    isPlaying = true
-                    mediaPlayer?.release()
-                    mediaPlayer = mp
-                } catch (e: Exception) {
-                    // 文件可能不存在
-                }
-            }
-        },
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) HugeIcons.PauseCircle else HugeIcons.PlayCircle,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                val waveformBars = remember(voiceMessage.url) {
-                    val rnd = java.util.Random(voiceMessage.url.hashCode().toLong())
-                    List(24) { 0.2f + rnd.nextFloat() * 0.8f }
-                }
-                val waveformColor = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
-                Canvas(modifier = Modifier.width(60.dp).height(24.dp)) {
-                    val barCount = waveformBars.size
-                    val barWidth = 2.5f
-                    val gap = (size.width - barWidth * barCount) / (barCount - 1).coerceAtLeast(1)
-                    waveformBars.forEachIndexed { index, barRatio ->
-                        val barHeight = size.height * barRatio.coerceIn(0.2f, 1f)
-                        val x = index * (barWidth + gap)
-                        val y = (size.height - barHeight) / 2f
-                        drawRoundRect(
-                            color = waveformColor,
-                            topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                            size = Size(barWidth, barHeight),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.5f, 1.5f)
-                        )
-                    }
-                }
-                Text(
-                    text = "${durationSec}″",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
-            if (voiceMessage.transcript.isNotBlank()) {
-                Text(
-                    text = voiceMessage.transcript,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 4.dp),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
     }
 }
 
@@ -1020,62 +707,6 @@ private fun ChatMessageSideUserAvatar(
                 modifier = Modifier.size(36.dp),
                 value = avatar,
                 loading = false,
-            )
-        }
-    }
-}
-
-
-/** 非文本段（图片/视频/文档）外框：带上头像并保证最大宽度 */
-@Composable
-private fun PartRow(
-    spec: SegmentAvatarSpec?,
-    isUser: Boolean,
-    loading: Boolean,
-    content: @Composable () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
-    ) {
-        if (spec != null && !isUser) {
-            PartAvatarView(spec, loading)
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        content()
-        if (spec != null && isUser) {
-            Spacer(modifier = Modifier.width(8.dp))
-            PartAvatarView(spec, loading)
-        }
-    }
-}
-
-@Composable
-private fun PartAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
-    Box(
-        modifier = Modifier.width(SegmentAvatarWidth),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        when (spec) {
-            is SegmentAvatarSpec.User -> UIAvatar(
-                name = spec.nickname,
-                modifier = Modifier.size(SegmentAvatarWidth),
-                value = spec.avatar,
-                loading = false,
-            )
-
-            is SegmentAvatarSpec.AssistantAvatar -> UIAvatar(
-                name = spec.assistant.name,
-                modifier = Modifier.size(SegmentAvatarWidth),
-                value = spec.assistant.avatar,
-                loading = loading,
-            )
-
-            is SegmentAvatarSpec.Model -> AutoAIIcon(
-                name = spec.modelId,
-                modifier = Modifier.size(SegmentAvatarWidth),
-                loading = loading,
             )
         }
     }
