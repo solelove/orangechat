@@ -64,7 +64,7 @@ sealed interface SegmentAvatarSpec {
 }
 
 @Composable
-private fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
+internal fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
     Box(modifier = Modifier.width(SegmentAvatarWidth), contentAlignment = Alignment.TopCenter) {
         when (spec) {
             is SegmentAvatarSpec.User -> UIAvatar(
@@ -93,10 +93,10 @@ private fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
 /**
  * 按模式渲染一个气泡组。
  *
- * - 模式为 NONE 时直接渲染一个整体气泡（保持原有行为）
- * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡，一句一框
- * - 头像统一由外层 ChatMessage 画一次，这里不再逐段画头像，
- *   否则一条消息后面会跟着好几个头像，图片行也会再多一个
+ * - 模式为 NONE 时直接渲染一个整体气泡
+ * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡
+ * - 每个气泡旁边都带一个头像，且只带这一个（外层不再重复画，
+ *   图片行自己画自己的），保证一个气泡后面只有一个头像
  * - 气泡宽度跟随内容，最宽不超过 [maxWidth]
  */
 @Composable
@@ -116,23 +116,44 @@ fun SplitBubbleColumn(
     content: @Composable (String) -> Unit,
 ) {
     if (!mode.isEnabled) {
-        BubbleSurface(
-            imagePath = imagePath,
-            cornerRadius = cornerRadius,
-            color = color,
-            overlayEnabled = overlayEnabled,
-            bubbleAlpha = bubbleAlpha,
-            maxWidth = maxWidth,
-            animate = true,
-            onClick = onClick,
+        val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
+        val bodyMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
+        val isRight = alignment == Alignment.End
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = if (isRight) Arrangement.End else Arrangement.Start,
         ) {
-            content(text)
+            if (segmentAvatar != null && !isRight) {
+                SegmentAvatarView(segmentAvatar, avatarLoading)
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            BubbleSurface(
+                imagePath = imagePath,
+                cornerRadius = cornerRadius,
+                color = color,
+                overlayEnabled = overlayEnabled,
+                bubbleAlpha = bubbleAlpha,
+                maxWidth = bodyMaxWidth,
+                animate = true,
+                onClick = onClick,
+            ) {
+                content(text)
+            }
+            if (segmentAvatar != null && isRight) {
+                Spacer(modifier = Modifier.width(8.dp))
+                SegmentAvatarView(segmentAvatar, avatarLoading)
+            }
         }
         return
     }
 
     // 只在文本或模式变化时重新切分
     val segments = remember(text, mode) { splitByMode(text, mode) }
+
+    // 扣掉头像占位后的可用宽度
+    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
+    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
     val isRightSide = alignment == Alignment.End
 
     Column(
@@ -146,16 +167,24 @@ fun SplitBubbleColumn(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
             ) {
+                if (segmentAvatar != null && !isRightSide) {
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 BubbleSurface(
                     imagePath = imagePath,
                     cornerRadius = cornerRadius,
                     color = color,
                     overlayEnabled = overlayEnabled,
                     bubbleAlpha = bubbleAlpha,
-                    maxWidth = maxWidth,
+                    maxWidth = segmentMaxWidth,
                     onClick = onClick,
                 ) {
                     content(segment)
+                }
+                if (segmentAvatar != null && isRightSide) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    SegmentAvatarView(segmentAvatar, avatarLoading)
                 }
             }
         }
