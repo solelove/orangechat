@@ -492,7 +492,6 @@ fun ChatInput(
     ) {
         Column(
             modifier = modifier
-                .imePadding()
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
