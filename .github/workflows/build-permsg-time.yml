@@ -40,65 +40,29 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
-          if [ -f web-ui/pnpm-lock.yaml ]; then pnpm --dir web-ui install --frozen-lockfile
-          elif [ -f web-ui/package.json ]; then pnpm --dir web-ui install
-          else echo skip; fi
-
       - name: keystore
         run: |
           keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
           printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-permsg-${{ hashFiles('**/*.gradle*') }}
-
       - name: Build
         run: |
           chmod +x gradlew
-          set -o pipefail
-          ./gradlew assembleRelease 2>&1 | tee build.log
+          set +e
+          ./gradlew assembleRelease > build.log 2>&1
+          echo "EXIT=$?" > exit_code.txt
+          set -e
+          cat exit_code.txt
+          tail -n 30 build.log || true
 
-      - name: Dump error to repo
-        if: failure()
+      - name: Push full log
+        if: always()
         run: |
-          {
-            echo "=== kotlin errors ==="
-            grep -E "^e: " build.log | head -60 || true
-            echo "=== what went wrong ==="
-            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -60 || true
-            echo "=== tail ==="
-            tail -n 40 build.log || true
-          } > ci-timeerr.log
-          cat ci-timeerr.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
-          git add -f ci-timeerr.log
-          git commit -m "ci: timeerr [skip ci]" || true
-          git push origin HEAD:master || true
-
-      - name: Upload artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: orangechat-permsg-time
-          path: app/build/outputs/apk/release/*.apk
-
-      - name: Publish
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="permsg-time-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --title "每消息注入时间" --notes "基于 223-avatar-202611090805 (77f389dce)。只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条和头像不碰。" app/build/outputs/apk/release/*.apk
+          git checkout master -- . 2>/dev/null || true
+          cp build.log ci-build-full.log 2>/dev/null || echo "no build.log" > ci-build-full.log
+          cp exit_code.txt ci-exit-code.txt 2>/dev/null || echo "none" > ci-exit-code.txt
+          git add -f ci-build-full.log ci-exit-code.txt
+          git commit -m "ci: full build log [skip ci]" || echo nothing-to-commit
+          git push origin HEAD:master || echo push-failed
