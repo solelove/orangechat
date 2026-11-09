@@ -16,69 +16,21 @@ jobs:
           fetch-depth: 0
 
       - name: Verify base
+        run: echo "commit=$(git rev-parse HEAD)"
+
+      - name: Fetch patch script
         run: |
-          echo "commit=$(git rev-parse HEAD)"
-          test "$(git rev-parse HEAD)" = "77f389dce52d53ddacce4f07ca885a2e3bcbf005" && echo "base OK" || { echo "base MISMATCH"; exit 1; }
+          git fetch origin master --depth 1
+          git show origin/master:scripts/patch_permsg_time.py > patch_permsg_time.py
+          wc -l patch_permsg_time.py
 
-      - name: Apply time injection patch
+      - name: Apply patch
         run: |
-          cat > /tmp/patch.py <<'PYEOF'
-import io, sys
-
-P = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
-s = io.open(P, encoding="utf-8").read()
-
-OLD = (
-    "            val timeReminder = TimeReminderTransformer.buildReminder(messages)\n"
-    "            val systemWithTime = if (timeReminder != null) {\n"
-    "                system + \"\\n\\n\" + timeReminder\n"
-    "            } else system\n"
-    "            if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))\n"
-    "            addAll(messages.limitContext(assistant.contextMessageSize))"
-)
-
-NEW = (
-    "            val timeReminder = TimeReminderTransformer.buildReminder(messages)\n"
-    "            val systemWithTime = if (timeReminder != null) {\n"
-    "                system + \"\\n\\n\" + timeReminder\n"
-    "            } else system\n"
-    "            if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))\n"
-    "            addAll(\n"
-    "                messages.limitContext(assistant.contextMessageSize).map { msg ->\n"
-    "                    val stamp = \"<time_reminder>Current time: \" + String.format(\n"
-    "                        java.util.Locale.US,\n"
-    "                        \"%04d-%02d-%02d %02d:%02d\",\n"
-    "                        msg.createdAt.year,\n"
-    "                        msg.createdAt.monthNumber,\n"
-    "                        msg.createdAt.dayOfMonth,\n"
-    "                        msg.createdAt.hour,\n"
-    "                        msg.createdAt.minute,\n"
-    "                    ) + \"</time_reminder>\\n\"\n"
-    "                    msg.copy(parts = listOf(UIMessagePart.Text(stamp)) + msg.parts)\n"
-    "                }\n"
-    "            )"
-)
-
-if "msg.copy(parts = listOf(UIMessagePart.Text(stamp)) + msg.parts)" in s:
-    print("ALREADY PATCHED")
-    sys.exit(0)
-
-if OLD not in s:
-    print("ANCHOR MISSING")
-    sys.exit(1)
-
-s = s.replace(OLD, NEW, 1)
-io.open(P, "w", encoding="utf-8", newline="").write(s)
-print("PATCHED OK")
-PYEOF
-          python3 /tmp/patch.py
-          echo "=== verify patched lines ==="
-          grep -n -A2 -B2 "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 patch_permsg_time.py
+          grep -n "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Show diff
-        run: |
-          git --no-pager diff --stat
-          git --no-pager diff
+        run: git --no-pager diff
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -102,17 +54,8 @@ PYEOF
 
       - name: keystore
         run: |
-          keytool -genkeypair -v \
-            -keystore app/release.keystore \
-            -storepass orangechat2026 -keypass orangechat2026 \
-            -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 \
-            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
-          cat > local.properties <<'EOF'
-          storeFile=release.keystore
-          storePassword=orangechat2026
-          keyAlias=orangechat
-          keyPassword=orangechat2026
-          EOF
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
 
       - uses: actions/cache@v4
         with:
@@ -158,7 +101,4 @@ PYEOF
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="permsg-time-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" \
-            --title "每消息注入时间" \
-            --notes "基于 223-avatar-202611090805 (77f389dce)。只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条和头像不碰。" \
-            app/build/outputs/apk/release/*.apk
+          gh release create "$TAG" --title "每消息注入时间" --notes "基于 223-avatar-202611090805 (77f389dce)。只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条和头像不碰。" app/build/outputs/apk/release/*.apk
