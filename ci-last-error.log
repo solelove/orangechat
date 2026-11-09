@@ -1,4 +1,4 @@
-run=42624764900 sha=090f3d2cb500c59f432aefeeb98f7aa1508202a4
+run=42627017405 sha=b668997caf278dd3429eb3c4edcb01c5a4db484c
 === kotlin errors ===
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 Argument type mismatch: actual type is 'Assistant?', but 'Boolean' was expected.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showModelIcon'.
@@ -186,5 +186,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 
 ==============================================================================
 
-BUILD FAILED in 1m 54s
+BUILD FAILED in 2m 40s
 565 actionable tasks: 299 executed, 266 from cache
