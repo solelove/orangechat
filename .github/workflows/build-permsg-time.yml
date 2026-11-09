@@ -16,21 +16,9 @@ jobs:
           fetch-depth: 0
 
       - name: Verify base
-        run: echo "commit=$(git rev-parse HEAD)"
-
-      - name: Fetch patch script
         run: |
-          git fetch origin master --depth 1
-          git show origin/master:scripts/patch_permsg_time.py > patch_permsg_time.py
-          wc -l patch_permsg_time.py
-
-      - name: Apply patch
-        run: |
-          python3 patch_permsg_time.py
-          grep -n "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
-
-      - name: Show diff
-        run: git --no-pager diff
+          echo "commit=$(git rev-parse HEAD)"
+          grep -n "时间上下文无条件注入" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -72,7 +60,7 @@ jobs:
 
       - name: Verify APK
         run: |
-          ls -lh app/build/outputs/apk/release/ || true
+          ls -lh app/build/outputs/apk/release/
           test -n "$(find app/build/outputs/apk/release -name '*.apk' -print -quit)" && echo "APK OK" || { echo "NO APK"; exit 1; }
 
       - name: Upload artifact
@@ -87,5 +75,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="permsg-time-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --title "每消息注入时间" --notes "基于 223-avatar-202611090805 (77f389dce)。只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条和头像不碰。" app/build/outputs/apk/release/*.apk
+          TAG="timefull-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" --title "时间上下文无条件注入" --notes "基于 77f389dce。GenerationHandler 已内置时间上下文无条件注入（年月日时分），界面不显示。头像与时间条未改动。" app/build/outputs/apk/release/*.apk
