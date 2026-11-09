@@ -22,63 +22,63 @@ jobs:
 
       - name: Apply time injection patch
         run: |
-          FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
-          python3 - "$FILE" <<'PY'
-          import io, sys
-          p = sys.argv[1]
-          s = io.open(p, encoding='utf-8').read()
+          cat > /tmp/patch.py <<'PYEOF'
+import io, sys
 
-          old = '''            // 时间上下文无条件注入 与界面显示解耦
-                      val timeReminder = TimeReminderTransformer.buildReminder(messages)
-                      val systemWithTime = if (timeReminder != null) {
-                          system + "\\n\\n" + timeReminder
-                      } else system
-                      if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))
-                      addAll(messages.limitContext(assistant.contextMessageSize))'''
+P = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+s = io.open(P, encoding="utf-8").read()
 
-          new = '''            // 时间上下文无条件注入 与界面显示解耦
-                      val timeReminder = TimeReminderTransformer.buildReminder(messages)
-                      val systemWithTime = if (timeReminder != null) {
-                          system + "\\n\\n" + timeReminder
-                      } else system
-                      if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))
-                      // 每条消息正文前强制带上自己的时间 只改发给模型的这份 界面不动
-                      addAll(
-                          messages.limitContext(assistant.contextMessageSize).map { msg ->
-                              val stamp = "<time_reminder>Current time: " +
-                                  String.format(
-                                      java.util.Locale.US,
-                                      "%04d-%02d-%02d %02d:%02d",
-                                      msg.createdAt.year,
-                                      msg.createdAt.monthNumber,
-                                      msg.createdAt.dayOfMonth,
-                                      msg.createdAt.hour,
-                                      msg.createdAt.minute,
-                                  ) +
-                                  "</time_reminder>\\n"
-                              msg.copy(
-                                  parts = listOf(UIMessagePart.Text(stamp)) + msg.parts
-                              )
-                          }
-                      )'''
+OLD = (
+    "            val timeReminder = TimeReminderTransformer.buildReminder(messages)\n"
+    "            val systemWithTime = if (timeReminder != null) {\n"
+    "                system + \"\\n\\n\" + timeReminder\n"
+    "            } else system\n"
+    "            if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))\n"
+    "            addAll(messages.limitContext(assistant.contextMessageSize))"
+)
 
-          if new in s:
-              print("already patched")
-              sys.exit(0)
-          if old not in s:
-              print("ANCHOR MISSING")
-              print("----- looking for -----")
-              print(old)
-              sys.exit(1)
-          s = s.replace(old, new, 1)
-          io.open(p, 'w', encoding='utf-8', newline='').write(s)
-          print("PATCHED")
-          PY
+NEW = (
+    "            val timeReminder = TimeReminderTransformer.buildReminder(messages)\n"
+    "            val systemWithTime = if (timeReminder != null) {\n"
+    "                system + \"\\n\\n\" + timeReminder\n"
+    "            } else system\n"
+    "            if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))\n"
+    "            addAll(\n"
+    "                messages.limitContext(assistant.contextMessageSize).map { msg ->\n"
+    "                    val stamp = \"<time_reminder>Current time: \" + String.format(\n"
+    "                        java.util.Locale.US,\n"
+    "                        \"%04d-%02d-%02d %02d:%02d\",\n"
+    "                        msg.createdAt.year,\n"
+    "                        msg.createdAt.monthNumber,\n"
+    "                        msg.createdAt.dayOfMonth,\n"
+    "                        msg.createdAt.hour,\n"
+    "                        msg.createdAt.minute,\n"
+    "                    ) + \"</time_reminder>\\n\"\n"
+    "                    msg.copy(parts = listOf(UIMessagePart.Text(stamp)) + msg.parts)\n"
+    "                }\n"
+    "            )"
+)
+
+if "msg.copy(parts = listOf(UIMessagePart.Text(stamp)) + msg.parts)" in s:
+    print("ALREADY PATCHED")
+    sys.exit(0)
+
+if OLD not in s:
+    print("ANCHOR MISSING")
+    sys.exit(1)
+
+s = s.replace(OLD, NEW, 1)
+io.open(P, "w", encoding="utf-8", newline="").write(s)
+print("PATCHED OK")
+PYEOF
+          python3 /tmp/patch.py
+          echo "=== verify ==="
+          grep -n "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Show diff
         run: |
           git --no-pager diff --stat
-          git --no-pager diff | head -80
+          git --no-pager diff
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
