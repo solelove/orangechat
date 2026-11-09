@@ -1,0 +1,38 @@
+name: apply-time-ui
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: write patcher
+        run: |
+          cat > /tmp/p.py <<'EOF'
+import io, sys
+
+def rw(p, pairs):
+    s = io.open(p, encoding='utf-8').read()
+    for old, new in pairs:
+        if old not in s:
+            print('MISS in', p, '->', old[:60])
+            sys.exit(1)
+        s = s.replace(old, new, 1)
+    io.open(p, 'w', encoding='utf-8').write(s)
+    print('OK', p)
+
+P1 = 'app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt'
+old1 = '    val bubbleImageOverlayEnabled: Boolean = false, // 关=纯图片, 开=图片+主题色遮罩\n)'
+new1 = '    val bubbleImageOverlayEnabled: Boolean = false, // 关=纯图片, 开=图片+主题色遮罩\n    val showMessageTimeLabel: Boolean = true,\n    val showChatTimeHeader: Boolean = false,\n)'
+rw(P1, [(old1, new1)])
+EOF
+      - name: run patcher
+        run: python3 /tmp/p.py
+      - name: commit
+        run: |
+          git config user.name solelove
+          git config user.email 19372340679@163.com
+          git add -A
+          git commit -m "feat(ui): 时间显示开关字段" || echo nothing
+          git push
