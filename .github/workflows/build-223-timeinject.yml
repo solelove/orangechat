@@ -1,0 +1,131 @@
+name: Build v2.2.3 + Time Inject
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v2.2.3
+          fetch-depth: 0
+
+      - name: Verify base is v2.2.3
+        run: |
+          echo "commit=$(git rev-parse HEAD)"
+          git rev-parse HEAD | grep -q 7b041d773085f87ef6dfc1707c079c5ced96244d && echo "base OK" || echo "base MISMATCH"
+
+      - name: Patch time injection
+        run: |
+          FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 - "$FILE" <<'PY'
+          import io, sys
+          p = sys.argv[1]
+          s = io.open(p, encoding='utf-8').read()
+          old = '''val timeReminder = if (assistant.enableTimeReminder) {
+                          TimeReminderTransformer.buildReminder(messages)
+                      } else null'''
+          new = '''// 时间上下文无条件注入 与界面显示解耦
+                      val timeReminder = TimeReminderTransformer.buildReminder(messages)'''
+          if new in s:
+              print("already patched"); sys.exit(0)
+          if old not in s:
+              print("anchor not found"); sys.exit(1)
+          s = s.replace(old, new)
+          io.open(p, 'w', encoding='utf-8', newline='').write(s)
+          print("patched")
+          PY
+          git --no-pager diff --stat || true
+          sed -n '550,560p' "$FILE"
+
+      - name: Init submodules
+        run: |
+          git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: Install web deps
+        run: |
+          if [ -f web-ui/pnpm-lock.yaml ]; then
+            pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then
+            pnpm --dir web-ui install
+          else
+            echo "no web-ui, skip"
+          fi
+
+      - name: Create keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -storepass orangechat2026 -keypass orangechat2026 \
+            -alias orangechat \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          cat > local.properties <<'EOF'
+          storeFile=release.keystore
+          storePassword=orangechat2026
+          keyAlias=orangechat
+          keyPassword=orangechat2026
+          EOF
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-223-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease 2>&1 | tee build.log
+
+      - name: Dump failure
+        if: failure()
+        run: |
+          {
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -60 || true
+            echo "=== tail ==="
+            tail -n 60 build.log || true
+          } > ci-last-error.log
+          cat ci-last-error.log
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-223-timeinject
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-timeinject-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "v2.2.3 + 时间注入" \
+            --notes "基于 v2.2.3 标签，仅改时间上下文无条件注入" \
+            app/build/outputs/apk/release/*.apk
