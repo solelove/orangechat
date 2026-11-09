@@ -22,14 +22,63 @@ jobs:
 
       - name: Apply time injection patch
         run: |
-          cat > /tmp/p.b64 <<'B64EOF'
-aW1wb3J0IGlvLCBzeXMKClRSID0gImFwcC9zcmMvbWFpbi9qYXZhL21lL3JlcmVyZS9yaWtrYWh1Yi9kYXRhL2FpL3RyYW5zZm9ybWVycy9UaW1lUmVtaW5kZXJUcmFuc2Zvcm1lci5rdCIKR0VOID0gImFwcC9zcmMvbWFpbi9qYXZhL21lL3JlcmVyZS9yaWtrYWh1Yi9kYXRhL2FpL0dlbmVyYXRpb25IYW5kbGVyLmt0IgoKZGVmIHJ3KHBhdGgsIHBhaXJzKToKICAgIHMgPSBpby5vcGVuKHBhdGgsIGVuY29kaW5nPSJ1dGYtOCIpLnJlYWQoKQogICAgb3JpZyA9IHMKICAgIGZvciBvbGQsIG5ldyBpbiBwYWlyczoKICAgICAgICBpZiBvbGQgaW4gczoKICAgICAgICAgICAgcyA9IHMucmVwbGFjZShvbGQsIG5ldywgMSkKICAgICAgICAgICAgcHJpbnQoIlBBVENIRUQ6IiwgcGF0aCkKICAgICAgICBlbGlmIG5ldyBpbiBzOgogICAgICAgICAgICBwcmludCgiQUxSRUFEWToiLCBwYXRoKQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIHByaW50KCJBTkNIT1IgTUlTU0lORzoiLCBwYXRoKQogICAgICAgICAgICBwcmludCgiLS0tIG5lZWRlZCAtLS0iKQogICAgICAgICAgICBwcmludChvbGQpCiAgICAgICAgICAgIHN5cy5leGl0KDEpCiAgICBpZiBzICE9IG9yaWc6CiAgICAgICAgaW8ub3BlbihwYXRoLCAidyIsIGVuY29kaW5nPSJ1dGYtOCIsIG5ld2xpbmU9IiIpLndyaXRlKHMpCgojIDEuIFRpbWVSZW1pbmRlclRyYW5zZm9ybWVyOiDljrvmjonnlKjkurrmtojmga8g5Y+q5L+d55WZ5bm05pyI5pel5pe25YiGCnJ3KFRSLCBbKAoiIiIiICAgIGZ1biBidWlsZFJlbWluZGVyKG1lc3NhZ2VzOiBMaXN0PFVJTWVzc2FnZT4pOiBTdHJpbmc/IHsKICAgICAgICB2YWwgdHogPSBUaW1lWm9uZS5jdXJyZW50U3lzdGVtRGVmYXVsdCgpCiAgICAgICAgdmFsIG5vdyA9IENsb2NrLlN5c3RlbS5ub3coKS50b0xvY2FsRGF0ZVRpbWUodHopCgogICAgICAgIC8vIOi3neS4iuS4gOadoSB1c2VyIOa2iOaBr+i/h+WOu+WkmuS5hTHvvJrnlKjnnJ/lrp4gbm93IOWHj+WOu+S4iuS4gOadoSB1c2VyIOeahCBjcmVhdGVkQXQKICAgICAgICB2YWwgdXNlck1lc3NhZ2VzID0gbWVzc2FnZXMuZmlsdGVyIHsgaXQucm9sZSA9PSBNZXNzYWdlUm9sZS5VU0VSIH0KICAgICAgICB2YWwgcHJldiA9IHVzZXJNZXNzYWdlcy5kcm9wTGFzdCgxKS5sYXN0T3JOdWxsKCk/LmNyZWF0ZWRBdAogICAgICAgIHZhbCBnYXBTZWNvbmRzID0gcHJldj8ubGV0IHsKICAgICAgICAgICAgKG5vdy50b0luc3RhbnQodHopIC0gaXQudG9JbnN0YW50KHR6KSkuaW5XaG9sZVNlY29uZHMKICAgICAgICB9ID8/OiAwTAoKICAgICAgICByZXR1cm4gYnVpbGRUaW1lUmVtaW5kZXJUZXh0KGdhcFNlY29uZHMudGFrZUlmIHsgaXQgPiA2MCB9LCBub3cpCiAgICB9IiIiLAoiIiIiICAgIC8qKiDlvZPliY3ml7bpl7TvvIzlubTmnIjml6XlkozlkbzlkbwgKi8KICAgIGZ1biBidWlsZFJlbWluZGVyKG1lc3NhZ2VzOiBMaXN0PFVJTWVzc2FnZT46IFN0cmluZz8gewogICAgICAgIHZhbCB0eiA9IFRpbWVab25lLmN1cnJlbnRTeXN0ZW1EZWZhdWx0KCkKICAgICAgICB2YWwgbm93ID0gQ2xvY2suU3lzdGVtLm5vdygpLnRvTG9jYWxEYXRlVGltZSh0eikKICAgICAgICByZXR1cm4gYnVpbGRUaW1lUmVtaW5kZXJUZXh0KG51bGwsIG5vdykKICAgIH0iIiIKKV0pCgojIDIuIOaXoOadoeS7tuazqOWFpe+8muavj+adoea2iOaBr+ato+aWh+WJjemdouaLvOS4iuiHquW3seeahOaXtumXtAojICAgIOWPqui/m+WFpSBpbnRlcm5hbE1lc3NhZ2Vz77yM55WM6Z2i5L2/55So55qEIG1lc3NhZ2VzIOS4jeWKqApydyhHRU4sIFsoCiIiIiAgICAgICAgICAgIC8vIOaXtumXtOS4iuS4i+aWh+aXoOadoeS7tuazqOWFpeS4jueVjOmdouaYvuekuuino+iApgogICAgICAgICAgICB2YWwgdGltZVJlbWluZGVyID0gVGltZVJlbWluZGVyVHJhbnNmb3JtZXIuYnVpbGRSZW1pbmRlcihtZXNzYWdlcykKICAgICAgICAgICAgdmFsIHN5c3RlbVdpdGhUaW1lID0gaWYgKHRpbWVSZW1pbmRlciAhPSBudWxsKSB7CiAgICAgICAgICAgICAgICBzeXN0ZW0gKyAiXG5cbiIgKyB0aW1lUmVtaW5kZXIKICAgICAgICAgICAgfSBlbHNlIHN5c3RlbQogICAgICAgICAgICBpZiAoc3lzdGVtV2l0aFRpbWUuaXNOb3RCbGFuaygpKSBhZGQoVUlNZXNzYWdlLnN5c3RlbShwcm9tcHQgPSBzeXN0ZW1XaXRoVGltZSkpCiAgICAgICAgICAgIGFkZEFsbChtZXNzYWdlcy5saW1pdENvbnRleHQoYXNzaXN0YW50LmNvbnRleHRNZXNzYWdlU2l6ZSkpIiIiLAoiIiIiICAgICAgICAgICAgLy8g5pe26Ze05peg5p2h5Lu25rOo5YWl77ya5q+P5p2h5raI5oGv5q2j5paH5YmN5ou85LiK6Ieq5bex55qE5pe26Ze077yM5Y+q6L+b5Y+R57uZ5qih5Z6L55qE5Lu96ZS577yM55WM6Z2i5LiN5YqoCiAgICAgICAgICAgIGlmIChzeXN0ZW0uaXNOb3RCbGFuaygpKSBhZGQoVUlNZXNzYWdlLnN5c3RlbShwcm9tcHQgPSBzeXN0ZW0pKQogICAgICAgICAgICBhZGRBbGwoCiAgICAgICAgICAgICAgICBtZXNzYWdlcy5saW1pdENvbnRleHQoYXNzaXN0YW50LmNvbnRleHRNZXNzYWdlU2l6ZSkKICAgICAgICAgICAgICAgICAgICAubWFwIHsgVGltZVJlbWluZGVyVHJhbnNmb3JtZXIuc3RhbXAoJCQkaXQpIH0KICAgICAgICAgICAgKSIiIgpdKQoKcHJpbnQoIkRP TkUiKQo=
-B64EOF
-          tr -d ' \n' < /tmp/p.b64 | base64 -d > /tmp/p.py
-          python3 /tmp/p.py
+          FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 - "$FILE" <<'PY'
+          import io, sys
+          p = sys.argv[1]
+          s = io.open(p, encoding='utf-8').read()
+
+          old = '''            // 时间上下文无条件注入 与界面显示解耦
+                      val timeReminder = TimeReminderTransformer.buildReminder(messages)
+                      val systemWithTime = if (timeReminder != null) {
+                          system + "\\n\\n" + timeReminder
+                      } else system
+                      if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))
+                      addAll(messages.limitContext(assistant.contextMessageSize))'''
+
+          new = '''            // 时间上下文无条件注入 与界面显示解耦
+                      val timeReminder = TimeReminderTransformer.buildReminder(messages)
+                      val systemWithTime = if (timeReminder != null) {
+                          system + "\\n\\n" + timeReminder
+                      } else system
+                      if (systemWithTime.isNotBlank()) add(UIMessage.system(prompt = systemWithTime))
+                      // 每条消息正文前强制带上自己的时间 只改发给模型的这份 界面不动
+                      addAll(
+                          messages.limitContext(assistant.contextMessageSize).map { msg ->
+                              val stamp = "<time_reminder>Current time: " +
+                                  String.format(
+                                      java.util.Locale.US,
+                                      "%04d-%02d-%02d %02d:%02d",
+                                      msg.createdAt.year,
+                                      msg.createdAt.monthNumber,
+                                      msg.createdAt.dayOfMonth,
+                                      msg.createdAt.hour,
+                                      msg.createdAt.minute,
+                                  ) +
+                                  "</time_reminder>\\n"
+                              msg.copy(
+                                  parts = listOf(UIMessagePart.Text(stamp)) + msg.parts
+                              )
+                          }
+                      )'''
+
+          if new in s:
+              print("already patched")
+              sys.exit(0)
+          if old not in s:
+              print("ANCHOR MISSING")
+              print("----- looking for -----")
+              print(old)
+              sys.exit(1)
+          s = s.replace(old, new, 1)
+          io.open(p, 'w', encoding='utf-8', newline='').write(s)
+          print("PATCHED")
+          PY
 
       - name: Show diff
-        run: git --no-pager diff --stat
+        run: |
+          git --no-pager diff --stat
+          git --no-pager diff | head -80
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -38,6 +87,18 @@ B64EOF
         with:
           distribution: temurin
           java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          if [ -f web-ui/pnpm-lock.yaml ]; then pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then pnpm --dir web-ui install
+          else echo skip; fi
 
       - name: keystore
         run: |
@@ -53,22 +114,36 @@ B64EOF
           keyPassword=orangechat2026
           EOF
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-permsg-${{ hashFiles('**/*.gradle*') }}
+
       - name: Build
         run: |
           chmod +x gradlew
           set -o pipefail
           ./gradlew assembleRelease 2>&1 | tee build.log
 
-      - name: Dump error
+      - name: Dump error to repo
         if: failure()
         run: |
           {
             echo "=== kotlin errors ==="
             grep -E "^e: " build.log | head -60 || true
+            echo "=== what went wrong ==="
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -60 || true
             echo "=== tail ==="
-            tail -n 60 build.log || true
+            tail -n 40 build.log || true
           } > ci-timeerr.log
           cat ci-timeerr.log
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -f ci-timeerr.log
+          git commit -m "ci: timeerr [skip ci]" || true
+          git push origin HEAD:master || true
 
       - name: Upload artifact
         if: success()
@@ -84,6 +159,6 @@ B64EOF
         run: |
           TAG="permsg-time-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "每消息注入时间 (基于 223-avatar-202611090805)" \
-            --notes "基于 223-avatar-202611090805 提交 77f389dce，只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条不动" \
+            --title "每消息注入时间" \
+            --notes "基于 223-avatar-202611090805 (77f389dce)。只改时间注入：年月日时分，每条消息强制注入，界面不显示，时间条和头像不碰。" \
             app/build/outputs/apk/release/*.apk
