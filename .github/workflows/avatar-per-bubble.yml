@@ -1,0 +1,101 @@
+name: Per Bubble Avatar
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v2.2.3
+          fetch-depth: 0
+
+      - name: Show base
+        run: git rev-parse HEAD
+
+      - name: Apply patches
+        run: |
+          cat > /tmp/p.b64 <<'B64EOF'
+          aW1wb3J0IGlvCgpQS0cgPSAiYXBwL3NyYy9tYWluL2phdmEvbWUvcmVyZXJlL3Jpa2thaHViIgpNU0cgPSBQS0cgKyAiL3VpL2NvbXBvbmVudHMvbWVzc2FnZSIKR0VOID0gUEtHICsgIi9kYXRhL2FpL0dlbmVyYXRpb25IYW5kbGVyLmt0IgoKZGVmIHJ3KHBhdGgsIHBhaXJzLCBuYW1lKToKICAgIHMgPSBpby5vcGVuKHBhdGgsIGVuY29kaW5nPSJ1dGYtOCIpLnJlYWQoKQogICAgb3JpZyA9IHMKICAgIGZvciBvbGQsIG5ldyBpbiBwYWlyczoKICAgICAgICBpZiBuZXcgaW4gcyBhbmQgb2xkIG5vdCBpbiBzOgogICAgICAgICAgICBwcmludCgiICBhbHJlYWR5IHBhdGNoZWQ6IiwgbmFtZSkKICAgICAgICAgICAgY29udGludWUKICAgICAgICBpZiBvbGQgbm90IGluIHM6CiAgICAgICAgICAgIHByaW50KCIgIEFOQ0hPUiBNSVNTSU5HOiIsIG5hbWUpCiAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgcyA9IHMucmVwbGFjZShvbGQsIG5ldywgMSkKICAgIGlmIHMgIT0gb3JpZzoKICAgICAgICBpby5vcGVuKHBhdGgsICJ3IiwgZW5jb2Rpbmc9InV0Zi04IiwgbmV3bGluZT0iIikud3JpdGUocykKICAgICAgICBwcmludCgiUEFUQ0hFRCIsIG5hbWUpCiAgICBlbHNlOgogICAgICAgIHByaW50KCJVTkNIQU5HRUQiLCBuYW1lKQoKIyAtLS0tLS0tLS0tIDEuIOaXtumXtOazqOWFpSAtLS0tLS0tLS0tCnJ3KEdFTiwgWygKIiIiICAgICAgICAgICAgdmFsIHRpbWVSZW1pbmRlciA9IGlmIChhc3Npc3RhbnQuZW5hYmxlVGltZVJlbWluZGVyKSB7CiAgICAgICAgICAgICAgICBUaW1lUmVtaW5kZXJUcmFuc2Zvcm1lci5idWlsZFJlbWluZGVyKG1lc3NhZ2VzKQogICAgICAgICAgICB9IGVsc2UgbnVsbCIiIiwKIiIiICAgICAgICAgICAgLy8g5pe26Ze05LiK5LiL5paH5peg5p2h5Lu25rOo5YWlIOS4jueVjOmdouaYvuekuuino+iApgogICAgICAgICAgICB2YWwgdGltZVJlbWluZGVyID0gVGltZVJlbWluZGVyVHJhbnNmb3JtZXIuYnVpbGRSZW1pbmRlcihtZXNzYWdlcykiIiIKKV0sICJHZW5lcmF0aW9uSGFuZGxlciDml7bpl7Tms6jlhaUiKQoKIyAtLS0tLS0tLS0tIDIuIEJ1YmJsZVN1cmZhY2Ug5pyq5ouG5YiG5Lmf5bim5aS05YOPIC0tLS0tLS0tLS0KcncoTVNHICsgIi9CdWJibGVTdXJmYWNlLmt0IiwgWygKIiIiICAgIGlmICghbW9kZS5pc0VuYWJsZWQpIHsKICAgICAgICBCdWJibGVTdXJmYWNlKAogICAgICAgICAgICBpbWFnZVBhdGggPSBpbWFnZVBhdGgsCiAgICAgICAgICAgIGNvcm5lclJhZGl1cyA9IGNvcm5lclJhZGl1cywKICAgICAgICAgICAgY29sb3IgPSBjb2xvciwKICAgICAgICAgICAgb3ZlcmxheUVuYWJsZWQgPSBvdmVybGF5RW5hYmxlZCwKICAgICAgICAgICAgYnViYmxlQWxwaGEgPSBidWJibGVBbHBoYSwKICAgICAgICAgICAgbWF4V2lkdGggPSBtYXhXaWR0aCwKICAgICAgICAgICAgYW5pbWF0ZSA9IHRydWUsCiAgICAgICAgICAgIG9uQ2xpY2sgPSBvbkNsaWNrLAogICAgICAgICkgewogICAgICAgICAgICBjb250ZW50KHRleHQpCiAgICAgICAgfQogICAgICAgIHJldHVybgogICAgfSIiIiwKIiIiICAgIGlmICghbW9kZS5pc0VuYWJsZWQpIHsKICAgICAgICB2YWwgaXNSaWdodFNpZGVQbGFpbiA9IGFsaWdubWVudCA9PSBBbGlnbm1lbnQuRW5kCiAgICAgICAgdmFsIGF2YXRhclNwYWNlUGxhaW4gPSBpZiAoc2VnbWVudEF2YXRhciAhPSBudWxsKSBTZWdtZW50QXZhdGFyV2lkdGggKyA4LmRwIGVsc2UgMC5kcAogICAgICAgIHZhbCBwbGFpbk1heFdpZHRoID0gKG1heFdpZHRoIC0gYXZhdGFyU3BhY2VQbGFpbikuY29lcmNlQXRMZWFzdCgxMjAuZHApCiAgICAgICAgUm93KAogICAgICAgICAgICBtb2RpZmllciA9IE1vZGlmaWVyLmZpbGxNYXhXaWR0aCgpLAogICAgICAgICAgICB2ZXJ0aWNhbEFsaWdubWVudCA9IEFsaWdubWVudC5Ub3AsCiAgICAgICAgICAgIGhvcml6b250YWxBcnJhbmdlbWVudCA9IGlmIChpc1JpZ2h0U2lkZVBsYWluKSBBcnJhbmdlbWVudC5FbmQgZWxzZSBBcnJhbmdlbWVudC5TdGFydCwKICAgICAgICApIHsKICAgICAgICAgICAgaWYgKHNlZ21lbnRBdmF0YXIgIT0gbnVsbCAmJiAhaXNSaWdodFNpZGVQbGFpbikgewogICAgICAgICAgICAgICAgU2VnbWVudEF2YXRhclZpZXcoc2VnbWVudEF2YXRhciwgYXZhdGFyTG9hZGluZykKICAgICAgICAgICAgICAgIFNwYWNlcihtb2RpZmllciA9IE1vZGlmaWVyLndpZHRoKDguZHApKQogICAgICAgICAgICB9CiAgICAgICAgICAgIEJ1YmJsZVN1cmZhY2UoCiAgICAgICAgICAgICAgICBpbWFnZVBhdGggPSBpbWFnZVBhdGgsCiAgICAgICAgICAgICAgICBjb3JuZXJSYWRpdXMgPSBjb3JuZXJSYWRpdXMsCiAgICAgICAgICAgICAgICBjb2xvciA9IGNvbG9yLAogICAgICAgICAgICAgICAgb3ZlcmxheUVuYWJsZWQgPSBvdmVybGF5RW5hYmxlZCwKICAgICAgICAgICAgICAgIGJ1YmJsZUFscGhhID0gYnViYmxlQWxwaGEsCiAgICAgICAgICAgICAgICBtYXhXaWR0aCA9IHBsYWluTWF4V2lkdGgsCiAgICAgICAgICAgICAgICBhbmltYXRlID0gdHJ1ZSwKICAgICAgICAgICAgICAgIG9uQ2xpY2sgPSBvbkNsaWNrLAogICAgICAgICAgICApIHsKICAgICAgICAgICAgICAgIGNvbnRlbnQodGV4dCkKICAgICAgICAgICAgfQogICAgICAgICAgICBpZiAoc2VnbWVudEF2YXRhciAhPSBudWxsICYmIGlzUmlnaHRTaWRlUGxhaW4pIHsKICAgICAgICAgICAgICAgIFNwYWNlcihtb2RpZmllciA9IE1vZGlmaWVyLndpZHRoKDguZHApKQogICAgICAgICAgICAgICAgU2VnbWVudEF2YXRhclZpZXcoc2VnbWVudEF2YXRhciwgYXZhdGFyTG9hZGluZykKICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICByZXR1cm4KICAgIH0iIiIKKV0sICJCdWJibGVTdXJmYWNlIOacquaLhuWIhuW4puWktOWDjyIpCgojIC0tLS0tLS0tLS0gMy4g5aSW5bGC5rC46L+c5LiN55S75aS05YOPIC0tLS0tLS0tLS0KcncoTVNHICsgIi9BdmF0YXJWaXNpYmlsaXR5Lmt0IiwgWygKIiIiICAgIHZhbCBzcGxpdCA9IHdpbGxTcGxpdEludG9CdWJibGVzKGlzVXNlciwgYXNzaXN0YW50KQogICAgaWYgKCFzcGxpdCkgcmV0dXJuIGZhbHNlCiAgICByZXR1cm4gaWYgKGlzVXNlcikgeyIiIiwKIiIiICAgIHJldHVybiBpZiAoaXNVc2VyKSB7IiIiCiksICgKIiIiICAgIGlmICghd2lsbFNwbGl0SW50b0J1YmJsZXMoaXNVc2VyLCBhc3Npc3RhbnQpKSByZXR1cm4gbnVsbAogICAgcmV0dXJuIGlmIChpc1VzZXIpIHsiIiIsCiIiIiAgICByZXR1cm4gaWYgKGlzVXNlcikgeyIiIgopXSwgIkF2YXRhclZpc2liaWxpdHkg5aSW5bGC5aS05YOP5YWz6ZetIikKCiMgLS0tLS0tLS0tLSA0LiBDaGF0TWVzc2FnZSDml6DmsJTms6HmqKHlvI/kuIvooaXlpLTlg48gLS0tLS0tLS0tLQpydyhNU0cgKyAiL0NoYXRNZXNzYWdlLmt0IiwgWygKIiIiICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIE1hcmtkb3duQmxvY2soCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY29udGVudCA9IGRpc3BsYXlUZXh0LnJlcGxhY2VSZWdleGVzKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhc3Npc3RhbnQgPSBhc3Npc3RhbnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNjb3BlID0gQXNzaXN0YW50QWZmZWN0U2NvcGUuQVNTSVNUQU5ULAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB2aXN1YWwgPSB0cnVlLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgb25DbGlja0NpdGF0aW9uID0gaGFuZGxlQ2xpY2tDaXRhdGlvbiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBtb2RpZmllciA9IE1vZGlmaWVyLmFuaW1hdGVDb250ZW50U2l6ZSgpCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0iIiIsCiIiIiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBSb3coCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbW9kaWZpZXIgPSBNb2RpZmllci5maWxsTWF4V2lkdGgoKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB2ZXJ0aWNhbEFsaWdubWVudCA9IEFsaWdubWVudC5Ub3AsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgaG9yaXpvbnRhbEFycmFuZ2VtZW50ID0gQXJyYW5nZW1lbnQuU3RhcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApIHsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAocGFydEF2YXRhclNwZWMgIT0gbnVsbCkgewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBQYXJ0QXZhdGFyVmlldyhwYXJ0QXZhdGFyU3BlYywgcGFydEF2YXRhckxvYWRpbmcpCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFNwYWNlcihtb2RpZmllciA9IE1vZGlmaWVyLndpZHRoKDguZHApKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBNYXJrZG93bkJsb2NrKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb250ZW50ID0gZGlzcGxheVRleHQucmVwbGFjZVJlZ2V4ZXMoCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhc3Npc3RhbnQgPSBhc3Npc3RhbnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzY29wZSA9IEFzc2lzdGFudEFmZmVjdFNjb3BlLkFTU0lTVEFOVCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZpc3VhbCA9IHRydWUsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG9uQ2xpY2tDaXRhdGlvbiA9IGhhbmRsZUNsaWNrQ2l0YXRpb24sCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG1vZGlmaWVyID0gTW9kaWZpZXIuYW5pbWF0ZUNvbnRlbnRTaXplKCkKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0iIiIKKV0sICJDaGF0TWVzc2FnZSDml6DmsJTms6HooaXlpLTlg48iKQo=
+          B64EOF
+          tr -d ' \n' < /tmp/p.b64 | base64 -d > /tmp/p.py
+          python3 /tmp/p.py
+
+      - name: Verify patch
+        run: |
+          git --no-pager diff --stat
+          grep -c "segmentAvatar != null && !isRightSidePlain" app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt
+          grep -n "shouldHideSideAvatar" -A5 app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt | head -12
+
+      - name: Init submodules
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: web deps
+        run: |
+          if [ -f web-ui/pnpm-lock.yaml ]; then pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then pnpm --dir web-ui install
+          else echo skip; fi
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -storepass orangechat2026 -keypass orangechat2026 \
+            -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          cat > local.properties <<'EOF'
+          storeFile=release.keystore
+          storePassword=orangechat2026
+          keyAlias=orangechat
+          keyPassword=orangechat2026
+          EOF
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-223-avatar-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease 2>&1 | tee build.log
+
+      - name: Show errors
+        if: failure()
+        run: |
+          grep -E "^e: " build.log | head -50 || true
+          tail -n 50 build.log || true
+
+      - name: Publish
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-avatar-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "v2.2.3 每气泡带头像" \
+            --notes "基于 v2.2.3 时间注入版 每个气泡和每张图片后面都带头像" \
+            app/build/outputs/apk/release/*.apk
