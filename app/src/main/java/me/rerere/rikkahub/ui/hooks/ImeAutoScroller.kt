@@ -25,12 +25,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 /**
  * 键盘弹出时把聊天列表顶上去。
  *
- * 键盘高度在弹出动画期间逐帧变化，旧实现每帧都 scrollBy 一次，
- * 列表跟着连滚几十帧，布局反复重算，表现为弹键盘时卡一下。
+ * 键盘高度在弹出动画期间逐帧变化。逐帧都 scrollBy 会连滚几十帧导致卡顿；
+ * 但完全只滚最后一次又有风险——一旦那次没触发，列表就永远不跟手。
  *
- * 现在用 debounce：等高度连续 120ms 不再变化后，才用一个最终值滚一次。
- * 注意不能用 collectLatest 里 delay 的写法，那样最后一次也会被
- * 后续事件取消掉，结果就完全不滚了。
+ * 折中方案：高度每变化 60px 以上才滚一次，动画期间最多滚几次，
+ * 结束时再 debounce 一次补偿到最终位置。
  */
 @OptIn(FlowPreview::class)
 @Composable
@@ -40,22 +39,34 @@ fun ImeLazyListAutoScroller(
     val ime = WindowInsets.ime
     val localDensity = LocalDensity.current
     var imeHeight by remember { mutableIntStateOf(0) }
+    var lastScrolled by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { ime.getBottom(localDensity) }
+            .distinctUntilChanged()
+            .collect { keyboardHeight ->
+                val delta = keyboardHeight - lastScrolled
+                // 变化足够大就立刻跟一次，避免完全不跟手
+                if (kotlin.math.abs(delta) >= 60) {
+                    lazyListState.scrollBy(delta.toFloat())
+                    lastScrolled = keyboardHeight
+                }
+                imeHeight = keyboardHeight
+            }
+    }
+
+    // 动画结束后把差值补齐，保证最终位置精确
     LaunchedEffect(Unit) {
         snapshotFlow { ime.getBottom(localDensity) }
             .distinctUntilChanged()
             .debounce(120)
             .collect { keyboardHeight ->
-                if (keyboardHeight > 0) {
-                    val delta = keyboardHeight - imeHeight
-                    if (delta != 0) {
-                        lazyListState.scrollBy(delta.toFloat())
-                        imeHeight = keyboardHeight
-                    }
-                } else {
-                    imeHeight = 0
+                val delta = keyboardHeight - lastScrolled
+                if (delta != 0) {
+                    lazyListState.scrollBy(delta.toFloat())
+                    lastScrolled = keyboardHeight
                 }
-                // 键盘收起后回到最新一条，跟原生行为一致
-                if (lazyListState.firstVisibleItemIndex <= 2) {
+                if (keyboardHeight == 0 && lazyListState.firstVisibleItemIndex <= 2) {
                     lazyListState.scrollToItem(0)
                 }
             }
