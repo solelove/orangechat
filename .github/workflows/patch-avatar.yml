@@ -1,0 +1,114 @@
+name: patch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch avatar calls
+        run: |
+          F=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          python3 - <<'PY'
+import re
+p='app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt'
+s=open(p,encoding='utf-8').read()
+
+# 1. 插入 hasNonTextParts / showSideAvatar 计算
+old_cond_assist = '        if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {'
+new_cond_assist = '        if (!isUserMessage && hasText && showSideAvatar) {'
+assert old_cond_assist in s, 'assist cond not found'
+s = s.replace(old_cond_assist, new_cond_assist)
+
+old_cond_user = '        if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {'
+new_cond_user = '        if (isUserMessage && hasText && showSideAvatar) {'
+assert old_cond_user in s, 'user cond not found'
+s = s.replace(old_cond_user, new_cond_user)
+
+# 2. 在 isUserMessage 之后插入计算
+anchor = '    val isUserMessage = message.role == MessageRole.USER\n'
+assert anchor in s, 'anchor not found'
+inject = anchor + '''
+    // 有图片/文件等非文本段时，头像由 PartRow 负责，外层让位
+    val hasNonTextParts = remember(message.parts) {
+        message.parts.any { it !is UIMessagePart.Text }
+    }
+    val hasText = remember(message.parts) {
+        message.parts.any { it is UIMessagePart.Text }
+    }
+    val showSideAvatar = !hasNonTextParts &&
+        !message.parts.isEmptyUIMessage() &&
+        !shouldHideSideAvatar(
+            isUser = isUserMessage,
+            showUserAvatar = settings.showUserAvatar,
+            showModelIcon = settings.showModelIcon,
+            showAssistantBubble = settings.showAssistantBubble,
+            assistant = assistant,
+            hasNonTextParts = false,
+        )
+'''
+s = s.replace(anchor, inject, 1)
+
+# 3. 文本段头像只在拆分时画
+old_user_avatar = '''                                        segmentAvatar = if (displaySettings.showUserAvatar)
+                                            SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+                                        else null,'''
+new_user_avatar = '                                        segmentAvatar = textSegmentAvatar,'
+assert old_user_avatar in s, 'user segment avatar not found'
+s = s.replace(old_user_avatar, new_user_avatar)
+
+old_asst_avatar = '''                                            segmentAvatar = when {
+                                                !displaySettings.showModelIcon -> null
+                                                assistant != null && assistant.useAssistantAvatar ->
+                                                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                                                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                                                else -> null
+                                            },'''
+new_asst_avatar = '                                            segmentAvatar = textSegmentAvatar,'
+assert old_asst_avatar in s, 'asst segment avatar not found'
+s = s.replace(old_asst_avatar, new_asst_avatar)
+
+# 4. 拆分模式统一走 resolveSplitMode
+s = s.replace(
+    'val splitMode = assistant?.bubbleSplitMode ?: BubbleSplitMode.NONE',
+    'val splitMode = resolveSplitMode(false, assistant)'
+)
+s = s.replace(
+    'mode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE,',
+    'mode = resolveSplitMode(true, assistant),'
+)
+
+# 5. 注入 textSegmentAvatar
+marker = '    val partAvatarLoading = loading\n'
+assert marker in s, 'marker not found'
+inject2 = marker + '''
+    // 文本气泡内的头像：只有开了拆分才由气泡自己画，否则外层画
+    val textSegmentAvatar: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+        segmentAvatarFor(
+            isUser = role == MessageRole.USER,
+            assistant = assistant,
+            model = model,
+            userAvatar = displaySettings.userAvatar,
+            userNickname = displaySettings.userNickname,
+            showUserAvatar = displaySettings.showUserAvatar,
+            showModelIcon = displaySettings.showModelIcon,
+            showAssistantBubble = displaySettings.showAssistantBubble,
+        )
+    }
+'''
+s = s.replace(marker, inject2, 1)
+
+open(p,'w',encoding='utf-8').write(s)
+print('patched ok')
+PY
+      - name: Commit
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(ui): 文本头像只在拆分时由气泡自画，外层统一负责" || echo nothing
+          git push
