@@ -551,9 +551,8 @@ class GenerationHandler(
                 }
  
             }
-            val timeReminder = if (assistant.enableTimeReminder) {
-                TimeReminderTransformer.buildReminder(messages)
-            } else null
+            // 时间上下文无条件注入 与界面显示解耦
+            val timeReminder = TimeReminderTransformer.buildReminder(messages)
             val systemWithTime = if (timeReminder != null) {
                 system + "\n\n" + timeReminder
             } else system
