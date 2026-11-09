@@ -1,4 +1,4 @@
-run=42627017405 sha=b668997caf278dd3429eb3c4edcb01c5a4db484c
+run=42627622423 sha=f3c57044c28d416cc1a8b89c07b9aa6286319bd4
 === kotlin errors ===
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 Argument type mismatch: actual type is 'Assistant?', but 'Boolean' was expected.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showModelIcon'.
@@ -108,6 +108,8 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 === tail ===
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
@@ -146,7 +148,7 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 33 more
+	... 66 more
 Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
 	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
 	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
@@ -180,11 +182,9 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	... 5 more
+	... 7 more
 
 ==============================================================================
 
-BUILD FAILED in 2m 40s
+BUILD FAILED in 1m 49s
 565 actionable tasks: 299 executed, 266 from cache
