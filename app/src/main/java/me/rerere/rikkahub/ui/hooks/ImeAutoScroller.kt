@@ -19,14 +19,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * 键盘弹出时把聊天列表顶上去。
  *
- * 键盘高度在弹出动画期间会逐帧变化，早期实现每帧都 scrollBy 一次，
- * 列表跟着连滚几十帧，布局反复重算，表现为"弹键盘时卡一下"。
- * 现在改成：等高度稳定（连续 80ms 不再变化）后只滚一次。
+ * 键盘高度在弹出动画期间逐帧变化，旧实现每帧都会进 collect 并 delay，
+ * delay 结束后照样 scrollBy，等于一次弹键盘滚动十几二十次，布局反复重算，
+ * 表现为"弹键盘/收键盘时卡一下"。
+ *
+ * 现在用 collectLatest：新高度一来就取消上一次还没走完的 delay，
+ * 只有高度真正稳定 150ms 后才滚一次。
  */
 @Composable
 fun ImeLazyListAutoScroller(
@@ -38,13 +42,16 @@ fun ImeLazyListAutoScroller(
     LaunchedEffect(Unit) {
         snapshotFlow { ime.getBottom(localDensity) }
             .distinctUntilChanged()
-            .collect { keyboardHeight ->
-                // 等键盘动画结束：高度连续不变 80ms 后才认为稳定
-                delay(80)
-                if (keyboardHeight > 0 && keyboardHeight != imeHeight) {
-                    lazyListState.scrollBy((keyboardHeight - imeHeight).toFloat())
-                    imeHeight = keyboardHeight
-                } else if (keyboardHeight == 0) {
+            .collectLatest { keyboardHeight ->
+                // 键盘动画期间高度每帧都变，上一次的等待会被取消
+                delay(150)
+                if (keyboardHeight > 0) {
+                    val delta = keyboardHeight - imeHeight
+                    if (delta != 0) {
+                        lazyListState.scrollBy(delta.toFloat())
+                        imeHeight = keyboardHeight
+                    }
+                } else {
                     imeHeight = 0
                 }
             }
