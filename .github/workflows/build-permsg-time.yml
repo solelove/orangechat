@@ -24,15 +24,20 @@ jobs:
       - name: Verify base
         run: |
           echo "HEAD=$(git rev-parse HEAD)"
-          git describe --tags --exact-match || true
+          git describe --tags --exact-match || echo "no exact tag"
 
       - name: Apply time patch
         run: |
           python3 /tmp/patch_permsg_time.py
           echo "----- diff -----"
           git --no-pager diff
-          echo "----- check -----"
+          echo "----- verify GenerationHandler -----"
           grep -n "val timeReminder = TimeReminderTransformer.buildReminder(messages)" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          echo "----- verify TimeReminderTransformer -----"
+          if grep -n "if (gapSeconds <= TIME_GAP_THRESHOLD_SECONDS) return null" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt; then
+            echo "STILL HAS GAP GUARD"; exit 1
+          fi
+          echo "gap guard removed OK"
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -64,7 +69,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-permsg-v223-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-permsg-v223b-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build
         run: |
@@ -90,4 +95,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="223-timefull-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --title "基于 v2.2.3 时间上下文无条件注入" --notes "基于 v2.2.3 (7b041d77)。只改时间注入：去掉 enableTimeReminder 开关判断，每条消息无条件注入真实当前时间（年月日时分）。其余源码完全一致，头像与时间条未改动。" app/build/outputs/apk/release/*.apk
+          gh release create "$TAG" --title "基于 v2.2.3 时间上下文无条件注入" --notes "基于 v2.2.3 (7b041d77)。只改时间注入：去掉 enableTimeReminder 开关判断和 1 小时间隔判断，每条消息无条件注入真实当前时间（年月日时分）。其余源码完全一致，头像与时间条未改动。" app/build/outputs/apk/release/*.apk
