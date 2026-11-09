@@ -41,7 +41,73 @@ jobs:
           print("patched")
           PY
           git --no-pager diff --stat || true
-          sed -n '550,560p' "$FILE"
+
+      - name: Replace TimeReminderTransformer with always-on version
+        run: |
+          TR=app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          cat > "$TR" <<'KT'
+          /*
+           * 橘瓣 OrangeChat
+           * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
+           * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
+           */
+
+          package me.rerere.rikkahub.data.ai.transformers
+
+          import kotlinx.datetime.LocalDateTime
+          import kotlinx.datetime.TimeZone
+          import kotlinx.datetime.toInstant
+          import kotlinx.datetime.toLocalDateTime
+          import me.rerere.ai.core.MessageRole
+          import me.rerere.ai.ui.UIMessage
+          import kotlin.time.Clock
+
+          object TimeReminderTransformer : InputMessageTransformer {
+              override suspend fun transform(
+                  ctx: TransformerContext,
+                  messages: List<UIMessage>,
+              ): List<UIMessage> = messages
+
+              /** 生成当前时间提醒文本；永远不为 null，保证每次都注入真实时间。 */
+              fun buildReminder(messages: List<UIMessage>): String? {
+                  val tz = TimeZone.currentSystemDefault()
+                  val now = Clock.System.now().toLocalDateTime(tz)
+
+                  val userMessages = messages.filter { it.role == MessageRole.USER }
+                  val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
+                  val gapSeconds = prev?.let {
+                      (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
+                  } ?: 0L
+
+                  return buildTimeReminderText(gapSeconds.takeIf { it > 60 }, now)
+              }
+          }
+
+          internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
+
+          internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
+              val dayOfWeek = time.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+              val timeStr = String.format(
+                  java.util.Locale.US, "%04d-%02d-%02d %02d:%02d",
+                  time.year, time.monthNumber, time.dayOfMonth, time.hour, time.minute
+              )
+              val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
+              return if (gapSeconds != null) {
+                  "$head (${formatGap(gapSeconds)} since last message)</time_reminder>"
+              } else {
+                  "$head</time_reminder>"
+              }
+          }
+
+          private fun formatGap(seconds: Long): String {
+              return when {
+                  seconds < 3600 -> "${seconds / 60} min"
+                  seconds < 86400 -> "${seconds / 3600} h"
+                  else -> "${seconds / 86400} d"
+              }
+          }
+          KT
+          tail -n 5 "$TR"
 
       - name: Init submodules
         run: |
@@ -126,6 +192,6 @@ jobs:
         run: |
           TAG="223-timeinject-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "v2.2.3 + 时间注入" \
-            --notes "基于 v2.2.3 标签，仅改时间上下文无条件注入" \
+            --title "v2.2.3 + 时间注入(带年月日)" \
+            --notes "基于 v2.2.3 标签 时间上下文无条件注入 且始终为真实当前时间 含年月日" \
             app/build/outputs/apk/release/*.apk
