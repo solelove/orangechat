@@ -1,0 +1,17 @@
+name: soften-pass2
+on:
+  push:
+    paths:
+      - '.github/workflows/soften-pass2.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: show
+        run: |
+          grep -n "PASS" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
