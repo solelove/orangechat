@@ -2,10 +2,7 @@ name: patch
 
 on:
   push:
-    paths:
-      - 'app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt'
-      - '.github/workflows/patch-avatar.yml'
-  workflow_dispatch:
+    branches: [ master ]
 
 jobs:
   patch:
@@ -14,89 +11,44 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Patch avatar calls
+        with:
+          fetch-depth: 1
+      - name: Patch
         run: |
           python3 - <<'PY'
 p='app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt'
 s=open(p,encoding='utf-8').read()
-if 'val showSideAvatar' in s:
-    print('already patched, skip')
+if 'val textSegmentAvatar' in s:
+    print('SKIP already patched')
     open('/tmp/skip','w').write('1')
     raise SystemExit(0)
 
-old_cond_assist = '        if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {'
-new_cond_assist = '        if (!isUserMessage && hasText && showSideAvatar) {'
-if old_cond_assist not in s:
-    print('assist cond not found')
-    raise SystemExit(1)
-s = s.replace(old_cond_assist, new_cond_assist)
-
-old_cond_user = '        if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {'
-new_cond_user = '        if (isUserMessage && hasText && showSideAvatar) {'
-if old_cond_user not in s:
-    print('user cond not found')
-    raise SystemExit(1)
-s = s.replace(old_cond_user, new_cond_user)
-
-anchor = '    val isUserMessage = message.role == MessageRole.USER\n'
-if anchor not in s:
-    print('anchor not found')
-    raise SystemExit(1)
-inject = anchor + '''
-    // 有图片/文件等非文本段时，头像由 PartRow 负责，外层让位
-    val hasNonTextParts = remember(message.parts) {
-        message.parts.any { it !is UIMessagePart.Text }
-    }
-    val hasText = remember(message.parts) {
-        message.parts.any { it is UIMessagePart.Text }
-    }
-    val showSideAvatar = !hasNonTextParts &&
-        !message.parts.isEmptyUIMessage() &&
-        !shouldHideSideAvatar(
-            isUser = isUserMessage,
-            showUserAvatar = settings.showUserAvatar,
-            showModelIcon = settings.showModelIcon,
-            showAssistantBubble = settings.showAssistantBubble,
-            assistant = assistant,
-            hasNonTextParts = false,
-        )
-'''
-s = s.replace(anchor, inject, 1)
-
-old_user_avatar = '''                                        segmentAvatar = if (displaySettings.showUserAvatar)
+# A. 用户文本气泡头像
+a='''                                        segmentAvatar = if (displaySettings.showUserAvatar)
                                             SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
                                         else null,'''
-if old_user_avatar in s:
-    s = s.replace(old_user_avatar, '                                        segmentAvatar = textSegmentAvatar,')
-    print('user avatar replaced')
+if a not in s: print('A MISSING'); raise SystemExit(1)
+s=s.replace(a,'                                        segmentAvatar = textSegmentAvatar,',1)
 
-old_asst_avatar = '''                                            segmentAvatar = when {
+# B. 助手文本气泡头像
+b='''                                            segmentAvatar = when {
                                                 !displaySettings.showModelIcon -> null
                                                 assistant != null && assistant.useAssistantAvatar ->
                                                     SegmentAvatarSpec.AssistantAvatar(assistant)
                                                 model != null -> SegmentAvatarSpec.Model(model.modelId)
                                                 else -> null
                                             },'''
-if old_asst_avatar in s:
-    s = s.replace(old_asst_avatar, '                                            segmentAvatar = textSegmentAvatar,')
-    print('assistant avatar replaced')
+if b not in s: print('B MISSING'); raise SystemExit(1)
+s=s.replace(b,'                                            segmentAvatar = textSegmentAvatar,',1)
 
-s = s.replace(
-    'val splitMode = assistant?.bubbleSplitMode ?: BubbleSplitMode.NONE',
-    'val splitMode = resolveSplitMode(false, assistant)'
-)
-s = s.replace(
-    'mode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE,',
-    'mode = resolveSplitMode(true, assistant),'
-)
+# C. 拆分模式走统一函数
+s=s.replace('val splitMode = assistant?.bubbleSplitMode ?: BubbleSplitMode.NONE','val splitMode = resolveSplitMode(false, assistant)')
+s=s.replace('mode = assistant?.effectiveUserSplitMode ?: BubbleSplitMode.NONE,','mode = resolveSplitMode(true, assistant),')
 
-marker = '    val partAvatarLoading = loading\n'
-if marker not in s:
-    print('marker not found')
-    raise SystemExit(1)
-inject2 = marker + '''
-    // 文本气泡内的头像：只有开了拆分才由气泡自己画，否则外层画
-    val textSegmentAvatar: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+# D. 注入 textSegmentAvatar
+m='    val partAvatarLoading = loading\n'
+if m not in s: print('D MISSING'); raise SystemExit(1)
+s=s.replace(m,m+'''    val textSegmentAvatar: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
         segmentAvatarFor(
             isUser = role == MessageRole.USER,
             assistant = assistant,
@@ -108,17 +60,16 @@ inject2 = marker + '''
             showAssistantBubble = displaySettings.showAssistantBubble,
         )
     }
-'''
-s = s.replace(marker, inject2, 1)
+''',1)
 
 open(p,'w',encoding='utf-8').write(s)
-print('patched ok')
+print('PATCHED')
 PY
       - name: Commit
         run: |
           if [ -f /tmp/skip ]; then echo skip; exit 0; fi
-          git config user.name "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
+          git config user.name ci-bot
+          git config user.email ci-bot@users.noreply.github.com
           git add -A
-          git commit -m "fix(ui): 文本头像只在拆分时由气泡自画 外层统一负责" || echo nothing
+          git commit -m "fix(ui): 文本气泡头像统一由 segmentAvatarFor 决定 未开拆分不画" || echo nochange
           git push
