@@ -10,10 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout v2.2.3
+      - name: Checkout 77f389dc avatar base
         uses: actions/checkout@v4
         with:
-          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          ref: 77f389dce52d53ddacce4f07ca885a2e3bcbf005
           fetch-depth: 0
 
       - name: Checkout patch script
@@ -24,12 +24,12 @@ jobs:
       - name: Verify base
         run: |
           echo "HEAD=$(git rev-parse HEAD)"
-          git describe --tags --exact-match || echo "no exact tag"
 
       - name: Apply time patch
         run: |
           python3 /tmp/patch_permsg_time.py
-          echo "----- diff -----"
+          echo "----- diff (only time files should appear) -----"
+          git --no-pager diff --stat
           git --no-pager diff
           echo "----- verify GenerationHandler -----"
           grep -n "val timeReminder = TimeReminderTransformer.buildReminder(messages)" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
@@ -69,7 +69,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-permsg-v223b-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-permsg-avatar-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build
         run: |
@@ -86,13 +86,14 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: orangechat-timefull
+          name: orangechat-timefull-avatar
           path: app/build/outputs/apk/release/*.apk
 
       - name: Publish
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="223-timefull-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --title "基于 v2.2.3 时间上下文无条件注入" --notes "基于 v2.2.3 (7b041d77)。只改时间注入：去掉 enableTimeReminder 开关判断和 1 小时间隔判断，每条消息无条件注入真实当前时间（年月日时分）。其余源码完全一致，头像与时间条未改动。" app/build/outputs/apk/release/*.apk
+          TAG="avatar-timefull-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" --repo "$REPO" --title "在每气泡带头像版上只加时间注入" --notes "基于 77f389dc（223-avatar-202611090805 那版的提交）。只改时间注入：去掉 enableTimeReminder 开关判断和 1 小时间隔判断。头像 键盘 消息框 气泡框 全部未动。" app/build/outputs/apk/release/*.apk
