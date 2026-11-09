@@ -1,0 +1,94 @@
+name: Diagnose
+
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 77f389dce52d53ddacce4f07ca885a2e3bcbf005
+          fetch-depth: 0
+
+      - name: Prep
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git branch -f master HEAD
+          git checkout master
+          echo "HEAD=$(git rev-parse HEAD)"
+
+      - name: Fetch patch script
+        run: |
+          git fetch origin master --depth 1
+          git show origin/master:scripts/patch_permsg_time.py > patch_permsg_time.py
+          python3 patch_permsg_time.py
+
+      - name: Diff
+        run: git --no-pager diff > diag-diff.txt 2>&1; wc -c diag-diff.txt
+
+      - name: Init submodules
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          if [ -f web-ui/pnpm-lock.yaml ]; then pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then pnpm --dir web-ui install
+          else echo skip; fi
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-diag-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease > diag-build.log 2>&1
+          echo "GRADLE_EXIT=$?" | tee diag-exit.txt
+
+      - name: Collect
+        if: always()
+        run: |
+          {
+            echo "===== exit ====="
+            cat diag-exit.txt || echo none
+            echo "===== kotlin errors ====="
+            grep -E "^e: " diag-build.log | head -80 || echo none
+            echo "===== what went wrong ====="
+            sed -n '/What went wrong/,/BUILD FAILED/p' diag-build.log | head -60 || echo none
+            echo "===== tail 60 ====="
+            tail -n 60 diag-build.log || echo none
+          } > diag-report.txt
+          ls -lh app/build/outputs/apk/release/ > diag-apk.txt 2>&1 || true
+          cat diag-report.txt
+
+      - name: Push report
+        if: always()
+        run: |
+          git add -f diag-report.txt diag-exit.txt diag-apk.txt diag-diff.txt diag-build.log 2>/dev/null || true
+          git commit -m "diag: report [skip ci]" || echo nothing
+          git push origin master || echo PUSH_FAILED
