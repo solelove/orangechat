@@ -1,0 +1,120 @@
+name: Time Full Build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.trigger-timefull'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Show base
+        run: git log -1 --oneline
+
+      - name: Sanity check time injection
+        run: |
+          G=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          T=app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          echo "--- GenerationHandler ---"
+          grep -n "时间上下文无条件注入" "$G"
+          grep -n "val timeReminder = TimeReminderTransformer.buildReminder" "$G"
+          echo "--- Transformer ---"
+          grep -n "Current time" "$T"
+          grep -n "%04d-%02d-%02d" "$T"
+
+      - name: Init submodules
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: web deps
+        run: |
+          if [ -f web-ui/pnpm-lock.yaml ]; then
+            pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then
+            pnpm --dir web-ui install
+          else
+            echo "no web-ui, skip"
+          fi
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -storepass orangechat2026 -keypass orangechat2026 \
+            -alias orangechat \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          cat > local.properties <<'EOF'
+          storeFile=release.keystore
+          storePassword=orangechat2026
+          keyAlias=orangechat
+          keyPassword=orangechat2026
+          EOF
+
+      - name: gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-master-tf-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease 2>&1 | tee build.log
+
+      - name: On failure
+        if: failure()
+        run: |
+          {
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -80 || true
+            echo "=== tail ==="
+            tail -n 100 build.log || true
+          } > ci-last-error.log
+          cat ci-last-error.log
+
+      - name: Upload
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-master-timefull
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="master-timefull-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "master + 时间注入完整版" \
+            --notes "基于 master 构建 时间上下文无条件注入 真实当前时间 含年月日时分 每气泡带头像 图片气泡带头像 消息拆分正常" \
+            app/build/outputs/apk/release/*.apk
