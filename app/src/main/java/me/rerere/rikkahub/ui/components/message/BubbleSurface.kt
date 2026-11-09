@@ -38,8 +38,6 @@ import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.model.BubbleSplitMode
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
-import me.rerere.rikkahub.utils.splitIntoBubbleSegments
-import me.rerere.rikkahub.utils.splitIntoSentenceBubbles
 
 /** 气泡拆分片段旁边的头像宽度 */
 internal val SegmentAvatarWidth = 36.dp
@@ -47,8 +45,27 @@ internal val SegmentAvatarWidth = 36.dp
 /** 按模式切分气泡文本 */
 fun splitByMode(text: String, mode: BubbleSplitMode): List<String> = when (mode) {
     BubbleSplitMode.NONE -> listOf(text)
-    BubbleSplitMode.LINE -> text.splitIntoBubbleSegments()
-    BubbleSplitMode.SENTENCE -> splitIntoSentenceBubbles()
+    BubbleSplitMode.LINE -> text.split("\n").filter { it.isNotBlank() }.ifEmpty { listOf(text) }
+    BubbleSplitMode.SENTENCE -> splitIntoSentences(text)
+}
+
+/** 按中英文句末标点切句，保留标点 */
+private fun splitIntoSentences(text: String): List<String> {
+    val result = mutableListOf<String>()
+    val buffer = StringBuilder()
+    text.forEach { ch ->
+        buffer.append(ch)
+        if (ch == '。' || ch == '！' || ch == '？' || ch == '!' || ch == '?' ||
+            (ch == '.' && (buffer.length < 2 || buffer[buffer.length - 2] != '.'))
+        ) {
+            val piece = buffer.toString().trim()
+            if (piece.isNotEmpty()) result.add(piece)
+            buffer.setLength(0)
+        }
+    }
+    val rest = buffer.toString().trim()
+    if (rest.isNotEmpty()) result.add(rest)
+    return result.ifEmpty { listOf(text) }
 }
 
 /** 拆分后每个气泡要显示的头像；为 null 表示不显示 */
@@ -93,11 +110,8 @@ internal fun SegmentAvatarView(spec: SegmentAvatarSpec, loading: Boolean) {
 /**
  * 按模式渲染一个气泡组。
  *
- * - 模式为 NONE 时直接渲染一个整体气泡
- * - 模式为 LINE / SENTENCE 时按行或按句拆成多个小气泡
- * - 每个气泡旁边都带一个头像，且只带这一个（外层不再重复画，
- *   图片行自己画自己的），保证一个气泡后面只有一个头像
- * - 气泡宽度跟随内容，最宽不超过 [maxWidth]
+ * 每个气泡旁边都带一个头像，且只带这一个；外层不再重复画，
+ * 图片行自己画自己的，保证一个气泡后面只有一个头像。
  */
 @Composable
 fun SplitBubbleColumn(
@@ -115,10 +129,11 @@ fun SplitBubbleColumn(
     avatarLoading: Boolean = false,
     content: @Composable (String) -> Unit,
 ) {
+    val isRight = alignment == Alignment.End
+    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
+    val bodyMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
+
     if (!mode.isEnabled) {
-        val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
-        val bodyMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
-        val isRight = alignment == Alignment.End
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
@@ -148,13 +163,7 @@ fun SplitBubbleColumn(
         return
     }
 
-    // 只在文本或模式变化时重新切分
     val segments = remember(text, mode) { splitByMode(text, mode) }
-
-    // 扣掉头像占位后的可用宽度
-    val avatarSpace = if (segmentAvatar != null) SegmentAvatarWidth + 8.dp else 0.dp
-    val segmentMaxWidth = (maxWidth - avatarSpace).coerceAtLeast(120.dp)
-    val isRightSide = alignment == Alignment.End
 
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -165,9 +174,9 @@ fun SplitBubbleColumn(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
-                horizontalArrangement = if (isRightSide) Arrangement.End else Arrangement.Start,
+                horizontalArrangement = if (isRight) Arrangement.End else Arrangement.Start,
             ) {
-                if (segmentAvatar != null && !isRightSide) {
+                if (segmentAvatar != null && !isRight) {
                     SegmentAvatarView(segmentAvatar, avatarLoading)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -177,12 +186,12 @@ fun SplitBubbleColumn(
                     color = color,
                     overlayEnabled = overlayEnabled,
                     bubbleAlpha = bubbleAlpha,
-                    maxWidth = segmentMaxWidth,
+                    maxWidth = bodyMaxWidth,
                     onClick = onClick,
                 ) {
                     content(segment)
                 }
-                if (segmentAvatar != null && isRightSide) {
+                if (segmentAvatar != null && isRight) {
                     Spacer(modifier = Modifier.width(8.dp))
                     SegmentAvatarView(segmentAvatar, avatarLoading)
                 }
