@@ -1,4 +1,4 @@
-name: Per Bubble Avatar
+name: Per Bubble Avatar Debug
 
 on:
   workflow_dispatch:
@@ -15,9 +15,6 @@ jobs:
           ref: refs/tags/v2.2.3
           fetch-depth: 0
 
-      - name: Show base
-        run: git rev-parse HEAD
-
       - name: Apply patches
         run: |
           cat > /tmp/p.b64 <<'B64EOF'
@@ -26,11 +23,13 @@ jobs:
           tr -d ' \n' < /tmp/p.b64 | base64 -d > /tmp/p.py
           python3 /tmp/p.py
 
-      - name: Verify patch
+      - name: Diff
         run: |
           git --no-pager diff --stat
-          grep -c "segmentAvatar != null && !isRightSidePlain" app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt
-          grep -n "shouldHideSideAvatar" -A5 app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt | head -12
+          echo "=== BubbleSurface check ==="
+          grep -n "isRightSidePlain" app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt || echo "NO MATCH"
+          echo "=== AvatarVisibility ==="
+          sed -n '20,40p' app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -75,7 +74,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-avatar-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av2-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build
         run: |
@@ -83,11 +82,23 @@ jobs:
           set -o pipefail
           ./gradlew assembleRelease 2>&1 | tee build.log
 
-      - name: Show errors
+      - name: Dump error to repo
         if: failure()
         run: |
-          grep -E "^e: " build.log | head -50 || true
-          tail -n 50 build.log || true
+          {
+            echo "run=${{ github.run_id }}"
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -60 || true
+            echo "=== what went wrong ==="
+            sed -n '/What went wrong/,/BUILD FAILED/p' build.log | head -80 || true
+            echo "=== tail ==="
+            tail -n 60 build.log || true
+          } > ci-avatar-error.log
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -f ci-avatar-error.log
+          git commit -m "ci: avatar build error [skip ci]" || true
+          git push origin HEAD:master || true
 
       - name: Publish
         if: success()
@@ -97,5 +108,5 @@ jobs:
           TAG="223-avatar-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "v2.2.3 每气泡带头像" \
-            --notes "基于 v2.2.3 时间注入版 每个气泡和每张图片后面都带头像" \
+            --notes "基于 v2.2.3 每个气泡和每张图片后面都带头像" \
             app/build/outputs/apk/release/*.apk
