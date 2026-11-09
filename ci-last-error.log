@@ -1,54 +1,16 @@
-run=42631383514 sha=4dac5d71f33ed53a1ad25be5ab006520a00cf0e5
+run=42632570483 sha=3eff1f461d7bed136aab91b10dcb32bd75dc0ba2
 === kotlin errors ===
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 Argument type mismatch: actual type is 'Assistant?', but 'Boolean' was expected.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showModelIcon'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showAssistantBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:419:41 Unresolved reference 'resolveSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:489:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:490:29 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:512:25 Unresolved reference 'PartRow'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:513:29 Unresolved reference 'AudioPlayerBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:518:25 Unresolved reference 'PartRow'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:519:29 Unresolved reference 'VoiceMessageBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:527:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:531:33 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:534:61 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:535:67 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:536:42 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:539:33 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:543:61 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:551:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:552:29 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:565:55 @Composable invocations can only happen from the context of a @Composable function
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:609:33 Unresolved reference 'AudioPlayerBubble'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:946:55 Unresolved reference 'AudioPlayerBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 Argument type mismatch: actual type is 'Assistant?', but 'Boolean' was expected.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showModelIcon'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'showAssistantBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:172:50 No value passed for parameter 'assistant'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:419:41 Unresolved reference 'resolveSplitMode'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:489:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:490:29 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:512:25 Unresolved reference 'PartRow'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:513:29 Unresolved reference 'AudioPlayerBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:518:25 Unresolved reference 'PartRow'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:519:29 Unresolved reference 'VoiceMessageBubble'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:527:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:531:33 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:534:61 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:535:67 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:536:42 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:539:33 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:543:61 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:551:25 Unresolved reference 'PartRow'.
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:552:29 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt:565:55 @Composable invocations can only happen from the context of a @Composable function
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:609:33 Unresolved reference 'AudioPlayerBubble'.
 e: file:///home/runner/work/orangechat/orangechat/app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessageTools.kt:946:55 Unresolved reference 'AudioPlayerBubble'.
 === what went wrong ===
 * What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
+Execution failed for task ':app:compileBaselineKotlin'.
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
    > Compilation error. See log for more details
 
@@ -58,7 +20,7 @@ Execution failed for task ':app:compileDebugKotlin'.
 > Get more help at https://help.gradle.org.
 
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileBaselineKotlin'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
@@ -108,6 +70,8 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 === tail ===
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
@@ -146,7 +110,7 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 33 more
+	... 66 more
 Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
 	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
 	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:295)
@@ -180,11 +144,9 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	... 5 more
+	... 7 more
 
 ==============================================================================
 
-BUILD FAILED in 2m 13s
+BUILD FAILED in 1m 48s
 565 actionable tasks: 299 executed, 266 from cache
