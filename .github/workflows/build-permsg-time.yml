@@ -72,8 +72,8 @@ io.open(P, "w", encoding="utf-8", newline="").write(s)
 print("PATCHED OK")
 PYEOF
           python3 /tmp/patch.py
-          echo "=== verify ==="
-          grep -n "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          echo "=== verify patched lines ==="
+          grep -n -A2 -B2 "time_reminder>Current time" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Show diff
         run: |
