@@ -1,0 +1,43 @@
+name: soften-pass3
+on:
+  push:
+    paths:
+      - '.github/workflows/soften-pass3.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: patch by line
+        run: |
+          F=app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          python3 - "$F" <<'PY'
+import sys, io
+p = sys.argv[1]
+s = io.open(p, encoding='utf-8').read()
+reps = [
+ ("请根据以上用户动向决定是否发消息。没什么好说的就回复 [PASS]。",
+  "请根据以上用户动向主动发一条消息，自然、有温度、像忽然想起她。"),
+ ("请根据以上上下文决定是否发消息。没什么好说的就回复 [PASS] 即可，不要强行找话题。",
+  "请根据以上上下文主动发一条消息。不要复述旧内容，聊点新的。"),
+ ("如果你觉得现在没什么好说的，或者没什么有趣的话题，请只回复 [PASS] 即可。",
+  "默认应当发消息。请主动找一个话题，或者只是轻松地问候她一句。"),
+]
+cnt = 0
+for a, b in reps:
+    n = s.count(a)
+    cnt += n
+    s = s.replace(a, b)
+    print(repr(a[:20]), '->', n)
+io.open(p, 'w', encoding='utf-8').write(s)
+print('total replaced', cnt)
+PY
+          git config user.name solelove
+          git config user.email 19372340679@163.com
+          git add -A
+          git diff --cached --quiet || git commit -m "fix(proactive): 放宽 PASS 判定，默认倾向发消息"
+          git push
