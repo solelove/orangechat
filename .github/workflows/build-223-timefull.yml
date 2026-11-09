@@ -1,0 +1,199 @@
+name: Build v2.2.3 + Time Inject Full
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v2.2.3
+          fetch-depth: 0
+
+      - name: Patch GenerationHandler unconditional
+        run: |
+          FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 - "$FILE" <<'PY'
+          import io, sys
+          p = sys.argv[1]
+          s = io.open(p, encoding='utf-8-sig').read()
+          old = '''val timeReminder = if (assistant.enableTimeReminder) {
+                          TimeReminderTransformer.buildReminder(messages)
+                      } else null'''
+          new = '''// 时间上下文无条件注入 与界面显示解耦
+                      val timeReminder = TimeReminderTransformer.buildReminder(messages)'''
+          if new in s:
+              print("already patched")
+          elif old not in s:
+              print("anchor not found"); sys.exit(1)
+          else:
+              s = s.replace(old, new)
+              io.open(p, 'w', encoding='utf-8', newline='').write(s)
+              print("patched")
+          PY
+          grep -n "timeReminder" "$FILE" | head -5
+
+      - name: Rewrite TimeReminderTransformer (real now + full date)
+        run: |
+          TR=app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          cat > "$TR" <<'KT'
+          /*
+           * 橘瓣 OrangeChat
+           * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
+           * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
+           */
+
+          package me.rerere.rikkahub.data.ai.transformers
+
+          import kotlinx.datetime.LocalDateTime
+          import kotlinx.datetime.TimeZone
+          import kotlinx.datetime.toInstant
+          import kotlinx.datetime.toLocalDateTime
+          import me.rerere.ai.core.MessageRole
+          import me.rerere.ai.ui.UIMessage
+          import kotlin.time.Clock
+
+          object TimeReminderTransformer : InputMessageTransformer {
+              override suspend fun transform(
+                  ctx: TransformerContext,
+                  messages: List<UIMessage>,
+              ): List<UIMessage> = messages
+
+              /** 始终用设备当前真实时间，永远不返回 null。 */
+              fun buildReminder(messages: List<UIMessage>): String? {
+                  val tz = TimeZone.currentSystemDefault()
+                  val now = Clock.System.now().toLocalDateTime(tz)
+
+                  val userMessages = messages.filter { it.role == MessageRole.USER }
+                  val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
+                  val gapSeconds = prev?.let {
+                      (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
+                  } ?: 0L
+
+                  return buildTimeReminderText(gapSeconds.takeIf { it > 60 }, now)
+              }
+          }
+
+          internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
+
+          internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
+              val dayOfWeek = time.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+              val timeStr = String.format(
+                  java.util.Locale.US, "%04d-%02d-%02d %02d:%02d",
+                  time.year, time.monthNumber, time.dayOfMonth, time.hour, time.minute
+              )
+              val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
+              return if (gapSeconds != null) {
+                  "$head (${formatGap(gapSeconds)} since last message)</time_reminder>"
+              } else {
+                  "$head</time_reminder>"
+              }
+          }
+
+          private fun formatGap(seconds: Long): String {
+              return when {
+                  seconds < 3600 -> "${seconds / 60} min"
+                  seconds < 86400 -> "${seconds / 3600} h"
+                  else -> "${seconds / 86400} d"
+              }
+          }
+          KT
+          sed -i 's/^          //' "$TR"
+          head -12 "$TR"
+          grep -n "Current time" "$TR"
+
+      - name: Verify no other source touched
+        run: |
+          git status --porcelain
+
+      - name: Init submodules
+        run: |
+          git submodule update --init --depth 1 material3/material-color-utilities || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: Install web deps
+        run: |
+          if [ -f web-ui/pnpm-lock.yaml ]; then
+            pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then
+            pnpm --dir web-ui install
+          else
+            echo "no web-ui, skip"
+          fi
+
+      - name: Create keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -storepass orangechat2026 -keypass orangechat2026 \
+            -alias orangechat \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          cat > local.properties <<'EOF'
+          storeFile=release.keystore
+          storePassword=orangechat2026
+          keyAlias=orangechat
+          keyPassword=orangechat2026
+          EOF
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-223-full-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease 2>&1 | tee build.log
+
+      - name: Dump failure
+        if: failure()
+        run: |
+          {
+            echo "=== kotlin errors ==="
+            grep -E "^e: " build.log | head -60 || true
+            echo "=== tail ==="
+            tail -n 80 build.log || true
+          } > ci-last-error.log
+          cat ci-last-error.log
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-223-timefull
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-timefull-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "v2.2.3 + 时间注入完整版" \
+            --notes "基于 v2.2.3 标签 时间上下文无条件注入 始终为真实当前时间 含年月日时分 其余源码与 v2.2.3 完全一致" \
+            app/build/outputs/apk/release/*.apk
