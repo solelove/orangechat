@@ -19,105 +19,29 @@ jobs:
           ref: refs/tags/v2.2.3
           fetch-depth: 0
 
+      - name: Fetch patch sources
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: _patchsrc
+
       - name: Show base
-        run: |
-          git log -1 --oneline
+        run: git log -1 --oneline
 
       - name: Patch GenerationHandler
         run: |
-          FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
-          python3 - "$FILE" <<'PY'
-import io, re, sys
-p = sys.argv[1]
-s = io.open(p, encoding='utf-8-sig').read()
-pat = re.compile(r'val timeReminder = if \(assistant\.enableTimeReminder\) \{\s*TimeReminderTransformer\.buildReminder\(messages\)\s*\} else null')
-if '时间上下文无条件注入' in s:
-    print('already patched')
-elif not pat.search(s):
-    print('ANCHOR NOT FOUND'); sys.exit(1)
-else:
-    s = pat.sub('// 时间上下文无条件注入 与界面显示解耦\n            val timeReminder = TimeReminderTransformer.buildReminder(messages)', s)
-    io.open(p, 'w', encoding='utf-8', newline='').write(s)
-    print('patched')
-PY
-          grep -n -B1 -A2 "时间上下文无条件注入" "$FILE"
+          python3 _patchsrc/scripts/patch_time_reminder.py app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Write TimeReminderTransformer
         run: |
-          TR=app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
-          cat > "$TR" <<'KT'
-/*
- * 橘瓣 OrangeChat
- * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
- * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
- */
-
-package me.rerere.rikkahub.data.ai.transformers
-
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
-import me.rerere.ai.core.MessageRole
-import me.rerere.ai.ui.UIMessage
-import kotlin.time.Clock
-
-object TimeReminderTransformer : InputMessageTransformer {
-    override suspend fun transform(
-        ctx: TransformerContext,
-        messages: List<UIMessage>,
-    ): List<UIMessage> = messages
-
-    fun buildReminder(messages: List<UIMessage>): String? {
-        val tz = TimeZone.currentSystemDefault()
-        val now = Clock.System.now().toLocalDateTime(tz)
-
-        val userMessages = messages.filter { it.role == MessageRole.USER }
-        val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
-        val gapSeconds = prev?.let {
-            (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
-        } ?: 0L
-
-        return buildTimeReminderText(gapSeconds.takeIf { it > 60 }, now)
-    }
-}
-
-internal fun applyTimeReminder(messages: List<UIMessage>): List<UIMessage> = messages
-
-internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
-    val dayOfWeek = time.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-    val timeStr = String.format(
-        java.util.Locale.US, "%04d-%02d-%02d %02d:%02d",
-        time.year, time.monthNumber, time.dayOfMonth, time.hour, time.minute
-    )
-    val head = "<time_reminder>Current time: $dayOfWeek, $timeStr"
-    return if (gapSeconds != null) {
-        "$head (${formatGap(gapSeconds)} since last message)</time_reminder>"
-    } else {
-        "$head</time_reminder>"
-    }
-}
-
-private fun formatGap(seconds: Long): String {
-    return when {
-        seconds < 3600 -> "${seconds / 60} min"
-        seconds < 86400 -> "${seconds / 3600} h"
-        else -> "${seconds / 86400} d"
-    }
-}
-KT
-          echo "=== head ==="
-          head -20 "$TR"
-          echo "=== time line ==="
-          grep -n "Current time" "$TR"
+          cp _patchsrc/scripts/TimeReminderTransformer.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          grep -n "Current time" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
 
       - name: Verify diff
-        run: |
-          git --no-pager diff --stat
+        run: git --no-pager diff --stat
 
       - name: Init submodules
-        run: |
-          git submodule update --init --depth 1 material3/material-color-utilities || true
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
 
       - uses: actions/setup-java@v4
         with:
@@ -165,7 +89,7 @@ KT
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-tf-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-223-tf2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
       - name: Build
         run: |
