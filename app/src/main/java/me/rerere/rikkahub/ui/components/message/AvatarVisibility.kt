@@ -7,6 +7,7 @@ package me.rerere.rikkahub.ui.components.message
 
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Avatar
+import me.rerere.rikkahub.data.model.BubbleSplitMode
 import me.rerere.ai.provider.Model
 
 /** 这条消息会不会被拆成多个小气泡 */
@@ -20,19 +21,18 @@ internal fun willSplitIntoBubbles(isUser: Boolean, assistant: Assistant?): Boole
 }
 
 /**
- * 外层是否隐藏头像。
+ * 气泡内部（含图片行）是否自己带头像。
  *
- * 拆分模式下每个小气泡自己带一个头像，外层再画就重复了，所以隐藏；
- * 非拆分模式这条消息只有一个气泡，由外层画，不隐藏。
+ * 关键点：assistant 为 null 时（比如没绑助手、或者历史消息）气泡里照样会
+ * 画头像，所以这里不能因为 assistant 为空就返回“不带头像”，否则外层又补
+ * 画一个，就会出现一条消息两个头像。
  */
-internal fun shouldHideSideAvatar(
+internal fun bubbleCarriesOwnAvatar(
     isUser: Boolean,
     showUserAvatar: Boolean,
     showModelIcon: Boolean,
     showAssistantBubble: Boolean,
-    assistant: Assistant?,
 ): Boolean {
-    if (!willSplitIntoBubbles(isUser, assistant)) return false
     return if (isUser) {
         showUserAvatar
     } else {
@@ -41,11 +41,20 @@ internal fun shouldHideSideAvatar(
 }
 
 /**
+ * 外层是否隐藏头像：气泡自己带了，外层就让位。
+ */
+internal fun shouldHideSideAvatar(
+    isUser: Boolean,
+    showUserAvatar: Boolean,
+    showModelIcon: Boolean,
+    showAssistantBubble: Boolean,
+    assistant: Assistant?,
+): Boolean = bubbleCarriesOwnAvatar(isUser, showUserAvatar, showModelIcon, showAssistantBubble)
+
+/**
  * 非文本段（图片/视频/音频/文档）的头像。
  *
- * 图片行自己带一个头像，所以只要图片行会画，外层就必须藏起来，
- * 否则一条带图的消息后面会出现两个头像。这里不再看拆分开关，
- * 因为不管拆不拆，图片行都有头像。
+ * 图片行自己带一个头像，且不受拆分开关影响，所以外层一律要让位。
  */
 internal fun segmentAvatarFor(
     isUser: Boolean,
@@ -67,4 +76,10 @@ internal fun segmentAvatarFor(
             else -> null
         }
     }
+}
+
+/** 气泡实际使用的拆分模式（assistant 为空时就是不拆分） */
+internal fun resolveSplitMode(isUser: Boolean, assistant: Assistant?): BubbleSplitMode {
+    if (assistant == null) return BubbleSplitMode.NONE
+    return if (isUser) assistant.effectiveUserSplitMode else assistant.bubbleSplitMode
 }
