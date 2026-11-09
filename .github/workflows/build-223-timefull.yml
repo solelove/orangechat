@@ -1,7 +1,10 @@
-name: Build v2.2.3 + Time Inject Full
+name: Time Full Build
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.trigger-timefull'
 
 permissions:
   contents: write
@@ -10,12 +13,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout v2.2.3 tag
+        uses: actions/checkout@v4
         with:
           ref: refs/tags/v2.2.3
           fetch-depth: 0
 
-      - name: Patch GenerationHandler unconditional
+      - name: Show base
+        run: |
+          git log -1 --oneline
+
+      - name: Patch GenerationHandler
         run: |
           FILE=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           python3 - "$FILE" <<'PY'
@@ -23,18 +31,18 @@ import io, re, sys
 p = sys.argv[1]
 s = io.open(p, encoding='utf-8-sig').read()
 pat = re.compile(r'val timeReminder = if \(assistant\.enableTimeReminder\) \{\s*TimeReminderTransformer\.buildReminder\(messages\)\s*\} else null')
-if '// 时间上下文无条件注入' in s:
+if '时间上下文无条件注入' in s:
     print('already patched')
 elif not pat.search(s):
-    print('anchor not found'); sys.exit(1)
+    print('ANCHOR NOT FOUND'); sys.exit(1)
 else:
     s = pat.sub('// 时间上下文无条件注入 与界面显示解耦\n            val timeReminder = TimeReminderTransformer.buildReminder(messages)', s)
     io.open(p, 'w', encoding='utf-8', newline='').write(s)
     print('patched')
 PY
-          grep -n -A2 "时间上下文无条件注入" "$FILE"
+          grep -n -B1 -A2 "时间上下文无条件注入" "$FILE"
 
-      - name: Rewrite TimeReminderTransformer (real now + full date)
+      - name: Write TimeReminderTransformer
         run: |
           TR=app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
           cat > "$TR" <<'KT'
@@ -60,7 +68,6 @@ object TimeReminderTransformer : InputMessageTransformer {
         messages: List<UIMessage>,
     ): List<UIMessage> = messages
 
-    /** 始终使用设备当前真实时间 永不返回 null */
     fun buildReminder(messages: List<UIMessage>): String? {
         val tz = TimeZone.currentSystemDefault()
         val now = Clock.System.now().toLocalDateTime(tz)
@@ -100,13 +107,12 @@ private fun formatGap(seconds: Long): String {
 }
 KT
           echo "=== head ==="
-          head -8 "$TR"
+          head -20 "$TR"
           echo "=== time line ==="
           grep -n "Current time" "$TR"
 
-      - name: Verify changed files
+      - name: Verify diff
         run: |
-          git status --porcelain
           git --no-pager diff --stat
 
       - name: Init submodules
@@ -122,13 +128,13 @@ KT
         with:
           node-version: '20'
 
-      - name: Set up pnpm
+      - name: pnpm
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
           pnpm --version
 
-      - name: Install web deps
+      - name: web deps
         run: |
           if [ -f web-ui/pnpm-lock.yaml ]; then
             pnpm --dir web-ui install --frozen-lockfile
@@ -138,7 +144,7 @@ KT
             echo "no web-ui, skip"
           fi
 
-      - name: Create keystore
+      - name: keystore
         run: |
           keytool -genkeypair -v \
             -keystore app/release.keystore \
@@ -153,13 +159,13 @@ KT
           keyPassword=orangechat2026
           EOF
 
-      - name: Gradle cache
+      - name: gradle cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-223-full2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-223-tf-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
       - name: Build
         run: |
@@ -167,25 +173,25 @@ KT
           set -o pipefail
           ./gradlew assembleRelease 2>&1 | tee build.log
 
-      - name: Dump failure
+      - name: On failure
         if: failure()
         run: |
           {
             echo "=== kotlin errors ==="
-            grep -E "^e: " build.log | head -60 || true
+            grep -E "^e: " build.log | head -80 || true
             echo "=== tail ==="
-            tail -n 80 build.log || true
+            tail -n 100 build.log || true
           } > ci-last-error.log
           cat ci-last-error.log
 
-      - name: Upload artifact
+      - name: Upload
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: orangechat-223-timefull
           path: app/build/outputs/apk/release/*.apk
 
-      - name: Publish release
+      - name: Release
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
