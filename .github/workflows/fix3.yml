@@ -1,0 +1,92 @@
+name: fix3
+on: push
+permissions:
+  contents: write
+jobs:
+  p:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply
+        run: |
+          cat > /tmp/patch.py <<'PYEOF'
+          import io, sys
+
+          def rw(p, pairs):
+              s = io.open(p, encoding='utf-8').read()
+              for old, new in pairs:
+                  if old not in s:
+                      print('MISS ' + p + ' :: ' + old[:70].replace('\n','\\n')); sys.exit(1)
+                  s = s.replace(old, new, 1)
+              io.open(p, 'w', encoding='utf-8').write(s)
+              print('OK ' + p)
+
+          CM = 'app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt'
+          pairs = []
+          # 外层头像：只要有内容就画（不再要求全是纯文本）
+          pairs.append((
+            "if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
+            "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false"))
+          pairs.append((
+            "if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
+            "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true"))
+          # PartRow 不再自己画头像（避免与气泡内头像叠加出现两个）
+          pairs.append((
+            "        if (spec != null && !isUser) {\n            PartAvatarView(spec, loading)\n            Spacer(modifier = Modifier.width(8.dp))\n        }\n        content()\n        if (spec != null && isUser) {\n            Spacer(modifier = Modifier.width(8.dp))\n            PartAvatarView(spec, loading)\n        }\n",
+            "        content()\n"))
+          rw(CM, pairs)
+
+          IA = 'app/src/main/java/me/rerere/rikkahub/ui/hooks/ImeAutoScroller.kt'
+          s = io.open(IA, encoding='utf-8').read()
+          old_block = """    val ime = WindowInsets.ime
+    val localDensity = LocalDensity.current
+    var imeHeight by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { ime.getBottom(localDensity) }
+            .distinctUntilChanged()
+            .collect { keyboardHeight ->
+                // 等键盘动画结束：高度连续不变 80ms 后才认为稳定
+                delay(80)
+                if (keyboardHeight > 0 && keyboardHeight != imeHeight) {
+                    lazyListState.scrollBy((keyboardHeight - imeHeight).toFloat())
+                    imeHeight = keyboardHeight
+                } else if (keyboardHeight == 0) {
+                    imeHeight = 0
+                }
+            }
+    }"""
+          new_block = """    val ime = WindowInsets.ime
+    val localDensity = LocalDensity.current
+    var imeHeight by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { ime.getBottom(localDensity) }
+            .distinctUntilChanged()
+            .collectLatest { keyboardHeight ->
+                // 键盘动画期间高度每帧都在变，旧值直接丢弃，等稳定 150ms 再滚一次
+                delay(150)
+                val target = keyboardHeight
+                if (target > 0 && target != imeHeight && imeHeight >= 0) {
+                    lazyListState.scrollBy((target - imeHeight).toFloat())
+                    imeHeight = target
+                } else if (target == 0) {
+                    imeHeight = 0
+                }
+            }
+    }"""
+          if old_block not in s:
+              print('MISS ime block'); sys.exit(1)
+          s = s.replace(old_block, new_block, 1)
+          s = s.replace("import kotlinx.coroutines.flow.distinctUntilChanged",
+                        "import kotlinx.coroutines.flow.distinctUntilChanged\nimport kotlinx.coroutines.flow.collectLatest", 1)
+          io.open(IA, 'w', encoding='utf-8').write(s)
+          print('OK ' + IA)
+          PYEOF
+          python3 /tmp/patch.py
+      - name: commit
+        run: |
+          git config user.name solelove
+          git config user.email 19372340679@163.com
+          git add -A
+          git diff --cached --quiet && echo "no change" || git commit -m "fix(ui): 头像只画一份 + 键盘滚动防抖改 collectLatest [skip ci]"
+          git push
