@@ -1,1 +1,1 @@
-go 2026-11-10 11:00 install deps then build
+go 2026-11-10 11:05 workspace fixed
