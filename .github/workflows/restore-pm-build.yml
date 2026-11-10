@@ -43,16 +43,27 @@ jobs:
           node-version: '20'
 
       - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install web-ui deps
+        working-directory: web-ui
         run: |
-          npm install -g pnpm@9
+          pnpm install --no-frozen-lockfile
           pnpm --version
+          node --version
+
+      - name: Verify web build works
+        working-directory: web-ui
+        run: pnpm run build
 
       - uses: gradle/actions/setup-gradle@v3
 
       - run: chmod +x ./gradlew
 
       - name: Build APK
-        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g --stacktrace
+        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g
 
       - name: List APK
         if: always()
