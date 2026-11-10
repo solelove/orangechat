@@ -1,6 +1,6 @@
-name: Build 223-avatar + Time Inject Everywhere
+name: Build 223 Time All
 
-on:
+"on":
   workflow_dispatch:
 
 permissions:
@@ -10,225 +10,64 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout 77f389dc avatar base
+        uses: actions/checkout@v4
         with:
           ref: 77f389dce52d53ddacce4f07ca885a2e3bcbf005
           fetch-depth: 0
 
-      - name: Prep branch
+      - name: Verify base
         run: |
-          git config user.name "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          git branch -f master HEAD
-          git checkout master
           echo "HEAD=$(git rev-parse HEAD)"
           test "$(git rev-parse HEAD)" = "77f389dce52d53ddacce4f07ca885a2e3bcbf005" && echo "base OK" || exit 1
 
-      - name: Backup originals
+      - name: Checkout patch script
         run: |
-          cp app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt /tmp/TR.orig.kt
-          cp app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt /tmp/PM.orig.kt
+          git fetch origin master --depth 1
+          git show origin/master:scripts/patch_timeall.py > /tmp/patch_timeall.py
 
-      - name: Patch TimeReminderTransformer
+      - name: Apply time patch
         run: |
-          python3 - <<'PY'
-          import io
-          p = "app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt"
-          s = io.open(p, encoding='utf-8').read()
-          if 'buildReminderForProactive' in s:
-              print('already patched'); raise SystemExit(0)
-          anchor = "    /** 旧接口保留"
-          if anchor not in s:
-              print('anchor missing'); raise SystemExit(1)
-          add = '''    /**
-     * 主动消息用：主动发起时没有刚发的那条 user 消息，
-     * 用传入的上一条消息时间算间隔，保证主动发消息也知道现在几点、隔了多久。
-     */
-    fun buildReminderForProactive(lastMessageAt: LocalDateTime?): String {
-        val tz = TimeZone.currentSystemDefault()
-        val now = Clock.System.now().toLocalDateTime(tz)
-        val gapSeconds = lastMessageAt?.let { prev ->
-            (now.toInstant(tz) - prev.toInstant(tz)).inWholeSeconds
-        }?.takeIf { it > 60 }
-        return buildTimeReminderText(gapSeconds, now)
-    }
-
-    fun buildReminderNow(): String {
-        val tz = TimeZone.currentSystemDefault()
-        val now = Clock.System.now().toLocalDateTime(tz)
-        return buildTimeReminderText(null, now)
-    }
-
-'''
-          s = s.replace(anchor, add + anchor, 1)
-
-          old_text_start = "internal fun buildTimeReminderText"
-          idx = s.index(old_text_start)
-          end = s.index("\n}\n", idx) + 3
-          new_block = '''internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): String {
-    val timeStr = String.format(
-        java.util.Locale.US, "%04d年%02d月%02d日 %02d:%02d",
-        time.year, time.monthNumber, time.dayOfMonth, time.hour, time.minute
-    )
-    val head = "<time_reminder>现在是 $timeStr ${weekNameOf(time)}"
-    return if (gapSeconds != null) {
-        "$head，距离上一条消息过去${formatGapChinese(gapSeconds)}。这是真实当前时间，不要凭感觉猜时间。</time_reminder>"
-    } else {
-        "$head。这是真实当前时间，不要凭感觉猜时间。</time_reminder>"
-    }
-}
-
-private fun weekNameOf(time: LocalDateTime): String = when (time.dayOfWeek.name) {
-    "MONDAY" -> "星期一"
-    "TUESDAY" -> "星期二"
-    "WEDNESDAY" -> "星期三"
-    "THURSDAY" -> "星期四"
-    "FRIDAY" -> "星期五"
-    "SATURDAY" -> "星期六"
-    else -> "星期日"
-}
-
-private fun formatGapChinese(seconds: Long): String {
-    val m = seconds / 60
-    val h = seconds / 3600
-    val d = seconds / 86400
-    return when {
-        seconds < 60 -> "不到一分钟"
-        m < 60 -> "$m 分钟"
-        h < 24 -> {
-            val restMin = m % 60
-            if (restMin > 0) "$h 小时 $restMin 分钟" else "$h 小时"
-        }
-        else -> {
-            val restHour = h % 24
-            if (restHour > 0) "$d 天 $restHour 小时" else "$d 天"
-        }
-    }
-}
-'''
-          s = s[:idx] + new_block + s[end:]
-
-          old = '''        val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
-        val gapSeconds = prev?.let {
-            (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
-        } ?: 0L'''
-          new = '''        val prevUser = userMessages.dropLast(1).lastOrNull()?.createdAt
-        val prevAny = prevUser ?: messages.dropLast(1).lastOrNull()?.createdAt
-        val gapSeconds = prevAny?.let {
-            (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
-        }'''
-          if old in s:
-              s = s.replace(old, new, 1)
-          io.open(p, 'w', encoding='utf-8', newline='').write(s)
-          print('TR patched')
-          PY
-          grep -n "buildReminderForProactive\|现在是 \|formatGapChinese" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt || true
-
-      - name: Patch ProactiveMessageService
-        run: |
-          python3 - <<'PY'
-          import io
-          p = "app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt"
-          s = io.open(p, encoding='utf-8').read()
-          if 'TimeReminderTransformer.buildReminderForProactive' in s:
-              print('already patched'); raise SystemExit(0)
-
-          old_sig = "private suspend fun buildSystemPrompt(assistant: Assistant, settings: Settings, idleMinutes: Int = 0, jumpThreshold: Int = 120, isFromDeviceEvent: Boolean = false, deviceEventContext: String? = null): String {"
-          new_sig = "private suspend fun buildSystemPrompt(assistant: Assistant, settings: Settings, idleMinutes: Int = 0, jumpThreshold: Int = 120, isFromDeviceEvent: Boolean = false, deviceEventContext: String? = null, lastMessageAt: LocalDateTime? = null): String {"
-          if old_sig not in s:
-              print('sig missing'); raise SystemExit(1)
-          s = s.replace(old_sig, new_sig, 1)
-
-          old_tail = '''                if (!deviceEventContext.isNullOrBlank()) {
-                    appendLine()
-                    appendLine(deviceEventContext)
-                }
-            }
-        }
-    }'''
-          new_tail = '''                if (!deviceEventContext.isNullOrBlank()) {
-                    appendLine()
-                    appendLine(deviceEventContext)
-                }
-            }
-
-            // 每条主动消息都带统一时间上下文（真实当前时间 + 距上一条消息多久）
-            appendLine()
-            appendLine(TimeReminderTransformer.buildReminderForProactive(lastMessageAt))
-        }
-    }'''
-          if old_tail not in s:
-              print('tail missing'); raise SystemExit(1)
-          s = s.replace(old_tail, new_tail, 1)
-
-          old_call = "val systemPrompt = buildSystemPrompt(assistant, settings, idleMinutes, proactiveSetting.jumpIdleThresholdMinutes, isFromDeviceEvent, if (isFromDeviceEvent) deviceEventContext else contextStr)"
-          new_call = "val lastMessageAt = conversation?.messageNodes?.lastOrNull()?.messages?.lastOrNull()?.createdAt\n                val systemPrompt = buildSystemPrompt(assistant, settings, idleMinutes, proactiveSetting.jumpIdleThresholdMinutes, isFromDeviceEvent, if (isFromDeviceEvent) deviceEventContext else contextStr, lastMessageAt)"
-          if old_call not in s:
-              print('call missing'); raise SystemExit(1)
-          s = s.replace(old_call, new_call, 1)
-
-          io.open(p, 'w', encoding='utf-8', newline='').write(s)
-          print('PM patched')
-          PY
-          grep -n "buildReminderForProactive\|lastMessageAt" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt || true
-
-      - name: Diff summary
-        run: |
+          python3 /tmp/patch_timeall.py
+          echo "----- diff stat -----"
           git --no-pager diff --stat
-          echo "--- avatar files untouched check ---"
-          git --no-pager diff --name-only | grep -E "Avatar|Bubble|ChatMessage|ImeAuto" && echo "WARNING avatar touched" || echo "avatar untouched OK"
+          echo "----- avatar untouched check -----"
+          git --no-pager diff --name-only | grep -E "Avatar|Bubble|ChatMessage|ImeAuto" && { echo "WARNING avatar touched"; exit 1; } || echo "avatar untouched OK"
+          echo "----- verify format -----"
+          grep -n "%04d年%02d月%02d日" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          grep -n "buildReminderForProactive" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
 
       - name: Init submodules
-        run: |
-          git submodule update --init --depth 1 material3/material-color-utilities || true
+        run: git submodule update --init --depth 1 material3/material-color-utilities || true
 
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Set up pnpm
+      - name: pnpm
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
-          pnpm --version
+          if [ -f web-ui/pnpm-lock.yaml ]; then pnpm --dir web-ui install --frozen-lockfile
+          elif [ -f web-ui/package.json ]; then pnpm --dir web-ui install
+          else echo skip; fi
 
-      - name: Install web deps
+      - name: keystore
         run: |
-          if [ -f web-ui/pnpm-lock.yaml ]; then
-            pnpm --dir web-ui install --frozen-lockfile
-          elif [ -f web-ui/package.json ]; then
-            pnpm --dir web-ui install
-          else
-            echo "no web-ui, skip"
-          fi
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
 
-      - name: Create keystore
-        run: |
-          keytool -genkeypair -v \
-            -keystore app/release.keystore \
-            -storepass orangechat2026 -keypass orangechat2026 \
-            -alias orangechat \
-            -keyalg RSA -keysize 2048 -validity 36500 \
-            -dname "CN=OrangeChat,O=OrangeChat,C=CN"
-          cat > local.properties <<'EOF'
-          storeFile=release.keystore
-          storePassword=orangechat2026
-          keyAlias=orangechat
-          keyPassword=orangechat2026
-          EOF
-
-      - name: Gradle cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-223tv-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-timeall-avatar-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build
         run: |
@@ -239,28 +78,21 @@ private fun formatGapChinese(seconds: Long): String {
       - name: Dump failure
         if: failure()
         run: |
-          {
-            echo "=== kotlin errors ==="
-            grep -E "^e: " build.log | head -60 || true
-            echo "=== tail ==="
-            tail -n 80 build.log || true
-          } > ci-last-error.log
-          cat ci-last-error.log
+          grep -E "^e: " build.log | head -60 || true
+          tail -n 80 build.log || true
 
       - name: Upload artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: orangechat-223-timeall
+          name: orangechat-timeall-avatar
           path: app/build/outputs/apk/release/*.apk
 
-      - name: Publish release
+      - name: Publish
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="223-timeall-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" \
-            --title "223-avatar + 全量时间注入" \
-            --notes "基线 77f389dc（每气泡头像那一版） 只改时间 头像键盘气泡未动 正常聊天和主动消息都带真实当前时间与距上一条消息间隔" \
-            app/build/outputs/apk/release/*.apk
+          TAG="timeall-avatar-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" --repo "$REPO" --title "223头像版+全量时间注入" --notes "基于 77f389dc。时间注入每条消息都有：正常聊天、主动消息、设备事件。格式为年月日时分中文可读，并带距上一条消息间隔。头像 键盘 气泡 一个字符未动。" app/build/outputs/apk/release/*.apk
