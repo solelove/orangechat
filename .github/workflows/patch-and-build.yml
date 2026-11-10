@@ -1,0 +1,79 @@
+name: patch-and-build
+
+on:
+  push:
+    branches:
+      - timefix-202611101010
+    paths:
+      - 'ci-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: timefix-202611101010
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save patch script outside git
+        run: cp .ci/time_patch.py /tmp/time_patch.py
+
+      - name: Reset worktree to 77f389dc
+        run: |
+          git config user.name "solelove"
+          git config user.email "19372340679@163.com"
+          git reset --hard 77f389dce52d53ddacce4f07ca885a2e3bcbf005
+          git log --oneline -1
+          grep -c "buildReminderForProactive" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt || echo "77f389dc 基线确认 无主动入口"
+
+      - name: Apply patch
+        run: |
+          python3 /tmp/time_patch.py
+
+      - name: Verify anchors applied
+        run: |
+          echo "===== TR ====="
+          grep -n "buildReminderForProactive\|现在是\|星期" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          echo "===== AV ====="
+          grep -n "showUserAvatar: Boolean = true\|fun resolveSplitMode" app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
+          echo "===== PM ====="
+          grep -n "buildReminderForProactive\|lastMessageAt" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          echo "===== 行数 ====="
+          wc -l app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
+
+      - name: Commit patch
+        run: |
+          git config user.name "solelove"
+          git config user.email "19372340679@163.com"
+          git add -A
+          git commit -m "fix: 77f389dc 基线上修时间注入（主动消息带真实时间+间隔回退+中文年月日时分）+ 补 AvatarVisibility 签名让能编译" || echo "nothing to commit"
+          git push --force origin HEAD:timefix-202611101010
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-timefix-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7
