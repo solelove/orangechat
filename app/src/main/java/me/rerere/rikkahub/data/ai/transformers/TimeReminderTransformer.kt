@@ -20,8 +20,8 @@ import kotlin.time.Clock
  * 只产出 <time_reminder> 文本，由 GenerationHandler / 主动消息流程拼进系统提示，
  * 不往消息列表里插假消息。
  *
- * 关键点：时间一律取 Clock.System.now()，即每次请求真正发出时的当前时间。
- * 格式改成中文可读，避免模型把它当成一段英文噪声忽略掉。
+ * 关键点：时间一律取 Clock.System.now()，即每次请求真正发出时的当前时间，精确到分钟。
+ * 间隔用真实 now 减去上一条消息的 createdAt，取不到 user 时回退到上一条任意消息。
  */
 object TimeReminderTransformer : InputMessageTransformer {
     override suspend fun transform(
@@ -34,7 +34,7 @@ object TimeReminderTransformer : InputMessageTransformer {
         val tz = TimeZone.currentSystemDefault()
         val now = Clock.System.now().toLocalDateTime(tz)
 
-        // 距上一条 user 消息过去多久：用真实 now 减去上一条 user 的 createdAt
+        // 上一条消息时间：优先倒数第二条 user，取不到就回退到除最后一条外的任意消息
         val userMessages = messages.filter { it.role == MessageRole.USER }
         val prevUser = userMessages.dropLast(1).lastOrNull()?.createdAt
         val prevAny = prevUser ?: messages.dropLast(1).lastOrNull()?.createdAt
@@ -46,8 +46,8 @@ object TimeReminderTransformer : InputMessageTransformer {
     }
 
     /**
-     * 主动消息用：这条路没有"刚发的那条 user 消息"，
-     * 用传入的上一条消息时间算间隔，保证主动发消息也知道现在几点、隔了多久。
+     * 主动消息用：主动发起时没有刚发的那条 user 消息，
+     * 直接传入上一条消息时间算间隔，保证主动发消息也知道现在几点、隔了多久。
      */
     fun buildReminderForProactive(lastMessageAt: LocalDateTime?): String {
         val tz = TimeZone.currentSystemDefault()
@@ -69,9 +69,9 @@ internal fun buildTimeReminderText(gapSeconds: Long?, time: LocalDateTime): Stri
     )
     val head = "<time_reminder>现在是 $timeStr ${weekNameOf(time)}"
     return if (gapSeconds != null) {
-        "$head，距离上一条消息过去${formatGapChinese(gapSeconds)}。这是真实当前时间，不要凭感觉猜时间。</time_reminder>"
+        "$head，距离上一次聊天已经过去${formatGap(gapSeconds)}。这是真实当前时间，不要凭感觉猜。</time_reminder>"
     } else {
-        "$head。这是真实当前时间，不要凭感觉猜时间。</time_reminder>"
+        "$head。这是真实当前时间，不要凭感觉猜。</time_reminder>"
     }
 }
 
@@ -85,20 +85,20 @@ private fun weekNameOf(time: LocalDateTime): String = when (time.dayOfWeek.name)
     else -> "星期日"
 }
 
-private fun formatGapChinese(seconds: Long): String {
+private fun formatGap(seconds: Long): String {
     val m = seconds / 60
     val h = seconds / 3600
     val d = seconds / 86400
     return when {
         seconds < 60 -> "不到一分钟"
-        m < 60 -> "$m 分钟"
+        m < 60 -> "${m} 分钟"
         h < 24 -> {
             val restMin = m % 60
-            if (restMin > 0) "$h 小时 $restMin 分钟" else "$h 小时"
+            if (restMin > 0) "${h} 小时 ${restMin} 分钟" else "${h} 小时"
         }
         else -> {
             val restHour = h % 24
-            if (restHour > 0) "$d 天 $restHour 小时" else "$d 天"
+            if (restHour > 0) "${d} 天 ${restHour} 小时" else "${d} 天"
         }
     }
 }
