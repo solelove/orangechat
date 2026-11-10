@@ -1,1 +1,1 @@
-go 2026-11-10 10:49 pnpm ok
+go 2026-11-10 11:00 install deps then build
