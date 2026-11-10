@@ -181,6 +181,34 @@ fun SplitBubbleColumn(
     }
 }
 
+/**
+ * 非文本段（图片/视频/音频/文档）外面那一行：头像 + 内容。
+ * 拆分开关打开时 [spec] 才非空，否则只渲染内容，头像交给外层 ChatMessage。
+ */
+@Composable
+internal fun PartRow(
+    spec: SegmentAvatarSpec?,
+    isUser: Boolean,
+    loading: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+    ) {
+        if (spec != null && !isUser) {
+            SegmentAvatarView(spec, loading)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        content()
+        if (spec != null && isUser) {
+            Spacer(modifier = Modifier.width(8.dp))
+            SegmentAvatarView(spec, loading)
+        }
+    }
+}
+
 /** 气泡外壳：宽度跟随内容，最大不超过 [maxWidth] */
 @Composable
 fun BubbleSurface(

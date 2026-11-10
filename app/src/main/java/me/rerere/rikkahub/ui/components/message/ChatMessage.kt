@@ -169,7 +169,13 @@ fun ChatMessage(
     val sideAvatarVisible = remember(message.parts, assistant) {
         message.parts.all { it is UIMessagePart.Text } &&
             !message.parts.isEmptyUIMessage() &&
-            !shouldHideSideAvatar(isUserMessage, assistant)
+            !shouldHideSideAvatar(
+                isUser = isUserMessage,
+                showUserAvatar = settings.showUserAvatar,
+                showModelIcon = settings.showModelIcon,
+                showAssistantBubble = settings.showAssistantBubble,
+                assistant = assistant,
+            )
     }
 
     Row(
