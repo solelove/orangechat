@@ -31,11 +31,17 @@ jobs:
           python3 /tmp/patch_timeall.py
           echo "----- diff stat -----"
           git --no-pager diff --stat
-          echo "----- avatar untouched check -----"
-          git --no-pager diff --name-only | grep -E "Avatar|Bubble|ChatMessage|ImeAuto" && { echo "WARNING avatar touched"; exit 1; } || echo "avatar untouched OK"
+          echo "----- changed files -----"
+          git --no-pager diff --name-only
+          echo "----- guard: only these files may change -----"
+          ALLOWED="TimeReminderTransformer.kt|ProactiveMessageService.kt|AvatarVisibility.kt"
+          BAD=$(git --no-pager diff --name-only | grep -vE "$ALLOWED" || true)
+          if [ -n "$BAD" ]; then echo "UNEXPECTED FILES CHANGED:"; echo "$BAD"; exit 1; fi
+          echo "guard OK - 渲染文件未改动"
           echo "----- verify format -----"
           grep -n "%04d年%02d月%02d日" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
           grep -n "buildReminderForProactive" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          grep -n "fun resolveSplitMode" app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -95,4 +101,4 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           TAG="timeall-avatar-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --repo "$REPO" --title "223头像版+全量时间注入" --notes "基于 77f389dc。时间注入每条消息都有：正常聊天、主动消息、设备事件。格式为年月日时分中文可读，并带距上一条消息间隔。头像 键盘 气泡 一个字符未动。" app/build/outputs/apk/release/*.apk
+          gh release create "$TAG" --repo "$REPO" --title "223头像版+全量时间注入" --notes "基于 77f389dc。时间注入每条消息都有：正常聊天、主动消息、设备事件。格式为年月日时分中文可读，并带距上一条消息间隔。仅给 AvatarVisibility.kt 补默认参数和缺失函数以修复原基线编译错误，渲染逻辑未改。" app/build/outputs/apk/release/*.apk
