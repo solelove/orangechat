@@ -15,9 +15,13 @@ jobs:
           ref: 77f389dce52d53ddacce4f07ca885a2e3bcbf005
           fetch-depth: 0
 
-      - name: Verify base
+      - name: Prep branch
         run: |
-          git rev-parse HEAD
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git branch -f master HEAD
+          git checkout master
+          echo "HEAD=$(git rev-parse HEAD)"
           test "$(git rev-parse HEAD)" = "77f389dce52d53ddacce4f07ca885a2e3bcbf005" && echo "base OK" || exit 1
 
       - name: Backup originals
@@ -37,7 +41,7 @@ jobs:
           if anchor not in s:
               print('anchor missing'); raise SystemExit(1)
           add = '''    /**
-     * 主动消息用：主动发起时没有"刚发的那条 user 消息"，
+     * 主动消息用：主动发起时没有刚发的那条 user 消息，
      * 用传入的上一条消息时间算间隔，保证主动发消息也知道现在几点、隔了多久。
      */
     fun buildReminderForProactive(lastMessageAt: LocalDateTime?): String {
@@ -104,7 +108,6 @@ private fun formatGapChinese(seconds: Long): String {
 '''
           s = s[:idx] + new_block + s[end:]
 
-          # gap 优先用上一条 user 消息，回退任意上一条
           old = '''        val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
         val gapSeconds = prev?.let {
             (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
@@ -130,14 +133,12 @@ private fun formatGapChinese(seconds: Long): String {
           if 'TimeReminderTransformer.buildReminderForProactive' in s:
               print('already patched'); raise SystemExit(0)
 
-          # buildSystemPrompt 增加 lastMessageAt 参数
           old_sig = "private suspend fun buildSystemPrompt(assistant: Assistant, settings: Settings, idleMinutes: Int = 0, jumpThreshold: Int = 120, isFromDeviceEvent: Boolean = false, deviceEventContext: String? = null): String {"
           new_sig = "private suspend fun buildSystemPrompt(assistant: Assistant, settings: Settings, idleMinutes: Int = 0, jumpThreshold: Int = 120, isFromDeviceEvent: Boolean = false, deviceEventContext: String? = null, lastMessageAt: LocalDateTime? = null): String {"
           if old_sig not in s:
               print('sig missing'); raise SystemExit(1)
           s = s.replace(old_sig, new_sig, 1)
 
-          # 退出 buildString 之前注入时间
           old_tail = '''                if (!deviceEventContext.isNullOrBlank()) {
                     appendLine()
                     appendLine(deviceEventContext)
@@ -160,7 +161,6 @@ private fun formatGapChinese(seconds: Long): String {
               print('tail missing'); raise SystemExit(1)
           s = s.replace(old_tail, new_tail, 1)
 
-          # 调用处传入上一条消息时间
           old_call = "val systemPrompt = buildSystemPrompt(assistant, settings, idleMinutes, proactiveSetting.jumpIdleThresholdMinutes, isFromDeviceEvent, if (isFromDeviceEvent) deviceEventContext else contextStr)"
           new_call = "val lastMessageAt = conversation?.messageNodes?.lastOrNull()?.messages?.lastOrNull()?.createdAt\n                val systemPrompt = buildSystemPrompt(assistant, settings, idleMinutes, proactiveSetting.jumpIdleThresholdMinutes, isFromDeviceEvent, if (isFromDeviceEvent) deviceEventContext else contextStr, lastMessageAt)"
           if old_call not in s:
@@ -264,4 +264,3 @@ private fun formatGapChinese(seconds: Long): String {
             --title "223-avatar + 全量时间注入" \
             --notes "基线 77f389dc（每气泡头像那一版） 只改时间 头像键盘气泡未动 正常聊天和主动消息都带真实当前时间与距上一条消息间隔" \
             app/build/outputs/apk/release/*.apk
-          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
