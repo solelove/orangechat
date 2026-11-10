@@ -21,17 +21,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore and patch ProactiveMessageService
+      - name: Verify source state
         run: |
-          bash .ci/restore_and_patch_pm.sh
-
-      - name: Commit
-        run: |
-          git config user.name "solelove"
-          git config user.email "19372340679@163.com"
-          git add -A
-          git commit -m "fix: 从 77f389dc 恢复 ProactiveMessageService 并加主动消息时间注入" || echo "nothing"
-          git push origin HEAD:timefix-202611101010
+          echo "=== PM 大小 ==="
+          wc -c app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          grep -c "buildReminderForProactive" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          echo "=== TR 时间格式 ==="
+          grep -n "年%02d月" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          echo "=== AV 签名 ==="
+          grep -n "showUserAvatar: Boolean = true\|fun resolveSplitMode" app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
 
       - name: Setup JDK 21
         uses: actions/setup-java@v4
@@ -39,14 +37,30 @@ jobs:
           distribution: zulu
           java-version: '21'
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        run: |
+          npm install -g pnpm@9
+          pnpm --version
+
       - uses: gradle/actions/setup-gradle@v3
 
       - run: chmod +x ./gradlew
 
-      - name: Build
-        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g
+      - name: Build APK
+        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g --stacktrace
+
+      - name: List APK
+        if: always()
+        run: find app/build/outputs -name "*.apk" -exec ls -lh {} \; || echo "no apk"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: orangechat-timefix
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
