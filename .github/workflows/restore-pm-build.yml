@@ -20,6 +20,16 @@ jobs:
           ref: timefix-202611101010
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: false
+
+      - name: Init material-color-utilities submodule
+        run: |
+          git submodule sync -- material3/material-color-utilities
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule update --init --depth 1 -- material3/material-color-utilities
+          echo "=== 子模块内容 ==="
+          ls material3/material-color-utilities
+          ls material3/material-color-utilities/kotlin | head -20
 
       - name: Verify source state
         run: |
