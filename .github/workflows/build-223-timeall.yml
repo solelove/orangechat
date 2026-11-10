@@ -10,13 +10,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 完全照 avatar-per-bubble.yml 的做法：基底是 v2.2.3 标签
-      # 77f389dc 只是存放那个 workflow 的提交，本身不是可编译快照
-      - name: Checkout v2.2.3
+      # 基线 dd4f4dd：这是 MessageBubbles.kt 被删除之前的最后一个完整提交
+      # 之后的 c675e4cf 删掉了 MessageBubbles.kt 但 ChatMessage.kt 仍引用它
+      # 所以从 c675e4cf 起（含 77f389dc）全部编译不过
+      - name: Checkout dd4f4dd full source
         uses: actions/checkout@v4
         with:
-          ref: refs/tags/v2.2.3
+          ref: dd4f4dda90588cde27bfdeeb0680fdcfd610c205
           fetch-depth: 0
+
+      - name: Verify base
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD)" = "dd4f4dda90588cde27bfdeeb0680fdcfd610c205" && echo "base OK" || exit 1
+          echo "--- MessageBubbles.kt 存在性 ---"
+          test -f app/src/main/java/me/rerere/rikkahub/ui/components/message/MessageBubbles.kt && echo "MessageBubbles.kt OK" || exit 1
 
       - name: Checkout patch script
         run: |
@@ -38,6 +46,7 @@ jobs:
           echo "----- verify -----"
           grep -n "%04d年%02d月%02d日" app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
           grep -n "buildReminderForProactive" app/src/main/java/me/rerere/rikkahub/data/service/ProactiveMessageService.kt
+          grep -n "无条件注入" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
 
       - name: Init submodules
         run: git submodule update --init --depth 1 material3/material-color-utilities || true
@@ -69,7 +78,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-timeall-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-dd4f4dd-timeall-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build
         run: |
@@ -97,4 +106,4 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           TAG="timeall-$(date +%Y%m%d%H%M)"
-          gh release create "$TAG" --repo "$REPO" --title "v2.2.3 + 全量时间注入" --notes "基于 v2.2.3 标签。时间注入每条消息都有：正常聊天、主动消息、设备事件。格式为年月日时分中文可读，并带距上一条消息间隔。头像、气泡、键盘一个字符未改。" app/build/outputs/apk/release/*.apk
+          gh release create "$TAG" --repo "$REPO" --title "完整源码 + 全量时间注入" --notes "基于 dd4f4dd 完整源码。时间注入每条消息都有：正常聊天、主动消息、设备事件。格式为年月日时分中文可读，并带距上一条消息间隔。头像、气泡、键盘一个字符未改。" app/build/outputs/apk/release/*.apk
