@@ -1,0 +1,52 @@
+name: restore-pm-and-build
+
+on:
+  push:
+    branches:
+      - timefix-202611101010
+    paths:
+      - 'run-now.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: timefix-202611101010
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore and patch ProactiveMessageService
+        run: |
+          bash .ci/restore_and_patch_pm.sh
+
+      - name: Commit
+        run: |
+          git config user.name "solelove"
+          git config user.email "19372340679@163.com"
+          git add -A
+          git commit -m "fix: 从 77f389dc 恢复 ProactiveMessageService 并加主动消息时间注入" || echo "nothing"
+          git push origin HEAD:timefix-202611101010
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v3
+
+      - run: chmod +x ./gradlew
+
+      - name: Build
+        run: ./gradlew :app:assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx4g
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-timefix
+          path: app/build/outputs/apk/debug/*.apk
