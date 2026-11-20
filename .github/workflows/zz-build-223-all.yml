@@ -1,0 +1,121 @@
+name: Build v2.2.3 all three fixes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-build-223-all.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+
+      - name: Fetch patch scripts from master
+        run: |
+          curl -fsSL -o /tmp/tr.fixed.kt "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/TimeReminderTransformer.fixed.kt"
+          curl -fsSL -o /tmp/patch_theme.py "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/patch_dummy_theme.py"
+          curl -fsSL -o /tmp/patch_timehdr.py "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/patch_time_header.py"
+
+      - name: Apply patches
+        run: |
+          set -e
+          cp /tmp/tr.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          python3 - <<'PY'
+          import re, sys
+          gh = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+          s = open(gh, encoding='utf-8').read()
+          new = "val timeReminder = TimeReminderTransformer.buildReminder(messages)"
+          if "enableTimeReminder) {" not in s:
+              print("condition already gone")
+          else:
+              pat = re.compile(
+                  r"val timeReminder = if \(assistant\.enableTimeReminder\) \{\n"
+                  r"\s*TimeReminderTransformer\.buildReminder\(messages\)\n"
+                  r"\s*\} else null"
+              )
+              s2, n = pat.subn(new, s)
+              print("replaced", n)
+              if n != 1:
+                  print("ANCHOR NOT FOUND, abort")
+                  sys.exit(1)
+              open(gh, 'w', encoding='utf-8', newline='').write(s2)
+          PY
+          python3 /tmp/patch_theme.py
+          python3 /tmp/patch_timehdr.py
+          echo "--- verify ---"
+          grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
+          grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
+
+      - name: Verify diff scope
+        run: |
+          git --no-pager diff --stat
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt" || true)
+          if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
+          echo "scope OK"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web-ui before gradle
+        run: |
+          cd web-ui
+          export COREPACK_ENABLE_STRICT=0
+          pnpm install --ignore-workspace --no-frozen-lockfile
+          pnpm --ignore-workspace run build
+          echo "--- static output ---"
+          ls -la ../web/src/main/resources/static | head -20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-223-all10-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build release
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease -x :web:buildWebUi 2>&1 | tee build.log
+
+      - name: Dump failure
+        if: failure()
+        run: |
+          grep -E "^e: " build.log | head -60 || true
+          tail -n 100 build.log || true
+
+      - name: Publish
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-all-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "v2.2.3 三处修复" \
+            --notes "基于 v2.2.3 标签。1) 时间上下文去掉界面开关限制，每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。2) 启动加载期间主题不再短暂变成粉色（占位主题从樱花改为中性黑，已保存的主题选择不受影响）。3) 聊天顶部时间条：非今天的消息一律显示月日+时分，今天内仍只显示时分。" \
+            app/build/outputs/apk/release/*.apk
