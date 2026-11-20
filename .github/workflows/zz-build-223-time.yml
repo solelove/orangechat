@@ -1,0 +1,78 @@
+name: Build v2.2.3 time injection fixed
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-build-223-time.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+
+      - name: Patch GenerationHandler and TimeReminderTransformer
+        run: |
+          python3 - <<'PY'
+          gh = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+          s = open(gh, encoding='utf-8').read()
+          old = """            val timeReminder = if (assistant.enableTimeReminder) {
+                TimeReminderTransformer.buildReminder(messages)
+            } else null"""
+          new = """            // 时间上下文无条件注入 与界面开关解耦
+            val timeReminder = TimeReminderTransformer.buildReminder(messages)"""
+          if old in s:
+              s = s.replace(old, new)
+              open(gh, 'w', encoding='utf-8').write(s)
+              print("GenerationHandler patched")
+          else:
+              print("GenerationHandler pattern missing")
+
+          tr = "app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt"
+          t = open(tr, encoding='utf-8').read()
+          start = t.index("    /** 生成当前时间提醒文本")
+          end = t.index("/** 旧接口保留")
+          body = '''    /** 生成当前时间提醒文本；永远不为 null，保证每次都注入真实时间。 */
+    fun buildReminder(messages: List<UIMessage>): String? {
+        val tz = TimeZone.currentSystemDefault()
+        val now = Clock.System.now().toLocalDateTime(tz)
+
+        // 距上一条 user 消息过去多久：用真实 now 减去上一条 user 的 createdAt
+        val userMessages = messages.filter { it.role == MessageRole.USER }
+        val prev = userMessages.dropLast(1).lastOrNull()?.createdAt
+        val gapSeconds = prev?.let {
+            (now.toInstant(tz) - it.toInstant(tz)).inWholeSeconds
+        } ?: 0L
+
+        // 间隔小于 1 小时就不啰嗦 时间本身照常注入
+        return buildTimeReminderText(gapSeconds.takeIf { it > TIME_GAP_THRESHOLD_SECONDS }, now)
+    }
+}
+
+'''
+          t = t[:start] + body + t[end:]
+          if "import kotlin.time.Clock" not in t:
+              t = t.replace("import me.rerere.ai.ui.UIMessage",
+                            "import me.rerere.ai.ui.UIMessage\nimport kotlin.time.Clock")
+          open(tr, 'w', encoding='utf-8').write(t)
+          print("TimeReminderTransformer rewritten")
+          PY
+          git --no-pager diff --stat
+
+      - name: Build
+        run: |
+          chmod +x ./gradlew || true
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-223-timefixed
+          path: app/build/outputs/apk/**/*.apk
