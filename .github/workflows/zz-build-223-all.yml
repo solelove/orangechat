@@ -79,6 +79,10 @@ jobs:
           if grep -q "|| hasNonText" $CM; then
             echo "ERROR: mixed-message avatar dispatch still present"; exit 1
           fi
+          echo "--- assert: 外层不再要求全是文字段 ---"
+          if grep -q "message.parts.all { it is UIMessagePart.Text } &&" $CM; then
+            echo "ERROR: outer still gated on all{Text}"; exit 1
+          fi
           echo "assert OK"
 
       - name: Verify diff scope
@@ -120,7 +124,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av18-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av19-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -141,6 +145,6 @@ jobs:
         run: |
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "v2.2.3 三处修复 + 单头像对齐" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像：不拆分时一条消息只有一个侧边头像，与气泡顶部对齐；只有开启拆分气泡才逐段各自带头像。修掉混排消息里文字段和图片段各画一个、错开半格的问题。" \
+            --title "v2.2.3 三处修复 + 单头像对齐 v9" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像：不拆分时一条消息只有一个侧边头像，与气泡顶部对齐，带思考块的消息也照常显示；只有开启拆分气泡才逐段各自带头像。" \
             app/build/outputs/apk/release/*.apk
