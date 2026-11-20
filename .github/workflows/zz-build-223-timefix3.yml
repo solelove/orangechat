@@ -67,9 +67,8 @@ jobs:
 
       - name: pnpm install (web-ui)
         run: |
-          ls -la web-ui
           cd web-ui
-          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
+          pnpm install --ignore-workspace --no-frozen-lockfile
 
       - uses: actions/setup-java@v4
         with:
@@ -86,7 +85,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-tf5-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-tf6-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -105,7 +104,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-timefix5-$(date +%Y%m%d%H%M)"
+          TAG="223-timefix6-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "v2.2.3 时间注入修复" \
             --notes "基于 v2.2.3 标签。时间上下文去掉界面开关限制，改为每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。" \
