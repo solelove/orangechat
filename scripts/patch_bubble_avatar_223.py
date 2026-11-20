@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""在 v2.2.3 基线（7b041d77）上恢复「每段气泡都带头像」。
+"""在 v2.2.3 基线（7b041d77）上恢复「每个气泡段自己带一个头像」。
 
-基线里 BubbleSurface.kt 已经有 SegmentAvatarSpec / SplitBubbleColumn(segmentAvatar=...)，
-因此这里只改 ChatMessage.kt：
-  1) 用户侧 SplitBubbleColumn 传入 segmentAvatar
-  2) 助手侧 SplitBubbleColumn 传入 segmentAvatar
-  3) 外层侧边头像只在「整条都是文字」时画（非文本段由 PartRow 自己带，避免重复）
+目标形态（微信式逐段头像）：
+  - 每个文字气泡段带头像（SplitBubbleColumn 的 segmentAvatar）
+  - 每个图片/视频/音频/文档段带头像（PartRow 的 spec）
+  - 外层那条「整条消息一个侧边头像」彻底不画，否则纯文字消息会变成两个头像
+
+上一版失败的根因：
+  外层条件加了 `message.parts.all { it is UIMessagePart.Text }`，
+  只要这条消息里混了图片，整条就不画侧边头像。
+  而文字段头像是靠 SplitBubbleColumn 画的，一旦 MessagePartsBlock 里
+  文字段前后的布局被外层 Row 撑开，视觉上就只剩图片那个头像。
+  这次把外层侧边头像整个关掉，头像全交给内层逐段画，且只画一次。
 
 判定方式：看 OLD 锚点在不在。
   - OLD 在 -> 替换（正常路径）
   - OLD 不在、NEW 在 -> 已经打过，跳过，仍然算成功
   - 两个都不在 -> 锚点变了，直接失败（不许默默跳过）
-不用「某个字符串是否存在」这种宽泛判断，上一版就因为基线里本来就有
-`segmentAvatar = when {` 而误判成已打过，一个字没改。
 """
 import pathlib
 import sys
@@ -42,7 +46,7 @@ def patch(old, new, tag):
     sys.exit(1)
 
 
-# ---- 1) 用户侧 ----
+# ---- 1) 用户侧文字段带头像 ----
 patch(
     """                                        onClick = { onUserMessageClick?.invoke() },
                                     ) { segment ->""",
@@ -54,7 +58,7 @@ patch(
     "user",
 )
 
-# ---- 2) 助手侧 ----
+# ---- 2) 助手侧文字段带头像 ----
 patch(
     """                                            maxWidth = maxBubbleWidth,
                                             alignment = Alignment.Start,
@@ -73,27 +77,45 @@ patch(
     "assistant",
 )
 
-# ---- 3) 外层侧边头像开关 ----
-patch(
-    """if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false""",
-    """if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false""",
-    "outer-assistant",
-)
+# ---- 3) 外层侧边头像：彻底不画 ----
+disabled = 0
+for old in (
+    "if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
+    "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
+):
+    if old in src:
+        src = src.replace(
+            old,
+            "if (false && !isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
+            1,
+        )
+        changed.append("outer-assistant:disabled")
+        disabled += 1
+        break
 
-patch(
-    """if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true""",
-    """if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true""",
-    "outer-user",
-)
+for old in (
+    "if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
+    "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
+):
+    if old in src:
+        src = src.replace(
+            old,
+            "if (false && isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
+            1,
+        )
+        changed.append("outer-user:disabled")
+        disabled += 1
+        break
 
-# ---- 结果校验：必须真的带上了传参 ----
+# ---- 结果校验 ----
 ok_user = "segmentAvatar = if (displaySettings.showUserAvatar)" in src
 ok_asst = """                                            alignment = Alignment.Start,
                                             segmentAvatar = when {""" in src
-if not (ok_user and ok_asst):
-    print("[avatar] FAIL verify: user=%s assistant=%s" % (ok_user, ok_asst))
+ok_outer = "if (false && !isUserMessage" in src and "if (false && isUserMessage" in src
+if not (ok_user and ok_asst and ok_outer):
+    print("[avatar] FAIL verify: user=%s assistant=%s outer_off=%s" % (ok_user, ok_asst, ok_outer))
     sys.exit(1)
 
 P.write_text(src, encoding="utf-8")
 print("[avatar] patched: %s" % (", ".join(changed) if changed else "nothing to do"))
-print("[avatar] verify OK user=%s assistant=%s" % (ok_user, ok_asst))
+print("[avatar] verify OK user=%s assistant=%s outer_off=%s" % (ok_user, ok_asst, ok_outer))
