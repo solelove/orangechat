@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""在 v2.2.3 基线（7b041d77）上恢复「每个气泡段自己带一个头像」。
+"""在 v2.2.3 基线（7b041d77）上恢复头像显示（v6：恢复侧边头像，只在拆分时隐藏）。
 
-目标形态（微信式逐段头像）：
-  - 每个文字气泡段带头像（SplitBubbleColumn 的 segmentAvatar）
-  - 每个图片/视频/音频/文档段带头像（PartRow 的 spec）
-  - 外层那条「整条消息一个侧边头像」彻底不画，否则纯文字消息会变成两个头像
+目标形态（微信式）：
+  - 不拆分气泡时：外层整条消息旁边画一个侧边头像（文字段、图片段都算这一条消息）
+  - 拆分气泡时：外层不画，改由每个小气泡自己贴身像（SplitBubbleColumn 的 segmentAvatar）
+  - 非文本段（图片/视频/音频/文档）：拆分模式时自己带一个头像（PartRow 的 spec）
 
-上一版失败的根因：
-  外层条件加了 `message.parts.all { it is UIMessagePart.Text }`，
-  只要这条消息里混了图片，整条就不画侧边头像。
-  而文字段头像是靠 SplitBubbleColumn 画的，一旦 MessagePartsBlock 里
-  文字段前后的布局被外层 Row 撑开，视觉上就只剩图片那个头像。
-  这次把外层侧边头像整个关掉，头像全交给内层逐段画，且只画一次。
+v5 的失败：把外层侧边头像写成 `if (false && ...)` 彻底关掉，
+结果关掉拆分开关后全都不画，用户两端都没头像。基线原代码的空头像根因是
+`message.parts.all { it is UIMessagePart.Text }` 这个额外限制——只要消息里混了
+非文字段，侧边头像就不画；而 NONE 模式那段 SplitBubbleColumn 直接 return 走
+BubbleSurface，segmentAvatar 根本没用上。
+所以正解是：删掉 `all{Text}` 限制，让 shouldHideSideAvatar 决定是否画，
+它只在「真要拆分且逐段头像会显示」时才返回 true。
 
 判定方式：看 OLD 锚点在不在。
   - OLD 在 -> 替换（正常路径）
@@ -77,45 +78,59 @@ patch(
     "assistant",
 )
 
-# ---- 3) 外层侧边头像：彻底不画 ----
-disabled = 0
-for old in (
-    "if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
-    "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
-):
-    if old in src:
-        src = src.replace(
-            old,
-            "if (false && !isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false",
-            1,
-        )
-        changed.append("outer-assistant:disabled")
-        disabled += 1
-        break
+# ---- 3) 外层侧边头像：去掉「全是文字段才画」的额外限制，交给 shouldHideSideAvatar ---
+def restore_outer(prefix, tag):
+    """把外层条件恢复成只剩 shouldHideSideAvatar 判定，兼容 v5 的 if(false&&) 形态。"""
+    global src
+    candidates = [
+        # v5 留下的彻底禁用形态
+        "if (false && " + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
+        # 基线原始形态（带 all{Text}）
+        "if (" + prefix + " && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
+        # 已经修好的形态
+        "if (" + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
+    ]
+    for c in candidates:
+        if c in src:
+            if c.startswith("if (" + prefix + " && !message.parts.isEmptyUIMessage()"):
+                print("[avatar] %s: already patched, skip" % tag)
+                return
+            n = src.count(c)
+            if n != 1:
+                print("[avatar] FAIL %s: anchor hits=%d (expect 1)" % (tag, n))
+                sys.exit(1)
+            src = src.replace(
+                c,
+                "if (" + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
+                1,
+            )
+            changed.append(tag + ":restored")
+            return
+    print("[avatar] FAIL %s: no outer anchor matched" % tag)
+    sys.exit(1)
 
-for old in (
-    "if (isUserMessage && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
-    "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
-):
-    if old in src:
-        src = src.replace(
-            old,
-            "if (false && isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true",
-            1,
-        )
-        changed.append("outer-user:disabled")
-        disabled += 1
-        break
+
+restore_outer("!isUserMessage", "outer-assistant")
+restore_outer("isUserMessage", "outer-user")
 
 # ---- 结果校验 ----
 ok_user = "segmentAvatar = if (displaySettings.showUserAvatar)" in src
 ok_asst = """                                            alignment = Alignment.Start,
                                             segmentAvatar = when {""" in src
-ok_outer = "if (false && !isUserMessage" in src and "if (false && isUserMessage" in src
-if not (ok_user and ok_asst and ok_outer):
-    print("[avatar] FAIL verify: user=%s assistant=%s outer_off=%s" % (ok_user, ok_asst, ok_outer))
+ok_outer_asst = "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" in src
+ok_outer_user = "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" in src
+ok_no_all_text = "message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage()" not in src
+ok_no_false = "if (false && " not in src
+if not (ok_user and ok_asst and ok_outer_asst and ok_outer_user and ok_no_all_text and ok_no_false):
+    print(
+        "[avatar] FAIL verify: user=%s assistant=%s outer_asst=%s outer_user=%s no_all_text=%s no_false=%s"
+        % (ok_user, ok_asst, ok_outer_asst, ok_outer_user, ok_no_all_text, ok_no_false)
+    )
     sys.exit(1)
 
 P.write_text(src, encoding="utf-8")
 print("[avatar] patched: %s" % (", ".join(changed) if changed else "nothing to do"))
-print("[avatar] verify OK user=%s assistant=%s outer_off=%s" % (ok_user, ok_asst, ok_outer))
+print(
+    "[avatar] verify OK user=%s assistant=%s outer_asst=%s outer_user=%s no_all_text=%s no_false=%s"
+    % (ok_user, ok_asst, ok_outer_asst, ok_outer_user, ok_no_all_text, ok_no_false)
+)
