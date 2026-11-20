@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""在 v2.2.3 基线（7b041d77）上修正头像排布（v9）。
+"""在 v2.2.3 基线（7b041d77）上修正头像排布（v10）。
 
-【基线 7b041d77 就是「一条消息两个头像」】
+【基线 7b041d77 是「一条消息两个头像」】
   1) 外层侧边头像带 `message.parts.all { it is UIMessagePart.Text }`，
-     要求整条消息全是文字段才画。一旦混了图片、或带思考块，外层直接不画。
+     要求整条消息全是文字段才画。混了图片、或带思考块，外层直接不画。
   2) 文字段 SplitBubbleColumn 的 segmentAvatar 是无条件的。
   3) 图片等非文本段 PartRow 的 partAvatarSpec 也是无条件的。
-  => 文字+图片的消息，内层同时画两个头像，各跟各行高，错开半格。
-  => 带思考块的纯文字消息，外层 all{Text} 判 false，内层又没混排，
-     结果一个头像都没有。
+  => 文字+图片，内层同时画两个，错开半格。
+  => 带思考块的纯文字，外层不画、内层也不给，一个没有。
 
-【v8 的坑】
-  内层收紧到只在拆分时给（方向对），但外层仍然留着 all{Text}，
-  于是「带思考块的纯文字消息」头像全没了。
+【历次教训】
+  v8：内层收紧到「只拆分才给」-> 带思考块的纯文字消息头像全没了。
+  v9：外层去掉 all{Text} -> 纯文字好了，但混排里图片段也没头像了。
 
-【v9 做法】
-  A) 外层：不再看 all{Text}，只看「消息不为空 且 没开拆分的」。
-     拆分时让位给内层每段自己带的头像。
-  B) 文字段 / 非文本段头像：维持 v8 的「只在真拆分的才给」。
+【v10 定案：按「段类型」分开判，不再一刀切】
+  外层侧边头像：消息不空 且 没开拆分 -> 画（纯文字、带思考块、混排都算）。
+  文字段头像  ：只有真拆分时才给（不然和外层重复）。
+  非文本段头像：永远给（图片/视频/音频/文档 自己带一个，紧贴自己的行）。
+  结果：
+    纯文字不拆分  -> 外层一个，顶部对齐。
+    带思考块不拆分-> 外层一个（思考块不占头像）。
+    混排不拆分    -> 外层顶上 + 图片段自己一个。
+    开了拆分      -> 外层让位，每段各自带。
 """
 import pathlib
 import sys
@@ -68,9 +72,9 @@ anchor = """    val isUserMessage = message.role == MessageRole.USER
     Row("""
 inject = """    val isUserMessage = message.role == MessageRole.USER
 
-    // 一条消息只画一个头像：
-    //   - 没开拆分 -> 外层画这一个（不管里面有没有图片、有没有思考块）
-    //   - 开了拆分 -> 外层让位，由每个小气泡自己带
+    // 一条消息顶部那个侧边头像：
+    //   - 没开拆分 -> 由它负责（不管里面有没有图片、有没有思考块）
+    //   - 开了拆分 -> 让位，由每个小气泡自己带
     val sideAvatarVisible = remember(message.parts, assistant) {
         !message.parts.isEmptyUIMessage() &&
             !shouldHideSideAvatar(
@@ -118,7 +122,7 @@ patch(
     "assistant-text-seg",
 )
 
-# ==== C) 非文本段头像：同样只在真拆分的才给，并补出 textSegmentAvatar ====
+# ==== C) 拆成 textSegmentAvatar（拆分才给）+ partAvatarSpec（永远给）====
 patch(
     """    // 非文本段（图片/视频/音频/文档）旁边也画头像，不受拆分开关限制
     val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
@@ -137,9 +141,9 @@ patch(
         }
     }
     val partAvatarLoading = loading""",
-    """    // 逐段头像只在真拆分时才给；不拆分时整条消息由外层那一个负责
-    val splitMode0 = willSplitIntoBubbles(role == MessageRole.USER, assistant)
+    """    val splitMode0 = willSplitIntoBubbles(role == MessageRole.USER, assistant)
 
+    // 文字段头像：只在真拆分时才给；不拆分时由外层顶部那一个负责
     val textSegmentAvatar: SegmentAvatarSpec? = remember(
         role, assistant, model, displaySettings, splitMode0
     ) {
@@ -159,12 +163,10 @@ patch(
         }
     }
 
-    // 非文本段（图片/视频/音频/文档）头像：同样只在真拆分时才给
-    val partAvatarSpec: SegmentAvatarSpec? = remember(
-        role, assistant, model, displaySettings, splitMode0
-    ) {
-        if (!splitMode0) null
-        else if (role == MessageRole.USER) {
+    // 非文本段（图片/视频/音频/文档）头像：永远给，紧贴自己那一行，
+    // 不受拆分开关影响——图片旁边不能没有头像
+    val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+        if (role == MessageRole.USER) {
             if (displaySettings.showUserAvatar)
                 SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
             else null
@@ -189,11 +191,12 @@ checks = {
     "has_sideAvatarVisible": "val sideAvatarVisible = remember(message.parts, assistant)" in src,
     "outer_user_uses": "if (isUserMessage && sideAvatarVisible) {" in src,
     "outer_asst_uses": "if (!isUserMessage && sideAvatarVisible) {" in src,
-    "no_inline_outer": "message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" not in src,
-    "outer_no_all_text": "message.parts.all { it is UIMessagePart.Text } &&\n            !message.parts.isEmptyUIMessage()" not in src,
+    "outer_no_all_text": "message.parts.all { it is UIMessagePart.Text } &&" not in src,
     "text_seg_var": "val textSegmentAvatar: SegmentAvatarSpec? = remember(" in src,
+    "text_seg_gated": "if (!splitMode0) null" in src,
     "text_seg_wired": "segmentAvatar = textSegmentAvatar," in src,
-    "partrow_unchanged": "PartRow(\n                            spec = partAvatarSpec," in src,
+    "partrow_kept": "PartRow(\n                            spec = partAvatarSpec," in src,
+    "part_not_gated": "// 非文本段（图片/视频/音频/文档）头像：永远给" in src,
     "no_mixed": "|| hasNonText" not in src,
     "no_false": "if (false && " not in src,
 }
