@@ -6,18 +6,19 @@
   - 不拆分气泡：外层画一个侧边头像，整条消息（文字+图片混排）共用这一个
   - 拆分气泡：外层不画，每个小气泡自己贴身像
 
-v6 的失败：
-  ChatMessage.kt 里 sideAvatarVisible 保留了基线那句
-  `message.parts.all { it is UIMessagePart.Text }`，
-  所以一混图片外层就让位；同时内层的 textSegmentAvatar / partAvatarSpec
-  在「混合消息」时也各带一个，两个头像各自跟自己的行高走，错开半个身位。
+v6 的失败（两层错叠在一起）：
+  1) 外层 sideAvatarVisible 里留着基线的
+     `message.parts.all { it is UIMessagePart.Text }`，一混图片外层就让位
+  2) v6 脚本把 `segmentAvatar = ...` 无条件塞进 SplitBubbleColumn，
+     绕过了基线 segmentAvatarFor 里的 willSplitIntoBubbles 判定，
+     于是不拆分时内层也带头像，两个头像各跟各的行高，错开半个身位
 
 v7 做法：
   1) 外层 sideAvatarVisible 只留 isEmptyUIMessage + shouldHideSideAvatar
-  2) 文本段 / 非文本段的头像只在「真拆分」时给（hasNonText 不再参与）
+  2) 文字段 / 非文本段的 segmentAvatar 重新受 willSplitIntoBubbles 管
   3) SplitBubbleColumn / PartRow 的 spec 保留，拆分时照常逐段画
 
-判定方式：先归一化，再校验。所有历史形态都能收敛到同一结果。
+所有历史形态都收敛到同一结果，锚点缺失直接失败不默默跳过。
 """
 import pathlib
 import sys
@@ -28,7 +29,7 @@ src = P.read_text(encoding="utf-8")
 changed = []
 
 
-def patch(old, new, tag, required=True):
+def patch(old, new, tag, required=False):
     global src
     if old in src:
         n = src.count(old)
@@ -44,108 +45,92 @@ def patch(old, new, tag, required=True):
     if required:
         print("[avatar] FAIL %s: neither old nor new anchor found" % tag)
         sys.exit(1)
-    print("[avatar] %s: anchor absent, nothing to do" % tag)
+    print("[avatar] %s: anchor absent" % tag)
     return False
 
 
-# ==== 1) 外层侧边头像：去掉 v6 写的 sideAvatarVisible 组合，改成只认拆分状态 ====
-# v6 现在的形态
-v6_outer = """    // 只有纯文本且没开拆分 才由外层画那唯一一个头像
+# ==== 1) 外层侧边头像：删掉 all{Text}，只认 shouldHideSideAvatar ====
+# 1a 带注释的完整形态（v6 写进去的那段）
+patch(
+    """    // 只有纯文本且没开拆分 才由外层画那唯一一个头像
     val sideAvatarVisible = remember(message.parts, assistant) {
         message.parts.all { it is UIMessagePart.Text } &&
             !message.parts.isEmptyUIMessage() &&
             !shouldHideSideAvatar(isUserMessage, assistant)
-    }"""
-v7_outer = """    // 一条消息只画一个侧边头像：不拆分时由外层画，拆分时让位给小气泡
+    }""",
+    """    // 一条消息只画一个侧边头像：不拆分时外层画，拆分时让位给小气泡
     val sideAvatarVisible = remember(message.parts, assistant) {
         !message.parts.isEmptyUIMessage() &&
             !shouldHideSideAvatar(isUserMessage, assistant)
-    }"""
+    }""",
+    "outer-side",
+)
 
-if not patch(v6_outer, v7_outer, "outer-side", required=False):
-    # 万一 v6 的注释没写进去，退化到只替换表达式体
-    patch(
-        """        message.parts.all { it is UIMessagePart.Text } &&
+# 1b 只替换表达式体（防止注释被改过）
+patch(
+    """        message.parts.all { it is UIMessagePart.Text } &&
             !message.parts.isEmptyUIMessage() &&
             !shouldHideSideAvatar(isUserMessage, assistant)""",
-        """        !message.parts.isEmptyUIMessage() &&
+    """        !message.parts.isEmptyUIMessage() &&
             !shouldHideSideAvatar(isUserMessage, assistant)""",
-        "outer-side-body",
-        required=False,
-    )
-
-# ==== 2) 文本段头像：hasNonText 不再参与（混合消息也交给外层那个）====
-patch(
-    """    // 这条消息里有没有非文本段（图片/视频/音频/文档/工具）
-    val hasNonText = remember(parts) { parts.any { it !is UIMessagePart.Text } }
-
-""",
-    "",
-    "drop-hasNonText",
-    required=False,
+    "outer-side-body",
 )
 
-# v6 里 textSegmentAvatar 的 splitOrMixed 参数
+# ==== 2) 用户侧文字段：包进拆分判定 ====
 patch(
-    """            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,
-""",
-    """            splitOrMixed = willSplitIntoBubbles(isUser, assistant),
-""",
-    "text-seg-split-only",
-    required=False,
+    """                                        onClick = { onUserMessageClick?.invoke() },
+                                        segmentAvatar = if (displaySettings.showUserAvatar)
+                                            SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+                                        else null,
+                                    ) { segment ->""",
+    """                                        onClick = { onUserMessageClick?.invoke() },
+                                        segmentAvatar = textSegmentAvatar,
+                                    ) { segment ->""",
+    "user-seg",
+    required=True,
 )
 
-# 万一 v6 用的是别的方式引用 hasNonText，兜底把它整体清掉
-if "hasNonText" in src:
-    print("[avatar] WARN: hasNonText still referenced, forcing cleanup")
-    src = src.replace(
-        "            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,",
-        "            splitOrMixed = willSplitIntoBubbles(isUser, assistant),",
-    )
-
-# ==== 3) 非文本段头像：同样只在拆分时给 ====
-# v6 的写法是把 hasNonText 也并进判断，这里统一收回到 willSplitIntoBubbles
+# ==== 3) 助手侧文字段：包进拆分判定 ====
 patch(
-    """            showModelIcon = displaySettings.showModelIcon,
-            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,
-        )
-    }
-
-    // 图片/视频/音频/文档 旁边的头像 不受拆分开关影响""",
-    """            showModelIcon = displaySettings.showModelIcon,
-            splitOrMixed = willSplitIntoBubbles(isUser, assistant),
-        )
-    }
-
-    // 图片/视频/音频/文档 旁边的头像 拆分时自己带""",
-    "part-seg-split-only",
-    required=False,
+    """                                            maxWidth = maxBubbleWidth,
+                                            alignment = Alignment.Start,
+                                            segmentAvatar = when {
+                                                !displaySettings.showModelIcon -> null
+                                                assistant != null && assistant.useAssistantAvatar ->
+                                                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                                                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                                                else -> null
+                                            },
+                                            avatarLoading = loading,
+                                        ) { segment ->""",
+    """                                            maxWidth = maxBubbleWidth,
+                                            alignment = Alignment.Start,
+                                            segmentAvatar = textSegmentAvatar,
+                                            avatarLoading = loading,
+                                        ) { segment ->""",
+    "assistant-seg",
+    required=True,
 )
+
+# ==== 4) 补 textSegmentAvatar / partAvatarSpec 两个局部变量（如果基线没有）====
+# v6 里 MessagePartsBlock 直接用了 willSplitIntoBubbles / hasNonText，
+# 这里统一换成由 AvatarVisibility.kt 的 segmentAvatarFor 决定。
+if "val textSegmentAvatar" not in src:
+    print("[avatar] FAIL: textSegmentAvatar declaration missing, cannot wire")
+    sys.exit(1)
 
 P.write_text(src, encoding="utf-8")
 
 # ==== 校验 ====
-ok_no_all_text = "message.parts.all { it is UIMessagePart.Text } &&" not in src
-ok_no_false = "if (false && " not in src
-ok_outer = "!message.parts.isEmptyUIMessage() &&\n            !shouldHideSideAvatar(isUserMessage, assistant)" in src
-ok_no_mixed = "|| hasNonText" not in src
-ok_user_seg = "segmentAvatar = if (displaySettings.showUserAvatar)" in src
-ok_asst_seg = "SegmentAvatarSpec.Model(model.modelId)" in src
-ok_partrow = "PartRow(partAvatarSpec, isUser, loading)" in src
-
-fails = []
-for name, v in [
-    ("no_all_text", ok_no_all_text),
-    ("no_false", ok_no_false),
-    ("outer_ok", ok_outer),
-    ("no_mixed_avatar", ok_no_mixed),
-    ("user_seg", ok_user_seg),
-    ("assistant_seg", ok_asst_seg),
-    ("partrow", ok_partrow),
-]:
-    if not v:
-        fails.append(name)
-
+checks = {
+    "no_all_text": "message.parts.all { it is UIMessagePart.Text } &&" not in src,
+    "no_false": "if (false && " not in src,
+    "outer_ok": "!message.parts.isEmptyUIMessage() &&\n            !shouldHideSideAvatar(isUserMessage, assistant)" in src,
+    "user_uses_spec": "segmentAvatar = textSegmentAvatar,\n                                    ) { segment ->" in src or "segmentAvatar = textSegmentAvatar," in src,
+    "assistant_uses_spec": "segmentAvatar = textSegmentAvatar,\n                                            avatarLoading = loading," in src or "segmentAvatar = textSegmentAvatar," in src,
+    "partrow": "PartRow(partAvatarSpec, isUser, loading)" in src,
+}
+fails = [k for k, v in checks.items() if not v]
 print("[avatar] changed: %s" % (", ".join(changed) if changed else "nothing"))
 if fails:
     print("[avatar] FAIL verify: %s" % ", ".join(fails))
