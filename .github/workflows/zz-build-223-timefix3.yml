@@ -22,7 +22,6 @@ jobs:
         run: |
           curl -fsSL -o /tmp/tr.fixed.kt "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/TimeReminderTransformer.fixed.kt"
           wc -l /tmp/tr.fixed.kt
-          head -n 5 /tmp/tr.fixed.kt
 
       - name: Apply patches
         run: |
@@ -57,7 +56,7 @@ jobs:
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
-      - name: Setup Node + pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
@@ -65,14 +64,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
 
-      - name: pnpm install
+      - name: pnpm install (web-ui)
         run: |
-          if [ -f web/pnpm-lock.yaml ]; then cd web && pnpm install --frozen-lockfile
-          elif [ -f web/package.json ]; then cd web && pnpm install
-          else echo "no web module, skip"; fi
+          ls -la web-ui
+          cd web-ui
+          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
       - uses: actions/setup-java@v4
         with:
@@ -89,7 +86,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-tf4-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-tf5-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -101,14 +98,14 @@ jobs:
         if: failure()
         run: |
           grep -E "^e: " build.log | head -60 || true
-          tail -n 80 build.log || true
+          tail -n 100 build.log || true
 
       - name: Publish
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-timefix4-$(date +%Y%m%d%H%M)"
+          TAG="223-timefix5-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "v2.2.3 时间注入修复" \
             --notes "基于 v2.2.3 标签。时间上下文去掉界面开关限制，改为每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。" \
