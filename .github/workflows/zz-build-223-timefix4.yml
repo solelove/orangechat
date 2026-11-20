@@ -1,0 +1,113 @@
+name: Build v2.2.3 time inject fixed v4
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-build-223-timefix4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+
+      - name: Fetch fixed sources
+        run: |
+          curl -fsSL -o /tmp/tr.fixed.kt "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/TimeReminderTransformer.fixed.kt"
+          wc -l /tmp/tr.fixed.kt
+
+      - name: Apply patches
+        run: |
+          set -e
+          cp /tmp/tr.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          python3 - <<'PY'
+          import re, sys
+          gh = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+          s = open(gh, encoding='utf-8').read()
+          new = "val timeReminder = TimeReminderTransformer.buildReminder(messages)"
+          if "enableTimeReminder) {" not in s:
+              print("condition already gone")
+          else:
+              pat = re.compile(
+                  r"val timeReminder = if \(assistant\.enableTimeReminder\) \{\n"
+                  r"\s*TimeReminderTransformer\.buildReminder\(messages\)\n"
+                  r"\s*\} else null"
+              )
+              s2, n = pat.subn(new, s)
+              print("replaced", n)
+              if n != 1:
+                  print("ANCHOR NOT FOUND, abort")
+                  sys.exit(1)
+              open(gh, 'w', encoding='utf-8', newline='').write(s2)
+          PY
+          grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+
+      - name: Verify diff scope
+        run: |
+          git --no-pager diff --stat
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt" || true)
+          if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
+          echo "scope OK"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web-ui before gradle
+        run: |
+          cd web-ui
+          pnpm install --ignore-workspace --no-frozen-lockfile
+          pnpm run build
+          ls -la ../web/src/main/resources/static | head -20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-223-tf7-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build release
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease -x :web:buildWebUi 2>&1 | tee build.log
+
+      - name: Dump failure
+        if: failure()
+        run: |
+          grep -E "^e: " build.log | head -60 || true
+          tail -n 100 build.log || true
+
+      - name: Publish
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-timefix7-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --title "v2.2.3 时间注入修复" \
+            --notes "基于 v2.2.3 标签。时间上下文去掉界面开关限制，改为每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。" \
+            app/build/outputs/apk/release/*.apk
