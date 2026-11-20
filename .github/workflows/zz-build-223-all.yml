@@ -63,15 +63,15 @@ jobs:
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
           echo "--- ChatMessage avatar lines ---"
           grep -n "sideAvatarVisible\|textSegmentAvatar\|partAvatarSpec\|segmentAvatar" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
-          echo "--- assert: 一条消息只一个头像 ---"
+          echo "--- assert: 文字段只在拆分时带头像 ---"
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           grep -q "val sideAvatarVisible = remember(message.parts, assistant)" $CM
           grep -q "if (!isUserMessage && sideAvatarVisible) {" $CM
           grep -q "if (isUserMessage && sideAvatarVisible) {" $CM
           grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
           grep -q "segmentAvatar = textSegmentAvatar," $CM
-          if grep -q "message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" $CM; then
-            echo "ERROR: inline outer avatar condition still present"; exit 1
+          if grep -q "message.parts.all { it is UIMessagePart.Text } &&" $CM; then
+            echo "ERROR: outer still gated on all{Text}"; exit 1
           fi
           if grep -q "if (false && " $CM; then
             echo "ERROR: leftover if(false &&)"; exit 1
@@ -79,10 +79,23 @@ jobs:
           if grep -q "|| hasNonText" $CM; then
             echo "ERROR: mixed-message avatar dispatch still present"; exit 1
           fi
-          echo "--- assert: 外层不再要求全是文字段 ---"
-          if grep -q "message.parts.all { it is UIMessagePart.Text } &&" $CM; then
-            echo "ERROR: outer still gated on all{Text}"; exit 1
-          fi
+          echo "--- assert: 图片段头像没被拆分开关掐掉 ---"
+          python3 - <<'PY2'
+          import sys
+          p = "app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt"
+          s = open(p, encoding="utf-8").read()
+          i = s.find("val partAvatarSpec: SegmentAvatarSpec? = remember(")
+          if i < 0:
+              print("ERROR: partAvatarSpec missing"); sys.exit(1)
+          # 取 partAvatarSpec 到 partAvatarLoading 之间的块，里面不许出现 splitMode0 门禁
+          j = s.find("val partAvatarLoading", i)
+          block = s[i:j if j > i else i + 2000]
+          if "splitMode0" in block:
+              print("ERROR: partAvatarSpec gated by splitMode0"); sys.exit(1)
+          if "if (!splitMode0) null" in block:
+              print("ERROR: partAvatarSpec returns null when not split"); sys.exit(1)
+          print("partAvatarSpec ungated OK")
+          PY2
           echo "assert OK"
 
       - name: Verify diff scope
@@ -124,7 +137,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av19-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av20-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -145,6 +158,6 @@ jobs:
         run: |
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "v2.2.3 三处修复 + 单头像对齐 v9" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像：不拆分时一条消息只有一个侧边头像，与气泡顶部对齐，带思考块的消息也照常显示；只有开启拆分气泡才逐段各自带头像。" \
+            --title "v2.2.3 三处修复 + 单头像对齐 v10" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像：不拆分时消息顶部一个侧边头像（纯文字、带思考块、含图片都照常显示），图片/视频等非文本段永远带自己的头像；只有开启拆分气泡才让文字段逐段各自带头像。" \
             app/build/outputs/apk/release/*.apk
