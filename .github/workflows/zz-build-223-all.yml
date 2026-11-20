@@ -17,6 +17,12 @@ jobs:
         with:
           ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
           fetch-depth: 0
+          submodules: recursive
+
+      - name: Check submodule
+        run: |
+          ls material3/material-color-utilities/kotlin | head -10 || echo "SUBMODULE EMPTY"
+          ls material3/material-color-utilities/kotlin/dynamiccolor | head -5 || true
 
       - name: Fetch patch scripts from master
         run: |
@@ -95,7 +101,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-all10-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-all11-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
