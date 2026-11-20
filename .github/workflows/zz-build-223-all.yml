@@ -62,10 +62,13 @@ jobs:
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
           echo "--- ChatMessage avatar lines ---"
-          grep -n "segmentAvatar" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          grep -n "segmentAvatar\|if (false &&" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           echo "--- assert bubble avatar actually passed ---"
           grep -q "segmentAvatar = if (displaySettings.showUserAvatar)" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           grep -q "SegmentAvatarSpec.Model(model.modelId)" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          echo "--- assert outer side avatar disabled (no duplicate) ---"
+          grep -q "if (false && !isUserMessage" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          grep -q "if (false && isUserMessage" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           echo "assert OK"
 
       - name: Verify diff scope
@@ -107,7 +110,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av14-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av15-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -128,6 +131,6 @@ jobs:
         run: |
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "v2.2.3 三处修复 + 气泡头像" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间（年月日时分），间隔超 60 秒附时长。2) 启动加载期间主题不再闪粉（占位主题改中性黑，已保存选择不受影响）。3) 时间条非今天的消息显示月日+时分。4) 每段拆分气泡带自己的头像：文字气泡、图片、视频、文档全都带，修掉这次只有图片带、文字不带的回归。" \
+            --title "v2.2.3 三处修复 + 逐段头像" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间（年月日时分），间隔超 60 秒附时长。2) 启动加载期间主题不再闪粉（占位主题改中性黑，已保存选择不受影响）。3) 时间条非今天的消息显示月日+时分。4) 每个气泡段自己带一个头像：文字段、图片、视频、文档各自带，互不吞掉。外层整条侧边头像关闭，避免纯文字消息出现两个头像。修掉上一版混排消息里文字段头像消失的问题。" \
             app/build/outputs/apk/release/*.apk
