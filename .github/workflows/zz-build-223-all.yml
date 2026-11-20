@@ -1,4 +1,4 @@
-name: Build v2.2.3 all three fixes
+name: Build v2.2.3 three fixes + bubble avatar
 
 on:
   push:
@@ -21,19 +21,19 @@ jobs:
 
       - name: Check submodule
         run: |
-          ls material3/material-color-utilities/kotlin | head -10 || echo "SUBMODULE EMPTY"
-          ls material3/material-color-utilities/kotlin/dynamiccolor | head -5 || true
+          ls material3/material-color-utilities/kotlin/dynamiccolor | head -5
 
       - name: Fetch patch scripts from master
         run: |
-          curl -fsSL -o /tmp/tr.fixed.kt "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/TimeReminderTransformer.fixed.kt"
-          curl -fsSL -o /tmp/patch_theme.py "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/patch_dummy_theme.py"
-          curl -fsSL -o /tmp/patch_timehdr.py "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/patch_time_header.py"
+          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_bubble_avatar_223.py; do
+            curl -fsSL -o "/tmp/$f" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/$f"
+          done
+          ls -la /tmp/*.py /tmp/*.kt
 
       - name: Apply patches
         run: |
           set -e
-          cp /tmp/tr.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          cp /tmp/TimeReminderTransformer.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
           python3 - <<'PY'
           import re, sys
           gh = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
@@ -54,17 +54,19 @@ jobs:
                   sys.exit(1)
               open(gh, 'w', encoding='utf-8', newline='').write(s2)
           PY
-          python3 /tmp/patch_theme.py
-          python3 /tmp/patch_timehdr.py
+          python3 /tmp/patch_dummy_theme.py
+          python3 /tmp/patch_time_header.py
+          python3 /tmp/patch_bubble_avatar_223.py
           echo "--- verify ---"
           grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
+          grep -n "segmentAvatar" app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
 
       - name: Verify diff scope
         run: |
           git --no-pager diff --stat
-          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt" || true)
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt" || true)
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
@@ -83,7 +85,6 @@ jobs:
           export COREPACK_ENABLE_STRICT=0
           pnpm install --ignore-workspace --no-frozen-lockfile
           pnpm --ignore-workspace run build
-          echo "--- static output ---"
           ls -la ../web/src/main/resources/static | head -20
 
       - uses: actions/setup-java@v4
@@ -101,7 +102,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-all11-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av13-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -120,8 +121,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-all-$(date +%Y%m%d%H%M)"
+          TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
-            --title "v2.2.3 三处修复" \
-            --notes "基于 v2.2.3 标签。1) 时间上下文去掉界面开关限制，每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。2) 启动加载期间主题不再短暂变成粉色（占位主题从樱花改为中性黑，已保存的主题选择不受影响）。3) 聊天顶部时间条：非今天的消息一律显示月日+时分，今天内仍只显示时分。" \
+            --title "v2.2.3 三处修复 + 气泡头像" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间（年月日时分），间隔超 60 秒附时长。2) 启动加载期间主题不再闪粉（占位主题改中性黑，已保存选择不受影响）。3) 时间条非今天的消息显示月日+时分。4) 每段拆分气泡带自己的头像（文字、图片、视频、文档都带）。" \
             app/build/outputs/apk/release/*.apk
