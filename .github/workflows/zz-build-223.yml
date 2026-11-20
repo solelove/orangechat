@@ -1,0 +1,51 @@
+name: Build v2.2.3 with unconditional time injection
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-build-223.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+
+      - name: Patch GenerationHandler
+        run: |
+          F=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 - "$F" <<'PY'
+          import sys
+          p = sys.argv[1]
+          s = open(p, encoding='utf-8').read()
+          old = """            val timeReminder = if (assistant.enableTimeReminder) {
+                TimeReminderTransformer.buildReminder(messages)
+            } else null"""
+          new = """            // 时间上下文无条件注入 与界面显示解耦
+            val timeReminder = TimeReminderTransformer.buildReminder(messages)"""
+          if old in s:
+              s = s.replace(old, new)
+              print("patched GenerationHandler")
+          else:
+              print("already patched or pattern missing")
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          grep -n "timeReminder" "$F"
+
+      - name: Build
+        run: |
+          chmod +x ./gradlew || true
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangechat-223-time
+          path: app/build/outputs/apk/**/*.apk
