@@ -1,0 +1,30 @@
+name: Reset to 77f389dc
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-reset-77f389dc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify target commit exists
+        run: |
+          git cat-file -t 77f389dce52d53ddacce4f07ca885a2e3bcbf005
+          git --no-pager log -1 --format='target=%H %s' 77f389dce52d53ddacce4f07ca885a2e3bcbf005
+
+      - name: Force reset master
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push --force origin 77f389dce52d53ddacce4f07ca885a2e3bcbf005:refs/heads/master
+          echo "master 已重置"
