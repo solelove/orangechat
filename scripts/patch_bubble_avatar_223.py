@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""在 v2.2.3 基线（7b041d77）上恢复头像显示（v6：恢复侧边头像，只在拆分时隐藏）。
+"""在 v2.2.3 基线（7b041d77）上修正头像排布（v7）。
 
-目标形态（微信式）：
-  - 不拆分气泡时：外层整条消息旁边画一个侧边头像（文字段、图片段都算这一条消息）
-  - 拆分气泡时：外层不画，改由每个小气泡自己贴身像（SplitBubbleColumn 的 segmentAvatar）
-  - 非文本段（图片/视频/音频/文档）：拆分模式时自己带一个头像（PartRow 的 spec）
+目标形态（微信式，一条消息只一个头像，永远跟内容顶对齐）：
+  - 不拆分气泡：外层画一个侧边头像，整条消息（文字+图片混排）共用这一个
+  - 拆分气泡：外层不画，每个小气泡自己贴身像
 
-v5 的失败：把外层侧边头像写成 `if (false && ...)` 彻底关掉，
-结果关掉拆分开关后全都不画，用户两端都没头像。基线原代码的空头像根因是
-`message.parts.all { it is UIMessagePart.Text }` 这个额外限制——只要消息里混了
-非文字段，侧边头像就不画；而 NONE 模式那段 SplitBubbleColumn 直接 return 走
-BubbleSurface，segmentAvatar 根本没用上。
-所以正解是：删掉 `all{Text}` 限制，让 shouldHideSideAvatar 决定是否画，
-它只在「真要拆分且逐段头像会显示」时才返回 true。
+v6 的失败：
+  ChatMessage.kt 里 sideAvatarVisible 保留了基线那句
+  `message.parts.all { it is UIMessagePart.Text }`，
+  所以一混图片外层就让位；同时内层的 textSegmentAvatar / partAvatarSpec
+  在「混合消息」时也各带一个，两个头像各自跟自己的行高走，错开半个身位。
 
-判定方式：看 OLD 锚点在不在。
-  - OLD 在 -> 替换（正常路径）
-  - OLD 不在、NEW 在 -> 已经打过，跳过，仍然算成功
-  - 两个都不在 -> 锚点变了，直接失败（不许默默跳过）
+v7 做法：
+  1) 外层 sideAvatarVisible 只留 isEmptyUIMessage + shouldHideSideAvatar
+  2) 文本段 / 非文本段的头像只在「真拆分」时给（hasNonText 不再参与）
+  3) SplitBubbleColumn / PartRow 的 spec 保留，拆分时照常逐段画
+
+判定方式：先归一化，再校验。所有历史形态都能收敛到同一结果。
 """
 import pathlib
 import sys
@@ -29,8 +28,7 @@ src = P.read_text(encoding="utf-8")
 changed = []
 
 
-def patch(old, new, tag):
-    """old -> new。old 在就替换；old 不在但 new 在算已打过；都不在则失败。"""
+def patch(old, new, tag, required=True):
     global src
     if old in src:
         n = src.count(old)
@@ -39,98 +37,117 @@ def patch(old, new, tag):
             sys.exit(1)
         src = src.replace(old, new, 1)
         changed.append(tag + ":replaced")
-        return
+        return True
     if new in src:
         print("[avatar] %s: already patched, skip" % tag)
-        return
-    print("[avatar] FAIL %s: neither old nor new anchor found" % tag)
-    sys.exit(1)
+        return True
+    if required:
+        print("[avatar] FAIL %s: neither old nor new anchor found" % tag)
+        sys.exit(1)
+    print("[avatar] %s: anchor absent, nothing to do" % tag)
+    return False
 
 
-# ---- 1) 用户侧文字段带头像 ----
-patch(
-    """                                        onClick = { onUserMessageClick?.invoke() },
-                                    ) { segment ->""",
-    """                                        onClick = { onUserMessageClick?.invoke() },
-                                        segmentAvatar = if (displaySettings.showUserAvatar)
-                                            SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
-                                        else null,
-                                    ) { segment ->""",
-    "user",
-)
+# ==== 1) 外层侧边头像：去掉 v6 写的 sideAvatarVisible 组合，改成只认拆分状态 ====
+# v6 现在的形态
+v6_outer = """    // 只有纯文本且没开拆分 才由外层画那唯一一个头像
+    val sideAvatarVisible = remember(message.parts, assistant) {
+        message.parts.all { it is UIMessagePart.Text } &&
+            !message.parts.isEmptyUIMessage() &&
+            !shouldHideSideAvatar(isUserMessage, assistant)
+    }"""
+v7_outer = """    // 一条消息只画一个侧边头像：不拆分时由外层画，拆分时让位给小气泡
+    val sideAvatarVisible = remember(message.parts, assistant) {
+        !message.parts.isEmptyUIMessage() &&
+            !shouldHideSideAvatar(isUserMessage, assistant)
+    }"""
 
-# ---- 2) 助手侧文字段带头像 ----
-patch(
-    """                                            maxWidth = maxBubbleWidth,
-                                            alignment = Alignment.Start,
-                                        ) { segment ->""",
-    """                                            maxWidth = maxBubbleWidth,
-                                            alignment = Alignment.Start,
-                                            segmentAvatar = when {
-                                                !displaySettings.showModelIcon -> null
-                                                assistant != null && assistant.useAssistantAvatar ->
-                                                    SegmentAvatarSpec.AssistantAvatar(assistant)
-                                                model != null -> SegmentAvatarSpec.Model(model.modelId)
-                                                else -> null
-                                            },
-                                            avatarLoading = loading,
-                                        ) { segment ->""",
-    "assistant",
-)
-
-# ---- 3) 外层侧边头像：去掉「全是文字段才画」的额外限制，交给 shouldHideSideAvatar ---
-def restore_outer(prefix, tag):
-    """把外层条件恢复成只剩 shouldHideSideAvatar 判定，兼容 v5 的 if(false&&) 形态。"""
-    global src
-    candidates = [
-        # v5 留下的彻底禁用形态
-        "if (false && " + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
-        # 基线原始形态（带 all{Text}）
-        "if (" + prefix + " && message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
-        # 已经修好的形态
-        "if (" + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
-    ]
-    for c in candidates:
-        if c in src:
-            if c.startswith("if (" + prefix + " && !message.parts.isEmptyUIMessage()"):
-                print("[avatar] %s: already patched, skip" % tag)
-                return
-            n = src.count(c)
-            if n != 1:
-                print("[avatar] FAIL %s: anchor hits=%d (expect 1)" % (tag, n))
-                sys.exit(1)
-            src = src.replace(
-                c,
-                "if (" + prefix + " && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(",
-                1,
-            )
-            changed.append(tag + ":restored")
-            return
-    print("[avatar] FAIL %s: no outer anchor matched" % tag)
-    sys.exit(1)
-
-
-restore_outer("!isUserMessage", "outer-assistant")
-restore_outer("isUserMessage", "outer-user")
-
-# ---- 结果校验 ----
-ok_user = "segmentAvatar = if (displaySettings.showUserAvatar)" in src
-ok_asst = """                                            alignment = Alignment.Start,
-                                            segmentAvatar = when {""" in src
-ok_outer_asst = "if (!isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" in src
-ok_outer_user = "if (isUserMessage && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" in src
-ok_no_all_text = "message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage()" not in src
-ok_no_false = "if (false && " not in src
-if not (ok_user and ok_asst and ok_outer_asst and ok_outer_user and ok_no_all_text and ok_no_false):
-    print(
-        "[avatar] FAIL verify: user=%s assistant=%s outer_asst=%s outer_user=%s no_all_text=%s no_false=%s"
-        % (ok_user, ok_asst, ok_outer_asst, ok_outer_user, ok_no_all_text, ok_no_false)
+if not patch(v6_outer, v7_outer, "outer-side", required=False):
+    # 万一 v6 的注释没写进去，退化到只替换表达式体
+    patch(
+        """        message.parts.all { it is UIMessagePart.Text } &&
+            !message.parts.isEmptyUIMessage() &&
+            !shouldHideSideAvatar(isUserMessage, assistant)""",
+        """        !message.parts.isEmptyUIMessage() &&
+            !shouldHideSideAvatar(isUserMessage, assistant)""",
+        "outer-side-body",
+        required=False,
     )
-    sys.exit(1)
+
+# ==== 2) 文本段头像：hasNonText 不再参与（混合消息也交给外层那个）====
+patch(
+    """    // 这条消息里有没有非文本段（图片/视频/音频/文档/工具）
+    val hasNonText = remember(parts) { parts.any { it !is UIMessagePart.Text } }
+
+""",
+    "",
+    "drop-hasNonText",
+    required=False,
+)
+
+# v6 里 textSegmentAvatar 的 splitOrMixed 参数
+patch(
+    """            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,
+""",
+    """            splitOrMixed = willSplitIntoBubbles(isUser, assistant),
+""",
+    "text-seg-split-only",
+    required=False,
+)
+
+# 万一 v6 用的是别的方式引用 hasNonText，兜底把它整体清掉
+if "hasNonText" in src:
+    print("[avatar] WARN: hasNonText still referenced, forcing cleanup")
+    src = src.replace(
+        "            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,",
+        "            splitOrMixed = willSplitIntoBubbles(isUser, assistant),",
+    )
+
+# ==== 3) 非文本段头像：同样只在拆分时给 ====
+# v6 的写法是把 hasNonText 也并进判断，这里统一收回到 willSplitIntoBubbles
+patch(
+    """            showModelIcon = displaySettings.showModelIcon,
+            splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText,
+        )
+    }
+
+    // 图片/视频/音频/文档 旁边的头像 不受拆分开关影响""",
+    """            showModelIcon = displaySettings.showModelIcon,
+            splitOrMixed = willSplitIntoBubbles(isUser, assistant),
+        )
+    }
+
+    // 图片/视频/音频/文档 旁边的头像 拆分时自己带""",
+    "part-seg-split-only",
+    required=False,
+)
 
 P.write_text(src, encoding="utf-8")
-print("[avatar] patched: %s" % (", ".join(changed) if changed else "nothing to do"))
-print(
-    "[avatar] verify OK user=%s assistant=%s outer_asst=%s outer_user=%s no_all_text=%s no_false=%s"
-    % (ok_user, ok_asst, ok_outer_asst, ok_outer_user, ok_no_all_text, ok_no_false)
-)
+
+# ==== 校验 ====
+ok_no_all_text = "message.parts.all { it is UIMessagePart.Text } &&" not in src
+ok_no_false = "if (false && " not in src
+ok_outer = "!message.parts.isEmptyUIMessage() &&\n            !shouldHideSideAvatar(isUserMessage, assistant)" in src
+ok_no_mixed = "|| hasNonText" not in src
+ok_user_seg = "segmentAvatar = if (displaySettings.showUserAvatar)" in src
+ok_asst_seg = "SegmentAvatarSpec.Model(model.modelId)" in src
+ok_partrow = "PartRow(partAvatarSpec, isUser, loading)" in src
+
+fails = []
+for name, v in [
+    ("no_all_text", ok_no_all_text),
+    ("no_false", ok_no_false),
+    ("outer_ok", ok_outer),
+    ("no_mixed_avatar", ok_no_mixed),
+    ("user_seg", ok_user_seg),
+    ("assistant_seg", ok_asst_seg),
+    ("partrow", ok_partrow),
+]:
+    if not v:
+        fails.append(name)
+
+print("[avatar] changed: %s" % (", ".join(changed) if changed else "nothing"))
+if fails:
+    print("[avatar] FAIL verify: %s" % ", ".join(fails))
+    sys.exit(1)
+print("[avatar] verify OK")
