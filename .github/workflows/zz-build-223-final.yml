@@ -22,8 +22,6 @@ jobs:
         run: |
           curl -fsSL -o /tmp/tr.fixed.kt "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/TimeReminderTransformer.fixed.kt"
           curl -fsSL -o /tmp/patch_theme.py "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/patch_dummy_theme.py"
-          echo "--- theme patch ---"
-          head -5 /tmp/patch_theme.py
 
       - name: Apply patches
         run: |
@@ -73,8 +71,10 @@ jobs:
       - name: Build web-ui before gradle
         run: |
           cd web-ui
+          export COREPACK_ENABLE_STRICT=0
           pnpm install --ignore-workspace --no-frozen-lockfile
-          pnpm run build
+          pnpm --ignore-workspace run build
+          echo "--- static output ---"
           ls -la ../web/src/main/resources/static | head -20
 
       - uses: actions/setup-java@v4
@@ -92,7 +92,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-tf8-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-tf9-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
