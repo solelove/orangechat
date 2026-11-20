@@ -57,14 +57,27 @@ jobs:
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
-      - uses: actions/setup-java@v4
+      - name: Setup Node + pnpm
+        uses: pnpm/action-setup@v4
         with:
-          distribution: temurin
-          java-version: '17'
+          version: 9
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: pnpm install
+        run: |
+          if [ -f web/pnpm-lock.yaml ]; then cd web && pnpm install --frozen-lockfile
+          elif [ -f web/package.json ]; then cd web && pnpm install
+          else echo "no web module, skip"; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: keystore
         run: |
@@ -76,7 +89,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-tf3-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-tf4-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -95,7 +108,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-timefix3-$(date +%Y%m%d%H%M)"
+          TAG="223-timefix4-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "v2.2.3 时间注入修复" \
             --notes "基于 v2.2.3 标签。时间上下文去掉界面开关限制，改为每次取真实当前时间（含年月日时分），间隔超 60 秒附上距上一条的时长。" \
