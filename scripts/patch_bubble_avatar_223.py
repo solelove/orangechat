@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""在 v2.2.3 基线（7b041d77）上修正头像排布（v7）。
+"""在 v2.2.3 基线（7b041d77）上修正头像排布（v8）。
 
-目标形态（微信式，一条消息只一个头像，永远跟内容顶对齐）：
-  - 不拆分气泡：外层画一个侧边头像，整条消息（文字+图片混排）共用这一个
-  - 拆分气泡：外层不画，每个小气泡自己贴身像
+【根因，写清楚了免得再绕】
+基线 7b041d77 的 ChatMessage.kt 本来就是「一条消息两个头像」：
 
-v6 的失败（两层错叠在一起）：
-  1) 外层 sideAvatarVisible 里留着基线的
-     `message.parts.all { it is UIMessagePart.Text }`，一混图片外层就让位
-  2) v6 脚本把 `segmentAvatar = ...` 无条件塞进 SplitBubbleColumn，
-     绕过了基线 segmentAvatarFor 里的 willSplitIntoBubbles 判定，
-     于是不拆分时内层也带头像，两个头像各跟各的行高，错开半个身位
+  1) 外层侧边头像带 `message.parts.all { it is UIMessagePart.Text }`，
+     纯文字才画。混了图片，外层就让位。
+  2) 文字段 SplitBubbleColumn 的 segmentAvatar 是无条件的
+     `if (displaySettings.showUserAvatar) SegmentAvatarSpec.User(...)`，
+     不看拆分。
+  3) 图片等非文本段 PartRow 的 partAvatarSpec 也是无条件的。
 
-v7 做法：
-  1) 外层 sideAvatarVisible 只留 isEmptyUIMessage + shouldHideSideAvatar
-  2) 文字段 / 非文本段的 segmentAvatar 重新受 willSplitIntoBubbles 管
-  3) SplitBubbleColumn / PartRow 的 spec 保留，拆分时照常逐段画
+于是「文字+图片」的消息里，内层会同时画出文字段头像和图片段头像，
+两者各自跟着自己那一行的高度走，图片行高、文字行矮，视觉上错开半格。
 
-所有历史形态都收敛到同一结果，锚点缺失直接失败不默默跳过。
+之前几版一直在改外层的 all{Text}，方向全错——外层本来就没问题，
+问题在内层多发了一个头像。
+
+【v8 做法】
+  A) 外层侧边头像：维持基线的 all{Text} 语义，但改用 shouldHideSideAvatar
+     统一判（值等价，不引入新分支）。这条消息是纯文字、又没开拆分 -> 画一个。
+  B) 文字段 segmentAvatar：只在真拆分（willSplitIntoBubbles）时才给。
+  C) 非文本段 partAvatarSpec：同样只在真拆分时才给。
+
+结果：不拆分时，一条消息只有外层那一个头像，跟气泡顶部对齐；
+拆分时外层不画，每段自己带自己的。
 """
 import pathlib
 import sys
@@ -29,7 +36,7 @@ src = P.read_text(encoding="utf-8")
 changed = []
 
 
-def patch(old, new, tag, required=False):
+def patch(old, new, tag, required=True):
     global src
     if old in src:
         n = src.count(old)
@@ -49,34 +56,47 @@ def patch(old, new, tag, required=False):
     return False
 
 
-# ==== 1) 外层侧边头像：删掉 all{Text}，只认 shouldHideSideAvatar ====
-# 1a 带注释的完整形态（v6 写进去的那段）
-patch(
-    """    // 只有纯文本且没开拆分 才由外层画那唯一一个头像
+# ==== A) 外层侧边头像：基线四处条件收拢成一个 sideAvatarVisible ====
+# 基线原文（助手侧 / 用户侧）
+base_asst = (
+    "        if (!isUserMessage && message.parts.all { it is UIMessagePart.Text } "
+    "&& !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(false, "
+    "settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+)
+base_user = (
+    "        if (isUserMessage && message.parts.all { it is UIMessagePart.Text } "
+    "&& !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(true, "
+    "settings.showUserAvatar, settings.showModelIcon, settings.showAssistantBubble, assistant)) {"
+)
+
+new_asst = "        if (!isUserMessage && sideAvatarVisible) {"
+new_user = "        if (isUserMessage && sideAvatarVisible) {"
+
+patch(base_asst, new_asst, "assistant-outer")
+patch(base_user, new_user, "user-outer")
+
+# 在 Row(...) 之前插入 sideAvatarVisible 定义
+anchor = """    val isUserMessage = message.role == MessageRole.USER
+    Row("""
+inject = """    val isUserMessage = message.role == MessageRole.USER
+
+    // 一条消息只画一个头像：纯文字且没开拆分时由外层画；拆分时让位给小气泡
     val sideAvatarVisible = remember(message.parts, assistant) {
         message.parts.all { it is UIMessagePart.Text } &&
             !message.parts.isEmptyUIMessage() &&
-            !shouldHideSideAvatar(isUserMessage, assistant)
-    }""",
-    """    // 一条消息只画一个侧边头像：不拆分时外层画，拆分时让位给小气泡
-    val sideAvatarVisible = remember(message.parts, assistant) {
-        !message.parts.isEmptyUIMessage() &&
-            !shouldHideSideAvatar(isUserMessage, assistant)
-    }""",
-    "outer-side",
-)
+            !shouldHideSideAvatar(
+                isUser = isUserMessage,
+                showUserAvatar = settings.showUserAvatar,
+                showModelIcon = settings.showModelIcon,
+                showAssistantBubble = settings.showAssistantBubble,
+                assistant = assistant,
+            )
+    }
 
-# 1b 只替换表达式体（防止注释被改过）
-patch(
-    """        message.parts.all { it is UIMessagePart.Text } &&
-            !message.parts.isEmptyUIMessage() &&
-            !shouldHideSideAvatar(isUserMessage, assistant)""",
-    """        !message.parts.isEmptyUIMessage() &&
-            !shouldHideSideAvatar(isUserMessage, assistant)""",
-    "outer-side-body",
-)
+    Row("""
+patch(anchor, inject, "sideAvatarVisible")
 
-# ==== 2) 用户侧文字段：包进拆分判定 ====
+# ==== B) 文字段头像：无条件 -> 只在真拆分的才给 ====
 patch(
     """                                        onClick = { onUserMessageClick?.invoke() },
                                         segmentAvatar = if (displaySettings.showUserAvatar)
@@ -86,11 +106,9 @@ patch(
     """                                        onClick = { onUserMessageClick?.invoke() },
                                         segmentAvatar = textSegmentAvatar,
                                     ) { segment ->""",
-    "user-seg",
-    required=True,
+    "user-text-seg",
 )
 
-# ==== 3) 助手侧文字段：包进拆分判定 ====
 patch(
     """                                            maxWidth = maxBubbleWidth,
                                             alignment = Alignment.Start,
@@ -108,27 +126,85 @@ patch(
                                             segmentAvatar = textSegmentAvatar,
                                             avatarLoading = loading,
                                         ) { segment ->""",
-    "assistant-seg",
-    required=True,
+    "assistant-text-seg",
 )
 
-# ==== 4) 补 textSegmentAvatar / partAvatarSpec 两个局部变量（如果基线没有）====
-# v6 里 MessagePartsBlock 直接用了 willSplitIntoBubbles / hasNonText，
-# 这里统一换成由 AvatarVisibility.kt 的 segmentAvatarFor 决定。
-if "val textSegmentAvatar" not in src:
-    print("[avatar] FAIL: textSegmentAvatar declaration missing, cannot wire")
-    sys.exit(1)
+# ==== C) 非文本段头像：无条件 -> 只在真拆分的才给 ====
+patch(
+    """    // 非文本段（图片/视频/音频/文档）旁边也画头像，不受拆分开关限制
+    val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {
+        if (role == MessageRole.USER) {
+            if (displaySettings.showUserAvatar) {
+                SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+            } else null
+        } else {
+            if (!displaySettings.showModelIcon) null
+            else when {
+                assistant != null && assistant.useAssistantAvatar ->
+                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                else -> null
+            }
+        }
+    }
+    val partAvatarLoading = loading""",
+    """    // 文字段头像：只在真拆分时才逐段给；不拆分时整条消息由外层那一个负责
+    val splitMode0 = willSplitIntoBubbles(role == MessageRole.USER, assistant)
+    val textSegmentAvatar: SegmentAvatarSpec? = remember(
+        role, assistant, model, displaySettings, splitMode0
+    ) {
+        if (!splitMode0) null
+        else if (role == MessageRole.USER) {
+            if (displaySettings.showUserAvatar)
+                SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+            else null
+        } else {
+            if (!displaySettings.showModelIcon) null
+            else when {
+                assistant != null && assistant.useAssistantAvatar ->
+                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                else -> null
+            }
+        }
+    }
+
+    // 非文本段（图片/视频/音频/文档）头像：同样只在真拆分时才给
+    val partAvatarSpec: SegmentAvatarSpec? = remember(
+        role, assistant, model, displaySettings, splitMode0
+    ) {
+        if (!splitMode0) null
+        else if (role == MessageRole.USER) {
+            if (displaySettings.showUserAvatar)
+                SegmentAvatarSpec.User(displaySettings.userAvatar, displaySettings.userNickname)
+            else null
+        } else {
+            if (!displaySettings.showModelIcon) null
+            else when {
+                assistant != null && assistant.useAssistantAvatar ->
+                    SegmentAvatarSpec.AssistantAvatar(assistant)
+                model != null -> SegmentAvatarSpec.Model(model.modelId)
+                else -> null
+            }
+        }
+    }
+    val partAvatarLoading = loading""",
+    "segment-specs",
+)
 
 P.write_text(src, encoding="utf-8")
 
 # ==== 校验 ====
 checks = {
-    "no_all_text": "message.parts.all { it is UIMessagePart.Text } &&" not in src,
+    "has_sideAvatarVisible": "val sideAvatarVisible = remember(message.parts, assistant)" in src,
+    "outer_user_uses": "if (isUserMessage && sideAvatarVisible) {" in src,
+    "outer_asst_uses": "if (!isUserMessage && sideAvatarVisible) {" in src,
+    "no_inline_outer": "message.parts.all { it is UIMessagePart.Text } && !message.parts.isEmptyUIMessage() && !shouldHideSideAvatar(" not in src,
+    "text_seg_var": "val textSegmentAvatar: SegmentAvatarSpec? = remember(" in src,
+    "text_seg_wired_user": "segmentAvatar = textSegmentAvatar," in src,
+    "partrow_unchanged": "PartRow(\n                            spec = partAvatarSpec," in src,
+    "no_mixed": "|| hasNonText" not in src,
     "no_false": "if (false && " not in src,
-    "outer_ok": "!message.parts.isEmptyUIMessage() &&\n            !shouldHideSideAvatar(isUserMessage, assistant)" in src,
-    "user_uses_spec": "segmentAvatar = textSegmentAvatar,\n                                    ) { segment ->" in src or "segmentAvatar = textSegmentAvatar," in src,
-    "assistant_uses_spec": "segmentAvatar = textSegmentAvatar,\n                                            avatarLoading = loading," in src or "segmentAvatar = textSegmentAvatar," in src,
-    "partrow": "PartRow(partAvatarSpec, isUser, loading)" in src,
 }
 fails = [k for k, v in checks.items() if not v]
 print("[avatar] changed: %s" % (", ".join(changed) if changed else "nothing"))
