@@ -27,7 +27,7 @@ jobs:
         run: |
           ls material3/material-color-utilities/kotlin/dynamiccolor | head -5
 
-      - name: Fetch patch scripts and fixed sources from master
+      - name: Fetch scripts from master
         run: |
           set -e
           fetch() {
@@ -36,14 +36,12 @@ jobs:
             echo "GET $url"
             curl -sSL --retry 3 --retry-delay 2 -o "$dst" "$url"
             if [ ! -s "$dst" ]; then echo "EMPTY: $url"; exit 1; fi
-            head -c 120 "$dst" | tr -d '\n'; echo " ...($(wc -c < "$dst") bytes)"
+            echo "  -> $(wc -c < "$dst") bytes"
           }
           fetch TimeReminderTransformer.fixed.kt /tmp/TimeReminderTransformer.fixed.kt
           fetch patch_dummy_theme.py /tmp/patch_dummy_theme.py
           fetch patch_time_header.py /tmp/patch_time_header.py
-          fetch avatar/ChatMessage.kt /tmp/ChatMessage.kt
-          fetch avatar/AvatarVisibility.kt /tmp/AvatarVisibility.kt
-          ls -la /tmp/*.py /tmp/*.kt
+          fetch patch_avatar_v11.py /tmp/patch_avatar_v11.py
 
       - name: Apply patches
         run: |
@@ -71,70 +69,38 @@ jobs:
           PY
           python3 /tmp/patch_dummy_theme.py
           python3 /tmp/patch_time_header.py
-
-      - name: Overwrite avatar sources
-        run: |
-          set -e
-          D=app/src/main/java/me/rerere/rikkahub/ui/components/message
-          cp /tmp/ChatMessage.kt $D/ChatMessage.kt
-          cp /tmp/AvatarVisibility.kt $D/AvatarVisibility.kt
-          echo "--- sizes ---"
-          wc -c $D/ChatMessage.kt $D/AvatarVisibility.kt
+          python3 /tmp/patch_avatar_v11.py
 
       - name: Verify
         run: |
           set -e
-          echo "--- verify ---"
+          echo "--- time/theme/header ---"
           grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
 
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
-          AV=app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt
           echo "--- avatar wiring ---"
-          grep -n "sideAvatarVisible\|textSegmentAvatar\|partAvatarSpec" $CM
+          grep -n "sideAvatarVisible\|textSegmentAvatar\|partAvatarSpec\|splitOn" $CM
 
-          # 1. 外层不再按 all{Text} 门禁
           if grep -q "message.parts.all { it is UIMessagePart.Text } &&" $CM; then
             echo "ERROR: outer still gated on all{Text}"; exit 1
           fi
-          grep -q "val sideAvatarVisible = remember(message.parts, assistant) {" $CM
+          grep -q "val sideAvatarVisible = remember(message.parts, assistant, settings) {" $CM
           grep -q "if (!isUserMessage && sideAvatarVisible) {" $CM
           grep -q "if (isUserMessage && sideAvatarVisible) {" $CM
-
-          # 2. 两个 avatar spec 都必须走 AvatarVisibility 里的统一函数
-          grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
-          grep -q "splitOrMixed = willSplitIntoBubbles(isUser, assistant) || hasNonText," $CM
-          grep -q "val partAvatarSpec: SegmentAvatarSpec? = remember(role, assistant, model, displaySettings) {" $CM
+          grep -q "val splitOn = willSplitIntoBubbles(isUser, assistant)" $CM
+          grep -q "if (!splitOn) null" $CM
           grep -q "segmentAvatar = textSegmentAvatar," $CM
-
-          # 3. AvatarVisibility 必须按拆分开关一刀切
-          grep -q "internal fun segmentAvatarFor(" $AV
-          grep -q "if (!willSplitIntoBubbles(isUser, assistant)) return null" $AV
-          python3 - <<'PY2'
-          import sys
-          av = open("app/src/main/java/me/rerere/rikkahub/ui/components/message/AvatarVisibility.kt", encoding="utf-8").read()
-          i = av.find("internal fun segmentAvatarFor(")
-          j = av.find("internal fun partAvatarFor(")
-          if i < 0 or j < 0:
-              print("ERROR: avatar funcs missing"); sys.exit(1)
-          seg = av[i:j]
-          part = av[j:]
-          if "if (!willSplitIntoBubbles(isUser, assistant)) return null" not in seg:
-              print("ERROR: segmentAvatarFor not gated by split"); sys.exit(1)
-          if "if (!willSplitIntoBubbles(isUser, assistant)) return null" not in part:
-              print("ERROR: partAvatarFor not gated by split"); sys.exit(1)
-          print("avatar gating OK")
-          PY2
-
-          # 4. 不许有残留的双头像分支
-          if grep -q "if (false && " $CM; then echo "ERROR: leftover if(false &&)"; exit 1; fi
+          # 基线里的播放器组件必须还在
+          grep -q "internal fun AudioPlayerBubble(url: String) {" $CM
+          grep -q "internal fun VoiceMessageBubble(" $CM
           echo "assert OK"
 
       - name: Verify diff scope
         run: |
           git --no-pager diff --stat
-          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt|AvatarVisibility\.kt" || true)
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt" || true)
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
@@ -170,7 +136,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av12-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av13-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -192,5 +158,5 @@ jobs:
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --title "v2.2.3 三处修复 + 单头像 v11" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像归属按拆分开关一刀切：开了拆分每段自带，没开拆分外层只画一个侧边头像（纯文字、带思考块、文字+图片混排都是同一个），图片段不再单独画，解决混排时头像位置不一致。" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像归属按拆分开关一刀切：开了拆分每段自带，没开拆分外层只画一个侧边头像（纯文字、带思考块、文字+图片混排都是同一个），图片段不再单独画。" \
             app/build/outputs/apk/release/*.apk
