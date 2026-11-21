@@ -12,6 +12,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_OWNER: solelove
+      GH_REPO: orangechat
+      GH_REF: master
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,12 +29,20 @@ jobs:
 
       - name: Fetch patch scripts and fixed sources from master
         run: |
-          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py; do
-            curl -fsSL -o "/tmp/$f" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/$f"
-          done
-          for f in ChatMessage.kt AvatarVisibility.kt; do
-            curl -fsSL -o "/tmp/$f" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/avatar/$f"
-          done
+          set -e
+          fetch() {
+            local src="$1" dst="$2"
+            local url="https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_REF}/scripts/${src}"
+            echo "GET $url"
+            curl -sSL --retry 3 --retry-delay 2 -o "$dst" "$url"
+            if [ ! -s "$dst" ]; then echo "EMPTY: $url"; exit 1; fi
+            head -c 120 "$dst" | tr -d '\n'; echo " ...($(wc -c < "$dst") bytes)"
+          }
+          fetch TimeReminderTransformer.fixed.kt /tmp/TimeReminderTransformer.fixed.kt
+          fetch patch_dummy_theme.py /tmp/patch_dummy_theme.py
+          fetch patch_time_header.py /tmp/patch_time_header.py
+          fetch avatar/ChatMessage.kt /tmp/ChatMessage.kt
+          fetch avatar/AvatarVisibility.kt /tmp/AvatarVisibility.kt
           ls -la /tmp/*.py /tmp/*.kt
 
       - name: Apply patches
@@ -158,7 +170,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av11-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av12-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
