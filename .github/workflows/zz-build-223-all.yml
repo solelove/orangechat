@@ -42,6 +42,7 @@ jobs:
           fetch patch_dummy_theme.py /tmp/patch_dummy_theme.py
           fetch patch_time_header.py /tmp/patch_time_header.py
           fetch patch_avatar_v12.py /tmp/patch_avatar_v12.py
+          fetch patch_bubble_v121.py /tmp/patch_bubble_v121.py
 
       - name: Apply patches
         run: |
@@ -70,6 +71,7 @@ jobs:
           python3 /tmp/patch_dummy_theme.py
           python3 /tmp/patch_time_header.py
           python3 /tmp/patch_avatar_v12.py
+          python3 /tmp/patch_bubble_v121.py
 
       - name: Verify
         run: |
@@ -90,34 +92,44 @@ jobs:
 
           # 只检查"调用"，不检查函数定义。定义留在文件里只会产生 unused warning，
           # 不影响编译；把定义也算进去会把正确的补丁误判成失败。
-          # 调用行形如「            ChatMessageSideAvatar(」，前面是纯缩进；
-          # 定义行形如「private fun ChatMessageSideAvatar(」，前面有 fun。
           if grep -nE "^[[:space:]]*ChatMessageSideAvatar\(" $CM; then
             echo "ERROR: ChatMessageSideAvatar 仍被调用"; exit 1
           fi
           if grep -nE "^[[:space:]]*ChatMessageSideUserAvatar\(" $CM; then
             echo "ERROR: ChatMessageSideUserAvatar 仍被调用"; exit 1
           fi
-          # 定义必须还在（补丁不该动它们）
           grep -qE "^private fun ChatMessageSideAvatar\(" $CM
           grep -qE "^private fun ChatMessageSideUserAvatar\(" $CM
 
           grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
           grep -q "val partAvatarSpec: SegmentAvatarSpec? = textSegmentAvatar" $CM
           grep -q "segmentAvatar = textSegmentAvatar," $CM
-          # 拆分开关不该再影响段头像
           if grep -q "if (!splitOn) null" $CM; then
             echo "ERROR: 段头像仍受拆分开关限制"; exit 1
           fi
-          # 基线里的播放器组件必须还在
           grep -q "internal fun AudioPlayerBubble(url: String) {" $CM
           grep -q "internal fun VoiceMessageBubble(" $CM
+
+          BS=app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt
+          echo "--- bubble v12.1 wiring ---"
+          grep -n "不开拆分也要带头像" $BS
+          grep -n "singleAvatarSpace\|singleMaxWidth\|singleRightSide" $BS
+          # early return 分支里必须真的用了头像
+          if ! grep -q "singleAvatarSpace = if (segmentAvatar != null)" $BS; then
+            echo "ERROR: 不开拆分分支没有头像占用宽度"; exit 1
+          fi
+          if ! grep -q "SegmentAvatarView(segmentAvatar, avatarLoading)" $BS; then
+            echo "ERROR: SegmentAvatarView 没被调用"; exit 1
+          fi
+          # 开拆分路径必须完好
+          grep -q "val segments = remember(text, mode) { splitByMode(text, mode) }" $BS
+          grep -q "fun BubbleSurface(" $BS
           echo "assert OK"
 
       - name: Verify diff scope
         run: |
           git --no-pager diff --stat
-          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt" || true)
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt|BubbleSurface\.kt" || true)
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
@@ -153,7 +165,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av15-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av16-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -175,6 +187,6 @@ jobs:
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 三处修复 + 段头像 v12" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12：不开拆分时文字段和图片段也各自带一个头像，外层不再单独画；思考块、工具块不带头像。" \
+            --title "v2.2.3 三处修复 + 头像 v12.1" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像（v12 漏了这条，因为 SplitBubbleColumn 在 NONE 分支直接 return 没排头像）；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。" \
             app/build/outputs/apk/release/*.apk
