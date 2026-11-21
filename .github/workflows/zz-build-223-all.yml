@@ -87,13 +87,21 @@ jobs:
           if grep -q "!shouldHideSideAvatar(" $CM; then
             echo "ERROR: 外层侧边头像没删干净"; exit 1
           fi
-          # 外层两个头像组件也不能再被 ChatMessage 调用
-          if grep -q "ChatMessageSideAvatar(" $CM; then
+
+          # 只检查"调用"，不检查函数定义。定义留在文件里只会产生 unused warning，
+          # 不影响编译；把定义也算进去会把正确的补丁误判成失败。
+          # 调用行形如「            ChatMessageSideAvatar(」，前面是纯缩进；
+          # 定义行形如「private fun ChatMessageSideAvatar(」，前面有 fun。
+          if grep -nE "^[[:space:]]*ChatMessageSideAvatar\(" $CM; then
             echo "ERROR: ChatMessageSideAvatar 仍被调用"; exit 1
           fi
-          if grep -q "ChatMessageSideUserAvatar(" $CM; then
+          if grep -nE "^[[:space:]]*ChatMessageSideUserAvatar\(" $CM; then
             echo "ERROR: ChatMessageSideUserAvatar 仍被调用"; exit 1
           fi
+          # 定义必须还在（补丁不该动它们）
+          grep -qE "^private fun ChatMessageSideAvatar\(" $CM
+          grep -qE "^private fun ChatMessageSideUserAvatar\(" $CM
+
           grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
           grep -q "val partAvatarSpec: SegmentAvatarSpec? = textSegmentAvatar" $CM
           grep -q "segmentAvatar = textSegmentAvatar," $CM
@@ -145,7 +153,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av14-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av15-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
