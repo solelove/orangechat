@@ -60,22 +60,34 @@ jobs:
           GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           echo "--- cache order ---"
           grep -n "cache-order" $GH
-          grep -n "val dynamicSystem = buildString {" $GH
+          grep -q "val dynamicSystem = buildString {" $GH
           grep -q 'if (dynamicSystem.isBlank()) system else' $GH
           grep -q 'systemFinal + "\\n\\n" + timeReminder' $GH
           ! grep -q 'if (assistant.enableTimeReminder)' $GH
 
+          # 关键：被上一版切掉的函数必须还在
+          grep -q "fun translateText(" $GH
+          grep -q "fun generateText(" $GH
+          echo "translateText / generateText intact"
+
           DYN=$(grep -n "val dynamicSystem = buildString {" $GH | head -1 | cut -d: -f1)
           MEM=$(grep -n "buildMemoryPrompt(memories = memories)" $GH | head -1 | cut -d: -f1)
           TOOLS=$(grep -n "tools.forEach { tool ->" $GH | head -1 | cut -d: -f1)
-          printf 'dynamicSystem=%s memory=%s tools=%s\n' "$DYN" "$MEM" "$TOOLS"
+          EXT=$(grep -n "External memory recall failed" $GH | head -1 | cut -d: -f1)
+          printf 'dynamicSystem=%s memory=%s tools=%s external=%s\n' "$DYN" "$MEM" "$TOOLS" "$EXT"
           [ "$MEM" -gt "$DYN" ]
           [ "$TOOLS" -gt "$DYN" ]
+          [ "$EXT" -gt "$DYN" ]
 
           CB=$(grep -n "append(buildCodeBlockPrompt())" $GH | head -1 | cut -d: -f1)
           SK=$(grep -n "// 允许跳过回复" $GH | head -1 | cut -d: -f1)
           printf 'codeblock=%s skip=%s\n' "$CB" "$SK"
           [ "$CB" -lt "$SK" ]
+
+          # 大括号平衡
+          O=$(grep -o '{' $GH | wc -l); C=$(grep -o '}' $GH | wc -l)
+          echo "braces { = $O, } = $C"
+          [ "$O" -eq "$C" ]
 
           echo "--- other fixes ---"
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
@@ -96,7 +108,7 @@ jobs:
 
       - name: Dump system block
         run: |
-          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | grep -nE "静态段|动态段|buildString|记忆|外置记忆库|最近会话|代码块|工具prompt|插件|Skip|屏幕跳转|Message Bubbles|timeReminder|systemFinal|systemWithTime" | head -60
+          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | head -80
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -130,7 +142,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-cacheorder2-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-cacheorder3-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -149,9 +161,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-cacheorder2-$(date +%Y%m%d%H%M)"
+          TAG="223-cacheorder3-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 前缀缓存重排 v2" \
-            --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到最后，time_reminder 仍然最后拼。时间注入不再受界面开关限制，每次取真实当前时间。其余三处视觉修复不变。" \
+            --title "v2.2.3 前缀缓存重排 v3" \
+            --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到最后，time_reminder 最后拼。时间注入不再受界面开关限制。其余三处视觉修复不变。" \
             app/build/outputs/apk/release/*.apk
