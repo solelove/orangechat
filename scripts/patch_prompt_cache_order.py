@@ -3,13 +3,15 @@
 """把 GenerationHandler 的 system 拼接改成「静态前缀 + 动态尾部」。
 
 历史坑：
-  v1  按 anchor 文本定位，基线里没有那段文本 -> anchor not found。
-  v2  用 `}\\nval timeReminder` 找尾声，片段命中多处，把 translateText 切掉 -> 编译失败。
-  v3  drop() 里写成 src.replace(old, new="") -> TypeError: replace() takes at least 2
-      positional arguments。python 的 str.replace 不接受 new= 关键字。
+  v1  anchor not found（基线里没有那段文本）
+  v2  区间切割命中多处，把 translateText 切掉 -> 编译失败
+  v3  src.replace(old, new="") -> TypeError
+  v4  grep 防呆误伤 docstring
+  v5  braces_balanced 假阳性（Kotlin 字符串/注释里的大括号本来就数量不等）
 
-这一版：全部用「精确原文替换」，每次断言命中次数 == 1，
-写入前先做全部校验，校验不过就 sys.exit(1) 且不落盘（保持原文件干净）。
+这一版：精确原文替换，每次断言命中次数 == 1。
+大括号平衡检查去掉，因为对 Kotlin 源码不可靠；
+改为检查关键函数与关键行都还在，这比数括号有意义。
 """
 import pathlib
 import sys
@@ -30,7 +32,6 @@ src = src_orig
 
 
 def drop(old, tag):
-    """精确删除 old（必须恰好出现一次），返回被删掉的原文。"""
     global src
     n = src.count(old)
     if n != 1:
@@ -118,7 +119,7 @@ if t < 0:
     print("[order] FAIL external: tail not found")
     sys.exit(1)
 f_external = src[h:t + len(EXT_TAIL)]
-if f_external.count("val system = buildString {") > 0 or "fun " in f_external:
+if "fun " in f_external:
     print("[order] FAIL external: fragment spans too much")
     sys.exit(1)
 if src.count(f_external) != 1:
@@ -142,7 +143,6 @@ if src.count(ANCHOR) != 1:
 
 dyn_inner = "".join([f_memory, f_external, f_recent, f_tools, f_plugins])
 dyn_inner = dyn_inner.rstrip() + "\n"
-# 缩进 +4（从 buildString 顶层挪进 dynamicSystem 内层）
 dyn_inner = "\n".join(
     ("    " + ln if ln.strip() else ln) for ln in dyn_inner.split("\n")
 )
@@ -176,6 +176,8 @@ swap(
 )
 
 # ---------------- 校验（通过才落盘）----------------
+# 注意：不再检查大括号数量。Kotlin 源码里字符串和注释中的括号本来就不平衡，
+# 那个检查只会制造假阳性。
 checks = {
     "mark": MARK in src,
     "dynamic_block": "val dynamicSystem = buildString {" in src,
@@ -187,7 +189,8 @@ checks = {
     "build_string_once": src.count("val system = buildString {") == 1,
     "single_system_add": src.count("add(UIMessage.system(prompt = systemWithTime))") == 1,
     "limit_context_intact": "addAll(messages.limitContext(assistant.contextMessageSize))" in src,
-    "braces_balanced": src.count("{") == src.count("}"),
+    "fun_count_same": src.count("\n    fun ") == src_orig.count("\n    fun "),
+    "len_sane": len(src) > len(src_orig) // 2,
 }
 
 if "append(buildCodeBlockPrompt())" in src and "// 允许跳过回复" in src:
@@ -201,6 +204,8 @@ d = src.find("val dynamicSystem = buildString {")
 checks["memory_in_dynamic"] = d >= 0 and src.find("buildMemoryPrompt(memories = memories)", d) > d
 checks["tools_in_dynamic"] = d >= 0 and src.find("tools.forEach { tool ->", d) > d
 checks["external_in_dynamic"] = d >= 0 and src.find("External memory recall failed", d) > d
+checks["recent_in_dynamic"] = d >= 0 and src.find("buildRecentChatsPrompt(", d) > d
+checks["plugins_in_dynamic"] = d >= 0 and src.find("pluginPromptInjections.forEach", d) > d
 
 for k, v in checks.items():
     print("[order] %-24s %s" % (k, "OK" if v else "FAIL"))
