@@ -1,0 +1,154 @@
+name: Build cache-order fix (prompt prefix)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/zz-build-cache-order.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GH_OWNER: solelove
+      GH_REPO: orangechat
+      GH_REF: master
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Check submodule
+        run: ls material3/material-color-utilities/kotlin/dynamiccolor | head -5
+
+      - name: Fetch scripts from master
+        run: |
+          set -e
+          fetch() {
+            local src="$1" dst="$2"
+            local url="https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_REF}/scripts/${src}"
+            echo "GET $url"
+            curl -sSL --retry 3 --retry-delay 2 -o "$dst" "$url"
+            if [ ! -s "$dst" ]; then echo "EMPTY: $url"; exit 1; fi
+            echo "  -> $(wc -c < "$dst") bytes"
+          }
+          fetch TimeReminderTransformer.fixed.kt /tmp/TimeReminderTransformer.fixed.kt
+          fetch patch_dummy_theme.py /tmp/patch_dummy_theme.py
+          fetch patch_time_header.py /tmp/patch_time_header.py
+          fetch patch_avatar_v12.py /tmp/patch_avatar_v12.py
+          fetch patch_bubble_v121.py /tmp/patch_bubble_v121.py
+          fetch patch_prompt_cache_order.py /tmp/patch_prompt_cache_order.py
+
+      - name: Apply patches
+        run: |
+          set -e
+          cp /tmp/TimeReminderTransformer.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          # 1) 静态前缀 / 动态尾部 重排（本次核心修复）
+          python3 /tmp/patch_prompt_cache_order.py
+          # 2) 原有三处视觉修复
+          python3 /tmp/patch_dummy_theme.py
+          python3 /tmp/patch_time_header.py
+          python3 /tmp/patch_avatar_v12.py
+          python3 /tmp/patch_bubble_v121.py
+
+      - name: Verify
+        run: |
+          set -e
+          GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          echo "--- cache order ---"
+          grep -n "cache-order" $GH
+          grep -n "val dynamicSystem = buildString {" $GH
+          grep -n "val systemFinal = if (dynamicSystem.isBlank())" $GH
+          grep -q 'systemFinal + "\\n\\n" + timeReminder' $GH
+          # 静态块里必须只剩人格/代码块/开关说明，记忆与召回必须落在 dynamicSystem 之后
+          awk '/val dynamicSystem = buildString \{/{f=1} f&&/\*\*Memories\*\*/{found=1} END{exit !found}' $GH
+          # 记忆拼接函数调用必须出现在 dynamicSystem 之后
+          MEM_LINE=$(grep -n "buildMemoryPrompt(memories = memories)" $GH | head -1 | cut -d: -f1)
+          DYN_LINE=$(grep -n "val dynamicSystem = buildString {" $GH | head -1 | cut -d: -f1)
+          echo "memory at $MEM_LINE, dynamicSystem at $DYN_LINE"
+          [ "$MEM_LINE" -gt "$DYN_LINE" ]
+          # time_reminder 拼接必须在最后（在 add(UIMessage.system(...)) 之前）
+          grep -q "addAll(messages.limitContext(assistant.contextMessageSize))" $GH
+          echo "--- other fixes ---"
+          grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
+          grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
+          CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
+          grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
+          grep -q "val partAvatarSpec: SegmentAvatarSpec? = textSegmentAvatar" $CM
+          BS=app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt
+          grep -q "不开拆分也要带头像" $BS
+          echo "assert OK"
+
+      - name: Verify diff scope
+        run: |
+          git --no-pager diff --stat
+          BAD=$(git --no-pager diff --name-only | grep -vE "TimeReminderTransformer\.kt|GenerationHandler\.kt|PreferencesStore\.kt|ChatList\.kt|ChatMessage\.kt|BubbleSurface\.kt" || true)
+          if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
+          echo "scope OK"
+
+      - name: Dump GenerationHandler system block
+        run: |
+          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | head -200
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web-ui before gradle
+        run: |
+          cd web-ui
+          export COREPACK_ENABLE_STRICT=0
+          pnpm install --ignore-workspace --no-frozen-lockfile
+          pnpm --ignore-workspace run build
+          ls -la ../web/src/main/resources/static | head -20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: keystore
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore -storepass orangechat2026 -keypass orangechat2026 -alias orangechat -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=OrangeChat,O=OrangeChat,C=CN"
+          printf 'storeFile=release.keystore\nstorePassword=orangechat2026\nkeyAlias=orangechat\nkeyPassword=orangechat2026\n' > local.properties
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-223-cacheorder-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build release
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleRelease -x :web:buildWebUi 2>&1 | tee build.log
+
+      - name: Dump failure
+        if: failure()
+        run: |
+          grep -E "^e: " build.log | head -60 || true
+          tail -n 100 build.log || true
+
+      - name: Publish
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="223-cacheorder-$(date +%Y%m%d%H%M)"
+          gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
+            --title "v2.2.3 前缀缓存重排" \
+            --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到后面，time_reminder 仍在最后。目标是让 DeepSeek 前缀缓存能覆盖整个静态块，把命中率从 3.67% 拉起来。其余三处视觉修复保持不变。" \
+            app/build/outputs/apk/release/*.apk
