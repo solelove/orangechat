@@ -1,5 +1,6 @@
 name: Build cache-order fix (prompt prefix)
 
+# v4: 修掉 patch 脚本里 str.replace(new=...) 的 TypeError
 on:
   push:
     paths:
@@ -43,6 +44,8 @@ jobs:
           fetch patch_avatar_v12.py /tmp/patch_avatar_v12.py
           fetch patch_bubble_v121.py /tmp/patch_bubble_v121.py
           fetch patch_prompt_cache_order.py /tmp/patch_prompt_cache_order.py
+          # 防呆：脚本里不允许出现 new= 关键字
+          ! grep -n "replace(.*new=" /tmp/patch_prompt_cache_order.py
 
       - name: Apply patches
         run: |
@@ -64,8 +67,6 @@ jobs:
           grep -q 'if (dynamicSystem.isBlank()) system else' $GH
           grep -q 'systemFinal + "\\n\\n" + timeReminder' $GH
           ! grep -q 'if (assistant.enableTimeReminder)' $GH
-
-          # 关键：被上一版切掉的函数必须还在
           grep -q "fun translateText(" $GH
           grep -q "fun generateText(" $GH
           echo "translateText / generateText intact"
@@ -84,7 +85,6 @@ jobs:
           printf 'codeblock=%s skip=%s\n' "$CB" "$SK"
           [ "$CB" -lt "$SK" ]
 
-          # 大括号平衡
           O=$(grep -o '{' $GH | wc -l); C=$(grep -o '}' $GH | wc -l)
           echo "braces { = $O, } = $C"
           [ "$O" -eq "$C" ]
@@ -108,7 +108,7 @@ jobs:
 
       - name: Dump system block
         run: |
-          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | head -80
+          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | head -90
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -142,7 +142,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-cacheorder3-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-cacheorder4-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -161,9 +161,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-cacheorder3-$(date +%Y%m%d%H%M)"
+          TAG="223-cacheorder4-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 前缀缓存重排 v3" \
+            --title "v2.2.3 前缀缓存重排 v4" \
             --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到最后，time_reminder 最后拼。时间注入不再受界面开关限制。其余三处视觉修复不变。" \
             app/build/outputs/apk/release/*.apk
