@@ -1,0 +1,43 @@
+name: Debug patched GenerationHandler
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          fetch-depth: 0
+
+      - name: Fetch patch script
+        run: |
+          curl -sSL -o /tmp/p.py \
+            "https://raw.githubusercontent.com/solelove/orangechat/master/scripts/patch_prompt_cache_order.py"
+
+      - name: Apply and dump
+        run: |
+          GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          python3 /tmp/p.py || echo "PATCH EXIT=$?"
+          echo "=========== class 附近结构 ==========="
+          grep -nE "^(class|    fun |    private suspend fun |^})" $GH
+          echo "=========== 大括号逐行深度 ==========="
+          python3 - <<'PY'
+          depth = 0
+          for i, line in enumerate(open("app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt", encoding="utf-8"), 1):
+              depth += line.count("{") - line.count("}")
+              if "fun " in line or line.startswith("}"):
+                  print("%5d d=%-3d %s" % (i, depth, line.rstrip()[:90]))
+          PY
+
+      - name: Upload patched file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patched-gh
+          path: app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
