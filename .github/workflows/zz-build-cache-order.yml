@@ -48,9 +48,7 @@ jobs:
         run: |
           set -e
           cp /tmp/TimeReminderTransformer.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
-          # 1) 静态前缀 / 动态尾部 重排（本次核心修复）
           python3 /tmp/patch_prompt_cache_order.py
-          # 2) 原有三处视觉修复
           python3 /tmp/patch_dummy_theme.py
           python3 /tmp/patch_time_header.py
           python3 /tmp/patch_avatar_v12.py
@@ -63,17 +61,22 @@ jobs:
           echo "--- cache order ---"
           grep -n "cache-order" $GH
           grep -n "val dynamicSystem = buildString {" $GH
-          grep -n "val systemFinal = if (dynamicSystem.isBlank())" $GH
+          grep -q 'if (dynamicSystem.isBlank()) system else' $GH
           grep -q 'systemFinal + "\\n\\n" + timeReminder' $GH
-          # 静态块里必须只剩人格/代码块/开关说明，记忆与召回必须落在 dynamicSystem 之后
-          awk '/val dynamicSystem = buildString \{/{f=1} f&&/\*\*Memories\*\*/{found=1} END{exit !found}' $GH
-          # 记忆拼接函数调用必须出现在 dynamicSystem 之后
-          MEM_LINE=$(grep -n "buildMemoryPrompt(memories = memories)" $GH | head -1 | cut -d: -f1)
-          DYN_LINE=$(grep -n "val dynamicSystem = buildString {" $GH | head -1 | cut -d: -f1)
-          echo "memory at $MEM_LINE, dynamicSystem at $DYN_LINE"
-          [ "$MEM_LINE" -gt "$DYN_LINE" ]
-          # time_reminder 拼接必须在最后（在 add(UIMessage.system(...)) 之前）
-          grep -q "addAll(messages.limitContext(assistant.contextMessageSize))" $GH
+          ! grep -q 'if (assistant.enableTimeReminder)' $GH
+
+          DYN=$(grep -n "val dynamicSystem = buildString {" $GH | head -1 | cut -d: -f1)
+          MEM=$(grep -n "buildMemoryPrompt(memories = memories)" $GH | head -1 | cut -d: -f1)
+          TOOLS=$(grep -n "tools.forEach { tool ->" $GH | head -1 | cut -d: -f1)
+          printf 'dynamicSystem=%s memory=%s tools=%s\n' "$DYN" "$MEM" "$TOOLS"
+          [ "$MEM" -gt "$DYN" ]
+          [ "$TOOLS" -gt "$DYN" ]
+
+          CB=$(grep -n "append(buildCodeBlockPrompt())" $GH | head -1 | cut -d: -f1)
+          SK=$(grep -n "// 允许跳过回复" $GH | head -1 | cut -d: -f1)
+          printf 'codeblock=%s skip=%s\n' "$CB" "$SK"
+          [ "$CB" -lt "$SK" ]
+
           echo "--- other fixes ---"
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
@@ -91,9 +94,9 @@ jobs:
           if [ -n "$BAD" ]; then echo "UNEXPECTED: $BAD"; exit 1; fi
           echo "scope OK"
 
-      - name: Dump GenerationHandler system block
+      - name: Dump system block
         run: |
-          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | head -200
+          sed -n '/val internalMessages = buildList/,/addAll(messages.limitContext/p' app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt | grep -nE "静态段|动态段|buildString|记忆|外置记忆库|最近会话|代码块|工具prompt|插件|Skip|屏幕跳转|Message Bubbles|timeReminder|systemFinal|systemWithTime" | head -60
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -127,7 +130,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-cacheorder-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-cacheorder2-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -146,9 +149,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-cacheorder-$(date +%Y%m%d%H%M)"
+          TAG="223-cacheorder2-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 前缀缓存重排" \
-            --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到后面，time_reminder 仍在最后。目标是让 DeepSeek 前缀缓存能覆盖整个静态块，把命中率从 3.67% 拉起来。其余三处视觉修复保持不变。" \
+            --title "v2.2.3 前缀缓存重排 v2" \
+            --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到最后，time_reminder 仍然最后拼。时间注入不再受界面开关限制，每次取真实当前时间。其余三处视觉修复不变。" \
             app/build/outputs/apk/release/*.apk
