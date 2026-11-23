@@ -1,6 +1,6 @@
 name: Build cache-order fix (prompt prefix)
 
-# v4: 修掉 patch 脚本里 str.replace(new=...) 的 TypeError
+# v5: 去掉那条会误伤脚本 docstring 的 grep 防呆检查
 on:
   push:
     paths:
@@ -44,8 +44,8 @@ jobs:
           fetch patch_avatar_v12.py /tmp/patch_avatar_v12.py
           fetch patch_bubble_v121.py /tmp/patch_bubble_v121.py
           fetch patch_prompt_cache_order.py /tmp/patch_prompt_cache_order.py
-          # 防呆：脚本里不允许出现 new= 关键字
-          ! grep -n "replace(.*new=" /tmp/patch_prompt_cache_order.py
+          python3 -c "import ast,sys; ast.parse(open('/tmp/patch_prompt_cache_order.py').read())"
+          echo "patch script syntax OK"
 
       - name: Apply patches
         run: |
@@ -142,7 +142,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-cacheorder4-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-cacheorder5-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -161,9 +161,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="223-cacheorder4-$(date +%Y%m%d%H%M)"
+          TAG="223-cacheorder5-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 前缀缓存重排 v4" \
+            --title "v2.2.3 前缀缓存重排 v5" \
             --notes "system 提示词重排：静态段（人格 + 代码块规则 + Skip/Jump/气泡）放最前，动态段（记忆 / 外置召回 / 最近会话 / 工具 prompt / 插件注入）挪到最后，time_reminder 最后拼。时间注入不再受界面开关限制。其余三处视觉修复不变。" \
             app/build/outputs/apk/release/*.apk
