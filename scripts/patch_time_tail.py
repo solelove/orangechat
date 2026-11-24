@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""把时间提醒从 system 里挪到 messages 数组的最末尾。
+"""把时间提醒从 system 里挪到 messages 数组的最末尾（追加到最后一条 user 消息）。
 
 为什么：
   DeepSeek 的前缀缓存从第一个字符开始逐字连续匹配。
-  静态/动态分段（v9）之后，system 的结构是：
+  静态/动态分段（v9）之后 system 结构是：
       [静态段][动态段][time_reminder]
-  time_reminder 里的分钟数每分钟都在变，它一变，system 这一整条消息
-  就整条作废 —— 而 system 是 messages[0]，它作废 = 后面全部历史都吃不到缓存。
+  time_reminder 带分钟数，每分钟都变。它一变，system 这一整条消息就整条作废，
+  而 system 是 messages[0] —— 它作废等于后面全部历史都吃不到缓存。
 
-  所以把它剥出来，做成 messages 数组最后一条（role=user）的附加文本。
-  这样它变的时候只影响自己那几十个字符，system 和整段历史全部保住。
+  改成追加到最后一条 user 消息里（也就是整个数组的末尾），
+  它变的时候只影响自己那几十个字符，system 和整段历史全部保住。
 
-安全设计（吃过太多次亏）：
-  1. 三道锚点：systemWithTime 拼装块 / add(UIMessage.system(...)) / addAll(limitContext)
-  2. 每道锚点必须恰好命中 1 次
-  3. 三个锚点必须按顺序出现
-  4. 替换区间里不允许出现 fun 定义
-  5. 所有校验通过才落盘，任何一条不满足直接 exit 1
+必须跑在 patch_prompt_split_static_dynamic.py 之后（依赖 system 变量）。
+
+安全设计：
+  1. 三道锚点，每个必须恰好命中 1 次，且按顺序出现
+  2. 锚点之间不允许出现 fun 定义（防跨函数切割）
+  3. 替换完做 13 项断言，任何一项不过就不落盘
 """
 import pathlib
 import re
@@ -36,12 +36,12 @@ if MARK in text:
     print("[tail] already patched, skip")
     sys.exit(0)
 
-# ---------- 锚点 1：systemWithTime 拼装块 ----------
+# ---------- 锚点 1：timeReminder + systemWithTime 拼装块 ----------
 A1_RE = re.compile(
     r"^[ \t]*val timeReminder = [^\r\n]*\r?\n"
-    r"^[ \t]*val systemWithTime = if \(timeReminder != null\) \{\r?\n"
-    r"^[ \t]*system \+ \"\\n\\n\" \+ timeReminder\r?\n"
-    r"^[ \t]*\} else system\r?\n",
+    r"[ \t]*val systemWithTime = if \(timeReminder != null\) \{\r?\n"
+    r"[ \t]*system \+ \"\\n\\n\" \+ timeReminder\r?\n"
+    r"[ \t]*\} else system\r?\n",
     re.M,
 )
 
@@ -51,113 +51,83 @@ A2_RE = re.compile(
     re.M,
 )
 
-m1 = list(A1_RE.finditer(text))
-m2 = list(A2_RE.finditer(text))
+new = list(A1_RE.finditer(text))
+sysm = list(A2_RE.finditer(text))
 
-if len(m1) != 1:
-    print("[tail] FAIL: anchor1 (systemWithTime block) hits=%d" % len(m1))
+if len(new) != 1:
+    print("[tail] FAIL: anchor1 (timeReminder block) hits=%d" % len(new))
     sys.exit(1)
-if len(m2) != 1:
-    print("[tail] FAIL: anchor2 (add system) hits=%d" % len(m2))
+if len(sysm) != 1:
+    print("[tail] FAIL: anchor2 (add system) hits=%d" % len(sysm))
     sys.exit(1)
 
-s1, e1 = m1[0].span()
-s2, e2 = m2[0].span()
+s1, e1 = new[0].span()
+s2, e2 = sysm[0].span()
 
 if not (s1 < e1 <= s2 < e2):
-    print("[tail] FAIL: anchors out of order")
+    print("[tail] FAIL: anchors out of order (a1=%d..%d a2=%d..%d)" % (s1, e1, s2, e2))
     sys.exit(1)
 
-between = text[e1:s2]
-if "fun " in between:
-    print("[tail] FAIL: fragment between anchors spans function boundary")
+gap = text[e1:s2]
+if "fun " in gap:
+    print("[tail] FAIL: gap between anchors spans a function")
     sys.exit(1)
 
-print("[tail] anchors located: a1=%d bytes, gap=%d bytes" % (e1 - s1, len(between)))
+print("[tail] anchors OK: a1=%d bytes, gap=%d bytes" % (e1 - s1, len(gap)))
 
 NEW_A1 = (
-    "            // [time-tail] 时间提醒不放进 system。\n"
-    "            // 它是每分钟都会变的，放进 messages[0] 会把整条 system 打碎、\n"
-    "            // 连带着后面的全部历史都吃不到前缀缓存。改成追加到数组末尾，\n"
-    "            // 它变的时候只影响自己那几十个字符。\n"
+    "            // [time-tail] 时间提醒不进 system：它每分钟都变，\n"
+    "            // 放在 messages[0] 会把整条 system 打碎，连带后面全部历史吃不到缓存。\n"
     "            val timeReminder = TimeReminderTransformer.buildReminder(messages)\n"
 )
+NEW_A2 = "            if (system.isNotBlank()) add(UIMessage.system(prompt = system))\n"
 
-NEW_A2 = (
-    "            if (system.isNotBlank()) add(UIMessage.system(prompt = system))\n"
-)
-
-# 先替换靠后的锚点，避免偏移失效
+# 从后往前替换，避免偏移失效
 text = text[:s2] + NEW_A2 + text[e2:]
 text = text[:s1] + NEW_A1 + text[e1:]
 
-# ---------- 锚点 3：在 limitContext 之后追加末尾 user 消息 ----------
+# ---------- 锚点 3：limitContext 之后追加时间 ----------
 A3_RE = re.compile(
     r"^([ \t]*)addAll\(messages\.limitContext\(assistant\.contextMessageSize\)\)\r?\n",
     re.M,
 )
-m3 = list(A3_RE.finditer(text))
-if len(m3) != 1:
-    print("[tail] FAIL: anchor3 (limitContext) hits=%d" % len(m3))
+lim = list(A3_RE.finditer(text))
+if len(lim) != 1:
+    print("[tail] FAIL: anchor3 (limitContext) hits=%d" % len(lim))
     sys.exit(1)
 
-indent = m3[0].group(1)
+ind = lim[0].group(1)
 TAIL = (
     "\n"
-    + indent
-    + "// [time-tail] 时间提醒作为最后一段附在整条消息列表末尾。\n"
-    + indent
-    + "// 放在 system 里每分钟变一次会把整条 messages[0] 作废；\n"
-    + indent
-    + "// 放在末尾，静态段和全部历史都能继续命中前缀缓存。\n"
-    + indent
-    + "if (!system.isBlank() || internalSystemHasContent.compareAndSet(false, false)) {\n"
-    + indent
-    + "    // no-op, 保持结构清晰\n"
-    + indent
-    + "}\n"
+    + ind + "// [time-tail] 时间提醒附在整段消息列表的最末尾。\n"
+    + ind + "// 放在 system 里每分钟变一次会把整条 messages[0] 作废；\n"
+    + ind + "// 放在末尾，静态段和全部历史都能继续命中前缀缓存。\n"
+    + ind + "if (!timeReminder.isNullOrBlank()) {\n"
+    + ind + "    val lastUserIndex = indexOfLast { it.role == MessageRole.USER }\n"
+    + ind + "    if (lastUserIndex >= 0) {\n"
+    + ind + "        val target = this[lastUserIndex]\n"
+    + ind + "        this[lastUserIndex] = target.copy(\n"
+    + ind + "            parts = target.parts + UIMessagePart.Text(\"\\n\\n\" + timeReminder)\n"
+    + ind + "        )\n"
+    + ind + "    } else {\n"
+    + ind + "        add(UIMessage.user(timeReminder))\n"
+    + ind + "    }\n"
+    + ind + "}\n"
 )
 
-# 真正的实现：把 timeReminder 追加到最后一个 user 消息（或新建一条）
-REAL_TAIL = (
-    "\n"
-    + indent
-    + "// [time-tail] 时间提醒附在 messages 数组的最末尾。\n"
-    + indent
-    + "// 它每分钟都变，放进 system（messages[0]）会把整条历史的前缀缓存全部作废。\n"
-    + indent
-    + "if (!timeReminder.isNullOrBlank()) {\n"
-    + indent
-    + "    val lastIdx = indexOfLast { it.role == MessageRole.USER }\n"
-    + indent
-    + "    if (lastIdx >= 0) {\n"
-    + indent
-    + "        val target = this[lastIdx]\n"
-    + indent
-    + "        this[lastIdx] = target.copy(\n"
-    + indent
-    + "            parts = target.parts + UIMessagePart.Text(\"\\n\\n\" + timeReminder)\n"
-    + indent
-    + "        )\n"
-    + indent
-    + "    } else {\n"
-    + indent
-    + "        add(UIMessage.user(timeReminder))\n"
-    + indent
-    + "    }\n"
-    + indent
-    + "}\n"
-)
-
-text = text[:m3[0].end()] + REAL_TAIL + text[m3[0].end():]
+text = text[:lim[0].end()] + TAIL + text[lim[0].end():]
 
 # ---------- 校验 ----------
+i_sys = text.find("add(UIMessage.system(prompt = system))")
+i_lim = text.find("addAll(messages.limitContext(assistant.contextMessageSize))")
+i_tail = text.find("val lastUserIndex = indexOfLast")
+
 checks = {
     "mark": MARK in text,
-    "no_systemWithTime": "systemWithTime" not in text,
+    "systemWithTime_gone": "systemWithTime" not in text,
     "system_add_once": text.count("add(UIMessage.system(prompt = system))") == 1,
-    "time_line_alive": "val timeReminder = " in text,
-    "tail_append": "// [time-tail] 时间提醒附在 messages 数组的最末尾。" in text,
+    "time_line_alive": "val timeReminder = TimeReminderTransformer.buildReminder(messages)" in text,
+    "tail_append": "val lastUserIndex = indexOfLast { it.role == MessageRole.USER }" in text,
     "limit_intact": text.count("addAll(messages.limitContext(assistant.contextMessageSize))") == 1,
     "translate_alive": "fun translateText(" in text,
     "generate_alive": "fun generateText(" in text,
@@ -165,17 +135,13 @@ checks = {
     "codeblock_alive": "private fun buildCodeBlockPrompt()" in text,
     "static_alive": "val staticSystem = buildString {" in text,
     "dynamic_alive": "val dynamicSystem = buildString {" in text,
+    "user_part_alive": "UIMessagePart.Text(\"\\n\\n\" + timeReminder)" in text,
     "brace_balance": text.count("{") == text.count("}"),
+    "order_ok": 0 <= i_sys < i_lim < i_tail,
 }
 
-# 顺序：system 先 add，limitContext 后 addAll，再追加时间
-i_sys = text.find("add(UIMessage.system(prompt = system))")
-i_lim = text.find("addAll(messages.limitContext(assistant.contextMessageSize))")
-i_tail = text.find("// [time-tail] 时间提醒附在 messages 数组的最末尾。")
-checks["order_ok"] = 0 <= i_sys < i_lim < i_tail
-
-for k, v in checks.items():
-    print("[tail] %-22s %s" % (k, "OK" if v else "FAIL"))
+for k in checks:
+    print("[tail] %-24s %s" % (k, "OK" if checks[k] else "FAIL"))
 
 if not all(checks.values()):
     print("[tail] ABORT: 校验未通过，未写入文件")
