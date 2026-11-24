@@ -24,15 +24,16 @@
   v7  END 锚点带 "\\n"，文件可能是 CRLF -> 永远 hits=0
   v8  END 用了 master 才有的注释行，base 里不存在 -> hits=0
   v9  区间整段替换，成功
-  v10 本条：改成精确原文替换 + 断言，不再用区间正则整段重写
+  v10 精确原文替换 + 断言；但等价性比对把块首 `val system = buildString {`
+      也算了进去，它当然不在任何一段里 -> 误报 FAIL
+  v11 等价性比对改为「先剔除块首块尾容器行」，其余行逐字比对
 
-本版策略（v10）：
+本版策略（v11）：
   1. 起始锚点 `val system = buildString {` 必须恰好命中 1 次；
   2. 结束锚点 `val timeReminder = ...` 用正则兼容两种形态，恰好命中 1 次；
-  3. 先把人格段、记忆段、外置段、最近会话段、代码块段、工具段、插件段、
-     Skip/Jump/气泡段各自用**精确原文**切出来，任何一段找不到就中止；
-  4. 拼装时静态段 ∪ 动态段 的文本必须和原 block 逐字等价（去掉缩进后比对），
-     防止漏段、重段；
+  3. 各段用精确原文切出，任何一段找不到就中止；
+  4. 等价性比对：原 block 去掉首行与末行大括号、去掉空行后，
+     必须与「各段拼接后同样的处理」逐行一致；
   5. 所有断言通过才落盘。
 """
 import pathlib
@@ -82,15 +83,6 @@ if "\n    fun " in old or "\n    private " in old:
     sys.exit(1)
 
 # ---------- 精确切段 ----------
-def cut(name, needle):
-    """从 old 里取出 needle 所在行起、到下一个已知段头之前的完整片段。"""
-    idx = old.find(needle)
-    if idx < 0 or old.count(needle) != 1:
-        print("[two] FAIL: segment '%s' hits=%d" % (name, old.count(needle)))
-        sys.exit(1)
-    return idx
-
-
 PERSONA = """                val effectiveSystemPrompt =
                     if (assistant.allowConversationSystemPrompt && !conversationSystemPrompt.isNullOrBlank()) {
                         conversationSystemPrompt
@@ -171,7 +163,6 @@ RECENT = """                if (assistant.enableRecentChatsReference) {
                 }
 """
 
-# 外置召回段：从 "// 外置记忆库召回" 行到 catch 块结束（含缩进）
 EXT_START = "                // 外置记忆库召回"
 EXT_END_RE = re.compile(
     r"^[ \t]*\} catch \(e: Exception\) \{\r?\n"
@@ -190,8 +181,8 @@ for name, seg in [
         sys.exit(1)
 
 hi = old.find(EXT_START)
-if hi < 0:
-    print("[two] FAIL: external head not found")
+if hi < 0 or old.count(EXT_START) != 1:
+    print("[two] FAIL: external head hits=%d" % old.count(EXT_START))
     sys.exit(1)
 me = EXT_END_RE.search(old, hi)
 if not me:
@@ -203,15 +194,35 @@ if "fun " in EXTERNAL:
     sys.exit(1)
 print("[two] external segment: %d chars" % len(EXTERNAL))
 
-# ---------- 等价性校验：所有段拼起来必须覆盖原 block 的每一行非空内容 ----------
+# ---------- 等价性校验 ----------
+# 原 block 的骨架行（不属于任何一段）：
+#   首行 `val system = buildString {`  与末行 `}`（闭合 buildString）
+# 处理办法：把所有行按 strip 后收集，剔除首行容器行与纯 "}" 行，再逐行比对。
+def normalize(t):
+    out = []
+    for ln in t.splitlines():
+        x = ln.strip()
+        if not x:
+            continue
+        if x == "}":
+            continue
+        if x == "val system = buildString {":
+            continue
+        out.append(x)
+    return out
+
+
 segments = [PERSONA, MEM, EXTERNAL, RECENT, CODEBLOCK, TOOLS, PLUGINS, SKIP, JUMP, BUBBLES]
-norm = lambda t: [ln.strip() for ln in t.splitlines() if ln.strip()]
-old_norm = sorted(norm(old))
-new_norm = sorted(norm("".join(segments)))
+old_norm = normalize(old)
+new_norm = normalize("".join(segments))
+
 if old_norm != new_norm:
     missing = [x for x in old_norm if x not in new_norm]
     extra = [x for x in new_norm if x not in old_norm]
     print("[two] FAIL: content mismatch, missing=%r extra=%r" % (missing[:5], extra[:5]))
+    sys.exit(1)
+if len(old_norm) != len(new_norm):
+    print("[two] FAIL: line count mismatch old=%d new=%d" % (len(old_norm), len(new_norm)))
     sys.exit(1)
 print("[two] content equivalence OK (%d non-empty lines)" % len(old_norm))
 
@@ -248,9 +259,7 @@ DYNAMIC = (
     + "            }\n"
 )
 
-NEW = STATIC + DYNAMIC
-
-text = text[:s] + NEW + text[e:]
+text = text[:s] + STATIC + DYNAMIC + text[e:]
 
 # ---------- 落盘前断言 ----------
 checks = {
@@ -282,9 +291,11 @@ if si >= 0 and di > si:
     checks["no_recent_in_static"] = "buildRecentChatsPrompt" not in static_part
 
     dyn_part = text[di:]
-    checks["memory_first_in_dyn"] = 0 < dyn_part.find("buildMemoryPrompt(memories = memories)") < dyn_part.find("buildRecentChatsPrompt(assistant, conversationRepo)")
+    i_mem = dyn_part.find("buildMemoryPrompt(memories = memories)")
+    i_rec = dyn_part.find("buildRecentChatsPrompt(assistant, conversationRepo)")
+    checks["memory_first_in_dyn"] = 0 < i_mem < i_rec
     checks["external_in_dyn"] = "External memory recall failed" in dyn_part
-    checks["recent_in_dyn"] = "buildRecentChatsPrompt(assistant, conversationRepo)" in dyn_part
+    checks["recent_in_dyn"] = i_rec > 0
     checks["tools_in_dyn"] = "tools.forEach { tool ->" in dyn_part
     checks["plugins_in_dyn"] = "pluginPromptInjections.forEach" in dyn_part
 else:
