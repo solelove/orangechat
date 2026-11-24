@@ -1,11 +1,12 @@
 name: Build v2.2.3 three fixes + bubble avatar
-# rerun trigger: two-system v12（raw 加时间戳绕过 CDN 缓存）
+# rerun trigger: two-system v12（time-tail 分别 add 两条 system）
 
 on:
   push:
     paths:
       - '.github/workflows/zz-build-223-all.yml'
       - 'scripts/patch_prompt_two_system.py'
+      - 'scripts/patch_time_tail.py'
   workflow_dispatch:
 
 permissions:
@@ -35,9 +36,8 @@ jobs:
           # base commit (7b041d77) 的 scripts/ 目录里只有早期那批 fix_*.py，
           # 本次构建要用的补丁全部只存在于 master，所以统一从 master 取。
           #
-          # 注意：raw.githubusercontent.com 走 Fastly CDN，对 master 这种移动分支
-          # 会缓存最多 5 分钟。之前两次 "改了脚本但日志还是旧行为" 就是被缓存坑的。
-          # 这里加一个随构建变化的 cache-buster 参数，强制拿到最新内容。
+          # raw.githubusercontent.com 走 Fastly CDN，对 master 这种移动分支会缓存。
+          # 加一个随构建变化的 cache-buster 参数，强制拿到最新内容。
           CB="cb=$(date +%s)-${GITHUB_RUN_ID}"
           for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py; do
             url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/${f}?${CB}"
@@ -47,19 +47,19 @@ jobs:
             if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $f"; exit 1; fi
             echo "  -> $(wc -c < "/tmp/patch/${f}") bytes  sha=$(sha256sum "/tmp/patch/${f}" | cut -c1-12)"
           done
-          # two-system 补丁必须是 v11 及以后（v11 修掉了容器行误报）
-          if ! grep -q 'cache-two-system' /tmp/patch/patch_prompt_two_system.py; then
-            echo "STALE SCRIPT: patch_prompt_two_system.py (no cache-two-system mark)"; exit 1
-          fi
+          # two-system 必须是 v11+（v11 修掉容器行误报）
           if ! grep -q 'def normalize(t):' /tmp/patch/patch_prompt_two_system.py; then
-            echo "STALE SCRIPT: patch_prompt_two_system.py (old equivalence check, expect v11)"; exit 1
+            echo "STALE SCRIPT: patch_prompt_two_system.py (expect v11)"; exit 1
           fi
           if ! grep -q 'line count mismatch' /tmp/patch/patch_prompt_two_system.py; then
             echo "STALE SCRIPT: patch_prompt_two_system.py (missing v11 line-count check)"; exit 1
           fi
-          # time-tail 补丁必须走后缀追加那版
-          if ! grep -q 'lastUserIndex' /tmp/patch/patch_time_tail.py; then
-            echo "STALE SCRIPT: patch_time_tail.py"; exit 1
+          # time-tail 必须是分别 add 两条 system 那版
+          if ! grep -q 'prompt = staticSystem' /tmp/patch/patch_time_tail.py; then
+            echo "STALE SCRIPT: patch_time_tail.py (expect staticSystem/dynamicSystem add)"; exit 1
+          fi
+          if ! grep -q 'no_bare_system_var' /tmp/patch/patch_time_tail.py; then
+            echo "STALE SCRIPT: patch_time_tail.py (missing bare-system guard)"; exit 1
           fi
 
       - name: Apply patches
@@ -91,7 +91,7 @@ jobs:
           PY
 
           # 每个补丁单独运行，失败即停并明确指出是哪个脚本
-          # 顺序要求：two-system 必须早于 time-tail（time-tail 依赖 system 变量）
+          # 顺序要求：two-system 必须早于 time-tail（time-tail 依赖 static/dynamic 变量）
           for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py; do
             echo "===== running $p ====="
             python3 "/tmp/patch/$p" || { echo "PATCH FAILED: $p"; exit 1; }
@@ -132,10 +132,14 @@ jobs:
           assert "tools.forEach" in dyn, "tool prompts must be in dynamic"
           assert dyn.index("buildMemoryPrompt") < dyn.index("External memory recall failed")
           assert dyn.index("buildMemoryPrompt") < dyn.index("buildRecentChatsPrompt")
-          i_sys = s.index("add(UIMessage.system(prompt = system))")
+          # 两条 system 分别 add，且顺序先静态后动态；之后才是 limitContext 和尾部时间
+          i_static = s.index("add(UIMessage.system(prompt = staticSystem))")
+          i_dyn = s.index("add(UIMessage.system(prompt = dynamicSystem))")
           i_lim = s.index("addAll(messages.limitContext(assistant.contextMessageSize))")
           i_tail = s.index("val lastUserIndex = indexOfLast")
-          assert i_sys < i_lim < i_tail, "order wrong: system -> limitContext -> time tail"
+          assert i_static < i_dyn < i_lim < i_tail, "order wrong: static -> dynamic -> limitContext -> time tail"
+          # 不能残留裸 system 变量
+          assert "prompt = system)" not in s, "bare system variable still referenced"
           assert s.count("{") == s.count("}"), "brace imbalance"
           print("two-system split + time tail OK")
           PY
@@ -218,7 +222,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av18-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av19-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
