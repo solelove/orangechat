@@ -17,19 +17,18 @@
   v3  src.replace(old, new="") -> TypeError
   v4  grep 防呆误伤 docstring
   v5  数大括号假阳性
-  v6  结束锚点用了 "val timeReminder = if (assistant.enableTimeReminder) {"
-      ——那是补丁执行【之前】的形态。workflow 里的正则已经先把这段替换成
-      "val timeReminder = TimeReminderTransformer.buildReminder(messages)"，
-      所以锚点必须选一个在前后两个版本里都不变的文本。
+  v6  结束锚点用了补丁执行前的 timeReminder 形态（workflow 正则已改过它）
+  v7  END 锚点带 "\\n"，但文件可能是 CRLF 行尾 -> 永远 hits=0
 
-本版策略：
-  1. 起始锚点 + 结束锚点定位唯一一段，先断言各自恰好出现 1 次；
-  2. 结束锚点改用「// 时间上下文无条件注入」这一行注释，它在打补丁前后都稳定；
+本版策略（v8）：
+  1. 锚点一律不带换行符，只匹配行内容，行尾用正则统一吃 \\r?\\n；
+  2. 起始锚点 + 结束锚点定位唯一一段，断言各自恰好出现 1 次；
   3. 断言起点在终点前，且区间内不含函数定义（防止跨函数切割）；
   4. 整段替换，不做局部 patch；
   5. 所有校验通过才落盘，任一项失败直接退出且不写文件。
 """
 import pathlib
+import re
 import sys
 
 P = pathlib.Path("app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt")
@@ -45,20 +44,23 @@ if MARK in text:
     print("[split] already patched, skip")
     sys.exit(0)
 
-START = "            val system = buildString {\n"
-# 注意：这里不能用 timeReminder 那行，workflow 的正则已经改过它了。
-# 用「时间上下文」注释行，补丁前后完全一致。
-END = "            // 时间上下文无条件注入 与界面显示解耦\n"
+# 只匹配行内容，不依赖行尾（文件可能是 LF 也可能是 CRLF）
+START_RE = re.compile(r"^[ \t]*val system = buildString \{[ \t]*\r?\n", re.M)
+# 结束边界：这行注释在打补丁前后都不变，且 workflow 的正则不会碰它
+END_RE = re.compile(r"^[ \t]*// 时间上下文无条件注入[^\r\n]*\r?\n", re.M)
 
-if text.count(START) != 1:
-    print("[split] FAIL: start anchor hits=%d (expect 1)" % text.count(START))
+m_starts = list(START_RE.finditer(text))
+m_ends = list(END_RE.finditer(text))
+
+if len(m_starts) != 1:
+    print("[split] FAIL: start anchor hits=%d (expect 1)" % len(m_starts))
     sys.exit(1)
-if text.count(END) != 1:
-    print("[split] FAIL: end anchor hits=%d (expect 1)" % text.count(END))
+if len(m_ends) != 1:
+    print("[split] FAIL: end anchor hits=%d (expect 1)" % len(m_ends))
     sys.exit(1)
 
-s = text.index(START)
-e = text.index(END)
+s = m_starts[0].start()
+e = m_ends[0].start()
 if s >= e:
     print("[split] FAIL: start anchor after end anchor")
     sys.exit(1)
@@ -82,6 +84,7 @@ for need in [
 
 print("[split] located block: %d chars" % len(old_block))
 
+# 新代码统一用 LF，项目本身是 LF
 NEW_BLOCK = '''            // [cache-order] 静态前缀段：每轮完全一致的固定内容排在最前，
             // 这样前缀缓存能吃满这一整段。
             val staticSystem = buildString {
@@ -141,19 +144,26 @@ NEW_BLOCK = '''            // [cache-order] 静态前缀段：每轮完全一致
                 }
 '''
 
-EXT_HEAD = "                // 外置记忆库召回\n"
-EXT_TAIL = "                    Log.w(TAG, \"External memory recall failed\", e)\n                }\n"
+EXT_HEAD = "// 外置记忆库召回"
+EXT_TAIL_RE = re.compile(r"^[ \t]*Log\.w\(TAG, \"External memory recall failed\"[^\r\n]*\r?\n[ \t]*\}[ \t]*\r?\n", re.M)
+
 if old_block.count(EXT_HEAD) != 1:
     print("[split] FAIL: external head hits=%d" % old_block.count(EXT_HEAD))
     sys.exit(1)
 h = old_block.index(EXT_HEAD)
-t = old_block.index(EXT_TAIL, h) + len(EXT_TAIL)
-external_seg = old_block[h:t]
+# 从 EXT_HEAD 所在行首开始截，保留原有缩进
+line_start = old_block.rfind("\n", 0, h) + 1
+mt = EXT_TAIL_RE.search(old_block, h)
+if not mt:
+    print("[split] FAIL: external tail not found")
+    sys.exit(1)
+external_seg = old_block[line_start:mt.end()]
 if "fun " in external_seg:
     print("[split] FAIL: external segment spans too much")
     sys.exit(1)
 print("[split] external segment: %d chars" % len(external_seg))
 
+# 外置段里的缩进要保持和 dynamicSystem 对齐（原代码就在同一层级，直接用）
 NEW_BLOCK += external_seg
 
 NEW_BLOCK += '''
@@ -200,7 +210,7 @@ checks = {
     "codeblock_fn_alive": "private fun buildCodeBlockPrompt()" in text,
     "single_system_add": text.count("add(UIMessage.system(prompt = systemWithTime))") == 1,
     "limit_intact": "addAll(messages.limitContext(assistant.contextMessageSize))" in text,
-    "time_comment_alive": "// 时间上下文无条件注入 与界面显示解耦" in text,
+    "time_comment_alive": "// 时间上下文无条件注入" in text,
 }
 
 si = text.find("val staticSystem = buildString {")
@@ -229,6 +239,12 @@ else:
     checks["codeblock_in_static"] = False
     checks["no_memory_in_static"] = False
     checks["no_tools_in_static"] = False
+
+# 括号配平（Kotlin 文件整体级，允许字符串里有括号，这里只做粗检）
+if text.count("{") != text.count("}"):
+    checks["brace_balance"] = False
+else:
+    checks["brace_balance"] = True
 
 for k, v in checks.items():
     print("[split] %-22s %s" % (k, "OK" if v else "FAIL"))
