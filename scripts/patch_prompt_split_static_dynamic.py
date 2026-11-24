@@ -18,14 +18,18 @@
   v4  grep 防呆误伤 docstring
   v5  数大括号假阳性
   v6  结束锚点用了补丁执行前的 timeReminder 形态（workflow 正则已改过它）
-  v7  END 锚点带 "\\n"，但文件可能是 CRLF 行尾 -> 永远 hits=0
+  v7  END 锚点带 "\\n"，文件可能是 CRLF -> 永远 hits=0
+  v8  END 用了「// 时间上下文无条件注入」注释行 —— 那行是 master 版本才有的，
+      base commit 里根本不存在，所以必然 hits=0
 
-本版策略（v8）：
-  1. 锚点一律不带换行符，只匹配行内容，行尾用正则统一吃 \\r?\\n；
-  2. 起始锚点 + 结束锚点定位唯一一段，断言各自恰好出现 1 次；
-  3. 断言起点在终点前，且区间内不含函数定义（防止跨函数切割）；
-  4. 整段替换，不做局部 patch；
-  5. 所有校验通过才落盘，任一项失败直接退出且不写文件。
+本版策略（v9）：
+  1. 结束锚点改用 base 里真实存在的 val timeReminder 那一行，
+     用正则同时兼容补丁前 ("= if (assistant.enableTimeReminder)") 和
+     补丁后 ("= TimeReminderTransformer.buildReminder") 两种形态；
+  2. 起始锚点同样是正则，`val system = buildString {` 走行首匹配；
+  3. 两个锚点各自必须恰好命中 1 次，起点必须在终点前；
+  4. 区间内不允许出现函数定义（防止跨函数切割）；
+  5. 整段替换，不做局部 patch；所有校验通过才落盘。
 """
 import pathlib
 import re
@@ -44,10 +48,17 @@ if MARK in text:
     print("[split] already patched, skip")
     sys.exit(0)
 
-# 只匹配行内容，不依赖行尾（文件可能是 LF 也可能是 CRLF）
+# 起始：val system = buildString {  （行首，允许任意缩进）
 START_RE = re.compile(r"^[ \t]*val system = buildString \{[ \t]*\r?\n", re.M)
-# 结束边界：这行注释在打补丁前后都不变，且 workflow 的正则不会碰它
-END_RE = re.compile(r"^[ \t]*// 时间上下文无条件注入[^\r\n]*\r?\n", re.M)
+
+# 结束：val timeReminder = ... 这一行。两种形态都要能匹配：
+#   base 原样：  val timeReminder = if (assistant.enableTimeReminder) {
+#   workflow 改后：val timeReminder = TimeReminderTransformer.buildReminder(messages)
+END_RE = re.compile(
+    r"^[ \t]*val timeReminder = (?:if \(assistant\.enableTimeReminder\)|"
+    r"TimeReminderTransformer\.buildReminder\(messages\))[^\r\n]*\r?\n",
+    re.M,
+)
 
 m_starts = list(START_RE.finditer(text))
 m_ends = list(END_RE.finditer(text))
@@ -84,7 +95,6 @@ for need in [
 
 print("[split] located block: %d chars" % len(old_block))
 
-# 新代码统一用 LF，项目本身是 LF
 NEW_BLOCK = '''            // [cache-order] 静态前缀段：每轮完全一致的固定内容排在最前，
             // 这样前缀缓存能吃满这一整段。
             val staticSystem = buildString {
@@ -145,13 +155,15 @@ NEW_BLOCK = '''            // [cache-order] 静态前缀段：每轮完全一致
 '''
 
 EXT_HEAD = "// 外置记忆库召回"
-EXT_TAIL_RE = re.compile(r"^[ \t]*Log\.w\(TAG, \"External memory recall failed\"[^\r\n]*\r?\n[ \t]*\}[ \t]*\r?\n", re.M)
+EXT_TAIL_RE = re.compile(
+    r"^[ \t]*Log\.w\(TAG, \"External memory recall failed\"[^\r\n]*\r?\n[ \t]*\}[ \t]*\r?\n",
+    re.M,
+)
 
 if old_block.count(EXT_HEAD) != 1:
     print("[split] FAIL: external head hits=%d" % old_block.count(EXT_HEAD))
     sys.exit(1)
 h = old_block.index(EXT_HEAD)
-# 从 EXT_HEAD 所在行首开始截，保留原有缩进
 line_start = old_block.rfind("\n", 0, h) + 1
 mt = EXT_TAIL_RE.search(old_block, h)
 if not mt:
@@ -163,7 +175,6 @@ if "fun " in external_seg:
     sys.exit(1)
 print("[split] external segment: %d chars" % len(external_seg))
 
-# 外置段里的缩进要保持和 dynamicSystem 对齐（原代码就在同一层级，直接用）
 NEW_BLOCK += external_seg
 
 NEW_BLOCK += '''
@@ -210,7 +221,7 @@ checks = {
     "codeblock_fn_alive": "private fun buildCodeBlockPrompt()" in text,
     "single_system_add": text.count("add(UIMessage.system(prompt = systemWithTime))") == 1,
     "limit_intact": "addAll(messages.limitContext(assistant.contextMessageSize))" in text,
-    "time_comment_alive": "// 时间上下文无条件注入" in text,
+    "time_line_alive": "val timeReminder = " in text,
 }
 
 si = text.find("val staticSystem = buildString {")
@@ -240,11 +251,7 @@ else:
     checks["no_memory_in_static"] = False
     checks["no_tools_in_static"] = False
 
-# 括号配平（Kotlin 文件整体级，允许字符串里有括号，这里只做粗检）
-if text.count("{") != text.count("}"):
-    checks["brace_balance"] = False
-else:
-    checks["brace_balance"] = True
+checks["brace_balance"] = text.count("{") == text.count("}")
 
 for k, v in checks.items():
     print("[split] %-22s %s" % (k, "OK" if v else "FAIL"))
