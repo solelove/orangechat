@@ -1,5 +1,5 @@
 name: Build v2.2.3 three fixes + bubble avatar
-# rerun trigger: 所有补丁脚本统一从 master 取（base commit 里没有 scripts/ 下的这些文件）
+# rerun trigger: split 补丁 v9（结束锚点兼容补丁前后两种形态）
 
 on:
   push:
@@ -41,8 +41,8 @@ jobs:
             if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $f"; exit 1; fi
             echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
           done
-          # split 补丁必须是修复后的版本（结束锚点用「时间上下文」注释行）
-          if ! grep -q '时间上下文无条件注入' /tmp/patch/patch_prompt_split_static_dynamic.py; then
+          # split 补丁必须是 v9 及以后的版本（结束锚点兼容 enableTimeReminder 与 buildReminder）
+          if ! grep -q 'enableTimeReminder' /tmp/patch/patch_prompt_split_static_dynamic.py; then
             echo "STALE SCRIPT: patch_prompt_split_static_dynamic.py"; exit 1
           fi
 
@@ -106,6 +106,7 @@ jobs:
           dyn = s[di:]
           assert "buildMemoryPrompt" in dyn, "memory must be in dynamic tail"
           assert "tools.forEach" in dyn, "tool prompts must be in dynamic tail"
+          assert s.count("{") == s.count("}"), "brace imbalance"
           print("prompt split OK")
           PY
 
