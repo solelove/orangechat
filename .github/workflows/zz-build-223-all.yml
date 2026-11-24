@@ -1,5 +1,5 @@
 name: Build v2.2.3 three fixes + bubble avatar
-# rerun trigger: 修正 split 补丁的结束锚点
+# rerun trigger: split 补丁强制从 master 取（base 里残留同名旧版）
 
 on:
   push:
@@ -32,24 +32,30 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/patch
           base='${{ env.BASE_COMMIT }}'
-          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_split_static_dynamic.py; do
-            ok=0
-            for ref in "$base" master; do
-              url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${ref}/scripts/${f}"
-              echo "GET $url"
-              rm -f "/tmp/patch/${f}"
-              # -f: HTTP 4xx/5xx 直接失败，不把错误页写进文件
-              if curl -fsSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"; then
-                if [ -s "/tmp/patch/${f}" ]; then ok=1; break; fi
-              fi
-              echo "  (miss at $ref)"
-            done
-            if [ "$ok" != "1" ]; then echo "EMPTY: $f"; exit 1; fi
-            # 防呆：文件首行不能是 404 页面
-            if head -c 64 "/tmp/patch/${f}" | grep -qi '404: Not Found'; then
-              echo "BAD CONTENT (404 body): $f"; exit 1
-            fi
+
+          # 基础补丁：取 base commit 的版本（保证与基线代码匹配）
+          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py; do
+            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${base}/scripts/${f}"
+            echo "GET $url"
+            rm -f "/tmp/patch/${f}"
+            curl -fsSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"
+            if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $f"; exit 1; fi
             echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
+          done
+
+          # 新补丁：只从 master 取。base commit 里可能残留同名旧版，
+          # 之前就是命中它导致修复不生效。
+          for f in patch_prompt_split_static_dynamic.py; do
+            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/${f}"
+            echo "GET $url"
+            rm -f "/tmp/patch/${f}"
+            curl -fsSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"
+            if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $f"; exit 1; fi
+            echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
+            # 必须是修复后的版本：结束锚点用「时间上下文」注释行
+            if ! grep -q '时间上下文无条件注入' "/tmp/patch/${f}"; then
+              echo "STALE SCRIPT: $f (end anchor still old)"; exit 1
+            fi
           done
 
       - name: Apply patches
