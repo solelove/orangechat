@@ -31,11 +31,16 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/patch
           base='${{ env.BASE_COMMIT }}'
-          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py; do
-            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${base}/scripts/${f}"
-            echo "GET $url"
-            curl -sSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"
-            if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $url"; exit 1; fi
+          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_split_static_dynamic.py; do
+            ok=0
+            for ref in "$base" master; do
+              url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${ref}/scripts/${f}"
+              echo "GET $url"
+              curl -sSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url" || true
+              if [ -s "/tmp/patch/${f}" ]; then ok=1; break; fi
+              echo "  (miss at $ref)"
+            done
+            if [ "$ok" != "1" ]; then echo "EMPTY: $f"; exit 1; fi
             echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
           done
 
@@ -68,7 +73,7 @@ jobs:
           PY
 
           # 每个补丁单独运行，失败即停并明确指出是哪个脚本
-          for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py; do
+          for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_split_static_dynamic.py; do
             echo "===== running $p ====="
             python3 "/tmp/patch/$p" || { echo "PATCH FAILED: $p"; exit 1; }
           done
@@ -80,6 +85,27 @@ jobs:
           grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
+
+          echo "--- prompt static/dynamic split ---"
+          GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+          grep -q "val staticSystem = buildString {" $GH
+          grep -q "val dynamicSystem = buildString {" $GH
+          grep -q "if (dynamicSystem.isBlank()) {" $GH
+          # 静态段必须出现在动态段之前
+          python3 - <<'PY'
+          s = open("app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt", encoding='utf-8').read()
+          si = s.index("val staticSystem = buildString {")
+          di = s.index("val dynamicSystem = buildString {")
+          assert si < di, "static system must come before dynamic"
+          static_part = s[si:di]
+          assert "buildCodeBlockPrompt()" in static_part, "codeblock rules must be in static prefix"
+          assert "buildMemoryPrompt" not in static_part, "memory must not be in static prefix"
+          assert "tools.forEach" not in static_part, "tool prompts must not be in static prefix"
+          dyn = s[di:]
+          assert "buildMemoryPrompt" in dyn, "memory must be in dynamic tail"
+          assert "tools.forEach" in dyn, "tool prompts must be in dynamic tail"
+          print("prompt split OK")
+          PY
 
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           echo "--- avatar v12 wiring ---"
@@ -187,6 +213,6 @@ jobs:
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 三处修复 + 头像 v12.1" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像（v12 漏了这条，因为 SplitBubbleColumn 在 NONE 分支直接 return 没排头像）；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。" \
+            --title "v2.2.3 三处修复 + 头像 v12.1 + 缓存分层" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。5) 新增：system prompt 拆分为静态前缀段与动态尾段，静态段（人格+代码块规则+Skip/Jump/气泡）常驻最前且每轮一致，记忆/外置召回/最近会话/工具/插件全部后置，用于提升 DeepSeek 前缀缓存命中率。" \
             app/build/outputs/apk/release/*.apk
