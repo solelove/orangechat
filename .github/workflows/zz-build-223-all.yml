@@ -1,5 +1,5 @@
 name: Build v2.2.3 three fixes + bubble avatar
-# rerun trigger: two-system v10（system 拆成静态 + 动态两条消息）
+# rerun trigger: two-system v12（raw 加时间戳绕过 CDN 缓存）
 
 on:
   push:
@@ -34,20 +34,28 @@ jobs:
           mkdir -p /tmp/patch
           # base commit (7b041d77) 的 scripts/ 目录里只有早期那批 fix_*.py，
           # 本次构建要用的补丁全部只存在于 master，所以统一从 master 取。
+          #
+          # 注意：raw.githubusercontent.com 走 Fastly CDN，对 master 这种移动分支
+          # 会缓存最多 5 分钟。之前两次 "改了脚本但日志还是旧行为" 就是被缓存坑的。
+          # 这里加一个随构建变化的 cache-buster 参数，强制拿到最新内容。
+          CB="cb=$(date +%s)-${GITHUB_RUN_ID}"
           for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py; do
-            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/${f}"
+            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/${f}?${CB}"
             echo "GET $url"
             rm -f "/tmp/patch/${f}"
-            curl -fsSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"
+            curl -fsSL --retry 3 --retry-delay 2 -H 'Cache-Control: no-cache' -o "/tmp/patch/${f}" "$url"
             if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $f"; exit 1; fi
-            echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
+            echo "  -> $(wc -c < "/tmp/patch/${f}") bytes  sha=$(sha256sum "/tmp/patch/${f}" | cut -c1-12)"
           done
-          # two-system 补丁必须是 v10（有 [cache-two-system] 标记 + 等价性校验）
+          # two-system 补丁必须是 v11 及以后（v11 修掉了容器行误报）
           if ! grep -q 'cache-two-system' /tmp/patch/patch_prompt_two_system.py; then
-            echo "STALE SCRIPT: patch_prompt_two_system.py"; exit 1
+            echo "STALE SCRIPT: patch_prompt_two_system.py (no cache-two-system mark)"; exit 1
           fi
-          if ! grep -q 'content equivalence OK' /tmp/patch/patch_prompt_two_system.py; then
-            echo "STALE SCRIPT: missing equivalence check"; exit 1
+          if ! grep -q 'def normalize(t):' /tmp/patch/patch_prompt_two_system.py; then
+            echo "STALE SCRIPT: patch_prompt_two_system.py (old equivalence check, expect v11)"; exit 1
+          fi
+          if ! grep -q 'line count mismatch' /tmp/patch/patch_prompt_two_system.py; then
+            echo "STALE SCRIPT: patch_prompt_two_system.py (missing v11 line-count check)"; exit 1
           fi
           # time-tail 补丁必须走后缀追加那版
           if ! grep -q 'lastUserIndex' /tmp/patch/patch_time_tail.py; then
@@ -122,7 +130,6 @@ jobs:
           dyn = s[di:]
           assert "buildMemoryPrompt" in dyn, "memory must be in dynamic"
           assert "tools.forEach" in dyn, "tool prompts must be in dynamic"
-          # 记忆必须排在动态段最前（外置召回 / 最近会话之前）
           assert dyn.index("buildMemoryPrompt") < dyn.index("External memory recall failed")
           assert dyn.index("buildMemoryPrompt") < dyn.index("buildRecentChatsPrompt")
           i_sys = s.index("add(UIMessage.system(prompt = system))")
