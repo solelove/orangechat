@@ -1,11 +1,11 @@
-﻿/*
+/*
  * 橘瓣 OrangeChat
  * 衍生自 RikkaHub (https://github.com/rikkahub/rikkahub)，原作者 RE
  * 本项目基于 GNU AGPL v3 开源，详见根目录 LICENSE 文件
  */
 
 package me.rerere.rikkahub.data.ai
- 
+
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
@@ -64,23 +64,23 @@ import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.utils.applyPlaceholders
 import java.util.Locale
 import kotlin.time.Clock
- 
+
 private const val TAG = "GenerationHandler"
- 
+
 // 流式生成时往 UI 推送消息更新的最小间隔。
 // AI 的 SSE 增量可能每秒到达几十次，如果每次都原样同步到 UI 的 StateFlow，
 // 会导致 Compose 高频重组（Markdown 全量重解析、代码高亮重新分词、
 // animateContentSize 的尺寸补间动画被不断打断重启），表现为打字机效果的"抖动/掉帧"。
 // 这里把推送频率限制在这个间隔以内，肉眼完全感知不到延迟，但能大幅降低重组频率。
 private const val STREAM_UI_THROTTLE_MS = 50L
- 
+
 @Serializable
 sealed interface GenerationChunk {
     data class Messages(
         val messages: List<UIMessage>
     ) : GenerationChunk
 }
- 
+
 class GenerationHandler(
     private val context: Context,
     private val providerManager: ProviderManager,
@@ -108,12 +108,12 @@ class GenerationHandler(
     ): Flow<GenerationChunk> = flow {
         val provider = model.findProvider(settings.providers) ?: error("Provider not found")
         val providerImpl = providerManager.getProviderByType(provider)
- 
+
         var messages: List<UIMessage> = messages
- 
+
         for (stepIndex in 0 until maxSteps) {
             Log.i(TAG, "streamText: start step #$stepIndex (${model.id})")
- 
+
             val toolsInternal = buildList {
                 Log.i(TAG, "generateInternal: build tools($assistant)")
                 if (assistant?.enableMemory == true) {
@@ -139,14 +139,14 @@ class GenerationHandler(
                 add(buildWriteFilesTool(conversationId))
                 addAll(tools)
             }
- 
+
             // Check if we have tool calls ready to continue after user interaction.
             val pendingTools = messages.lastOrNull()?.getTools()?.filter {
                 it.canResumeExecution
             } ?: emptyList()
- 
+
             val toolsToProcess: List<UIMessagePart.Tool>
- 
+
             // Skip generation if we have approved/denied tool calls to handle
             if (pendingTools.isEmpty()) {
                 generateInternal(
@@ -204,13 +204,13 @@ class GenerationHandler(
                         .toLocalDateTime(TimeZone.currentSystemDefault())
                 )
                 emit(GenerationChunk.Messages(messages))
- 
+
                 val tools = messages.last().getTools().filter { !it.isExecuted }
                 if (tools.isEmpty()) {
                     // no tool calls, break
                     break
                 }
- 
+
                 // Check for tools that need approval
                 var hasPendingApproval = false
                 val updatedTools = tools.map { tool ->
@@ -233,7 +233,7 @@ class GenerationHandler(
                         else -> tool
                     }
                 }
- 
+
                 // If any tools were updated to Pending, update the message and break
                 if (updatedTools != tools) {
                     val lastMessage = messages.last()
@@ -247,20 +247,20 @@ class GenerationHandler(
                     messages = messages.dropLast(1) + lastMessage.copy(parts = updatedParts)
                     emit(GenerationChunk.Messages(messages))
                 }
- 
+
                 // If there are pending approvals, break and wait for user
                 if (hasPendingApproval) {
                     Log.i(TAG, "generateText: waiting for tool approval")
                     break
                 }
- 
+
                 toolsToProcess = updatedTools
             } else {
                 // Resuming after user interaction - use the resumable tools directly.
                 Log.i(TAG, "generateText: resuming with ${pendingTools.size} resumable tools")
                 toolsToProcess = messages.last().getTools().filter { it.canResumeExecution }
             }
- 
+
             // Handle tools (execute approved tools, handle denied tools)
             val executedTools = arrayListOf<UIMessagePart.Tool>()
             toolsToProcess.forEach { tool ->
@@ -283,7 +283,7 @@ class GenerationHandler(
                             )
                         )
                     }
- 
+
                     is ToolApprovalState.Answered -> {
                         // Tool was answered by user (e.g., ask_user tool)
                         val answer = (tool.approvalState as ToolApprovalState.Answered).answer
@@ -293,11 +293,11 @@ class GenerationHandler(
                             )
                         )
                     }
- 
+
                     is ToolApprovalState.Pending -> {
                         // Should not reach here, but just in case
                     }
- 
+
                     else -> {
                         // Auto or Approved - execute the tool
                         runCatching {
@@ -334,12 +334,12 @@ class GenerationHandler(
                     }
                 }
             }
- 
+
             if (executedTools.isEmpty()) {
                 // No results to add (all tools were pending)
                 break
             }
- 
+
             // Update last message with executed tools (NOT create TOOL message)
             val lastMessage = messages.last()
             val updatedParts = lastMessage.parts.map { part ->
@@ -360,10 +360,10 @@ class GenerationHandler(
                 )
             )
         }
- 
+
     }.throttleLatest(STREAM_UI_THROTTLE_MS)
         .flowOn(Dispatchers.IO)
- 
+
     private suspend fun generateInternal(
         assistant: Assistant,
         settings: Settings,
@@ -382,7 +382,9 @@ class GenerationHandler(
         workspaceCwd: String? = null,
     ) {
         val internalMessages = buildList {
-            val system = buildString {
+            // [cache-order] 静态前缀段：每轮完全一致的固定内容排在最前，
+            // 这样 DeepSeek 的前缀缓存能吃满这一整段。
+            val staticSystem = buildString {
                 val effectiveSystemPrompt =
                     if (assistant.allowConversationSystemPrompt && !conversationSystemPrompt.isNullOrBlank()) {
                         conversationSystemPrompt
@@ -392,13 +394,52 @@ class GenerationHandler(
                 if (effectiveSystemPrompt.isNotBlank()) {
                     append(effectiveSystemPrompt)
                 }
- 
+
+                // 代码文件命名和ZIP打包功能说明（静态规则，放到前缀段）
+                appendLine()
+                append(buildCodeBlockPrompt())
+
+                // 允许跳过回复
+                if (assistant.allowSkipReply) {
+                    appendLine()
+                    appendLine()
+                    appendLine("## Skip Reply")
+                    appendLine("If you determine that no reply is needed (e.g., the user's message doesn't require a response, or you have nothing meaningful to add), you may reply with exactly `[SKIP]` (without any other text). This message will be hidden from the user. Use this sparingly and only when truly appropriate.")
+                }
+
+                // 屏幕跳转能力（AI总是可以跳转，不需要开关）
+                if (true) {
+                    appendLine()
+                    appendLine()
+                    appendLine("## 屏幕跳转能力")
+                    appendLine("你可以在回复末尾追加 [JUMP] 标记（单独一行）来把聊天界面拉到用户屏幕最前面。")
+                    appendLine("适用场景：")
+                    appendLine("- 用户说要去别的应用，你觉得需要把用户拉回来时")
+                    appendLine("- 你觉得接下来的内容需要用户立即看到时")
+                    appendLine("不适用场景：")
+                    appendLine("- 一般闲聊不需要跳转")
+                    appendLine("- 用户正在跟你正常对话时不需要跳转")
+                    appendLine("[JUMP] 标记不会展示给用户，仅用于触发屏幕跳转。")
+                }
+
+                // 分气泡: 告知模型它自己能控制消息如何被拆成多个气泡
+                if (assistant.splitBubbleByLine) {
+                    appendLine()
+                    appendLine()
+                    appendLine("## Message Bubbles")
+                    appendLine("Your reply will be automatically split into separate chat bubbles at every line break (\\n) you write, similar to how a person sends several short texts in a row instead of one long message. You are fully in control of this: write a line break whenever you want the previous thought/sentence to appear as its own bubble, and keep things on the same line when they belong together. Do not insert blank lines purely for spacing — every line break becomes a new bubble, so use them intentionally. Exception: line breaks inside fenced code blocks (```) and Markdown tables are preserved as-is and will NOT create new bubbles, since those must stay intact as a single block.")
+                }
+            }
+
+            // [cache-order] 动态尾段：记忆 / 外置召回 / 最近会话 / 工具 / 插件
+            // 这些内容每轮都可能变化，排在静态段之后，就不会把前面的命中段打碎。
+            val dynamicSystem = buildString {
                 // 记忆
                 if (assistant.enableMemory) {
                     appendLine()
                     append(buildMemoryPrompt(memories = memories))
                 }
- 
+
                 // 外置记忆库召回
                 try {
                     val externalMemoryConfigs = settings.externalMemories.filter {
@@ -419,8 +460,8 @@ class GenerationHandler(
                                             val service = me.rerere.rikkahub.data.service.ExternalMemoryService(config)
                                             val recalled = mutableListOf<String>()
 
-                            // 如果配置了向量模型且开启了日记摘要，使用向量召回日记摘要
-                            if (config.embeddingModelId != null && queryText.isNotBlank() && config.autoSaveDiarySummary) {
+                                            // 如果配置了向量模型且开启了日记摘要，使用向量召回日记摘要
+                                            if (config.embeddingModelId != null && queryText.isNotBlank() && config.autoSaveDiarySummary) {
                                                 val embeddingModel = settings.findModelById(config.embeddingModelId)
                                                 if (embeddingModel != null) {
                                                     val embeddingProvider = embeddingModel.findProvider(settings.providers)
@@ -494,22 +535,18 @@ class GenerationHandler(
                 } catch (e: Exception) {
                     Log.w(TAG, "External memory recall failed", e)
                 }
- 
+
                 if (assistant.enableRecentChatsReference) {
                     appendLine()
                     append(buildRecentChatsPrompt(assistant, conversationRepo))
                 }
- 
-                // 代码文件命名和ZIP打包功能说明
-                appendLine()
-                append(buildCodeBlockPrompt())
- 
+
                 // 工具prompt
                 tools.forEach { tool ->
                     appendLine()
                     append(tool.systemPrompt(model, messages))
                 }
- 
+
                 // 插件提示词注入
                 if (pluginPromptInjections.isNotEmpty()) {
                     pluginPromptInjections.forEach { injection ->
@@ -518,39 +555,14 @@ class GenerationHandler(
                         append(injection)
                     }
                 }
- 
-                // 允许跳过回复
-                if (assistant.allowSkipReply) {
-                    appendLine()
-                    appendLine()
-                    appendLine("## Skip Reply")
-                    appendLine("If you determine that no reply is needed (e.g., the user's message doesn't require a response, or you have nothing meaningful to add), you may reply with exactly `[SKIP]` (without any other text). This message will be hidden from the user. Use this sparingly and only when truly appropriate.")
-                }
-
-                // 屏幕跳转能力（AI总是可以跳转，不需要开关）
-                if (true) {
-                    appendLine()
-                    appendLine()
-                    appendLine("## 屏幕跳转能力")
-                    appendLine("你可以在回复末尾追加 [JUMP] 标记（单独一行）来把聊天界面拉到用户屏幕最前面。")
-                    appendLine("适用场景：")
-                    appendLine("- 用户说要去别的应用，你觉得需要把用户拉回来时")
-                    appendLine("- 你觉得接下来的内容需要用户立即看到时")
-                    appendLine("不适用场景：")
-                    appendLine("- 一般闲聊不需要跳转")
-                    appendLine("- 用户正在跟你正常对话时不需要跳转")
-                    appendLine("[JUMP] 标记不会展示给用户，仅用于触发屏幕跳转。")
-                }
- 
-                // 分气泡: 告知模型它自己能控制消息如何被拆成多个气泡
-                if (assistant.splitBubbleByLine) {
-                    appendLine()
-                    appendLine()
-                    appendLine("## Message Bubbles")
-                    appendLine("Your reply will be automatically split into separate chat bubbles at every line break (\\n) you write, similar to how a person sends several short texts in a row instead of one long message. You are fully in control of this: write a line break whenever you want the previous thought/sentence to appear as its own bubble, and keep things on the same line when they belong together. Do not insert blank lines purely for spacing — every line break becomes a new bubble, so use them intentionally. Exception: line breaks inside fenced code blocks (```) and Markdown tables are preserved as-is and will NOT create new bubbles, since those must stay intact as a single block.")
-                }
- 
             }
+
+            val system = if (dynamicSystem.isBlank()) {
+                staticSystem
+            } else {
+                staticSystem + "\n\n" + dynamicSystem
+            }
+
             // 时间上下文无条件注入 与界面显示解耦
             val timeReminder = TimeReminderTransformer.buildReminder(messages)
             val systemWithTime = if (timeReminder != null) {
@@ -567,7 +579,7 @@ class GenerationHandler(
             processingStatus = processingStatus,
             workspaceCwd = workspaceCwd,
         )
- 
+
         var messages: List<UIMessage> = messages
         val params = TextGenerationParams(
             model = model,
@@ -640,7 +652,7 @@ class GenerationHandler(
             onUpdateMessages(messages)
         }
     }
- 
+
     fun translateText(
         settings: Settings,
         sourceText: String,
@@ -651,19 +663,19 @@ class GenerationHandler(
             ?: error("Translation model not found")
         val provider = model.findProvider(settings.providers)
             ?: error("Translation provider not found")
- 
+
         val providerHandler = providerManager.getProviderByType(provider)
- 
+
         if (!ModelRegistry.QWEN_MT.match(model.modelId)) {
             // Use regular translation with prompt
             val prompt = settings.translatePrompt.applyPlaceholders(
                 "source_text" to sourceText,
                 "target_lang" to targetLanguage.toString(),
             )
- 
+
             var messages = listOf(UIMessage.user(prompt))
             var translatedText = ""
- 
+
             providerHandler.streamText(
                 providerSetting = provider,
                 messages = messages,
@@ -674,7 +686,7 @@ class GenerationHandler(
             ).collect { chunk ->
                 messages = messages.handleMessageChunk(chunk)
                 translatedText = messages.lastOrNull()?.toText() ?: ""
- 
+
                 if (translatedText.isNotBlank()) {
                     onStreamUpdate?.invoke(translatedText)
                     emit(translatedText)
@@ -705,7 +717,7 @@ class GenerationHandler(
                 ),
             )
             val translatedText = chunk.choices.firstOrNull()?.message?.toText() ?: ""
- 
+
             if (translatedText.isNotBlank()) {
                 onStreamUpdate?.invoke(translatedText)
                 emit(translatedText)
@@ -713,7 +725,7 @@ class GenerationHandler(
         }
     }.flowOn(Dispatchers.IO)
 }
- 
+
 /**
  * 把原始 Flow 的高频发射节流成"每 periodMillis 毫秒最多发一次最新值"。
  *
@@ -735,7 +747,7 @@ private fun <T> Flow<T>.throttleLatest(periodMillis: Long): Flow<T> {
         }
     }
 }
- 
+
 /**
  * 构建代码块提示 - 告知AI代码文件命名和ZIP打包功能
  */
@@ -747,7 +759,6 @@ private fun buildCodeBlockPrompt(): String = buildString {
     appendLine("   - ✅ Correct: ```index.html instead of ```html")
     appendLine("   - ✅ Correct: ```styles.css instead of ```css")
     appendLine("   - ✅ Correct: ```package.json instead of ```json")
-    appendLine("   - ✅ Correct: ```manifest.xml instead of ```xml")
     appendLine("   - ✅ Correct: ```main.py instead of ```python")
     appendLine("   - ✅ Correct: ```App.vue instead of ```vue")
     appendLine("   - ❌ Wrong: ```kotlin, ```python, ```javascript (these don't provide filenames)")
@@ -759,4 +770,3 @@ private fun buildCodeBlockPrompt(): String = buildString {
     appendLine("   - The `edits` mode applies search/replace to the files from your previous `write_files` call. Files not mentioned in `edits` keep their content unchanged.")
     appendLine("   - Always use actual filenames (e.g. `MainActivity.kt`) as code block language tags, not just language names (e.g. `kotlin`).")
 }
- 
