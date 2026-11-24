@@ -9,17 +9,16 @@ on:
 permissions:
   contents: write
 
+env:
+  BASE_COMMIT: 7b041d773085f87ef6dfc1707c079c5ced96244d
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      GH_OWNER: solelove
-      GH_REPO: orangechat
-      GH_REF: master
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7b041d773085f87ef6dfc1707c079c5ced96244d
+          ref: ${{ env.BASE_COMMIT }}
           fetch-depth: 0
           submodules: recursive
 
@@ -27,27 +26,26 @@ jobs:
         run: |
           ls material3/material-color-utilities/kotlin/dynamiccolor | head -5
 
-      - name: Fetch scripts from master
+      - name: Fetch scripts at pinned commit
         run: |
-          set -e
-          fetch() {
-            local src="$1" dst="$2"
-            local url="https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_REF}/scripts/${src}"
+          set -euo pipefail
+          mkdir -p /tmp/patch
+          base='${{ env.BASE_COMMIT }}'
+          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py; do
+            url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${base}/scripts/${f}"
             echo "GET $url"
-            curl -sSL --retry 3 --retry-delay 2 -o "$dst" "$url"
-            if [ ! -s "$dst" ]; then echo "EMPTY: $url"; exit 1; fi
-            echo "  -> $(wc -c < "$dst") bytes"
-          }
-          fetch TimeReminderTransformer.fixed.kt /tmp/TimeReminderTransformer.fixed.kt
-          fetch patch_dummy_theme.py /tmp/patch_dummy_theme.py
-          fetch patch_time_header.py /tmp/patch_time_header.py
-          fetch patch_avatar_v12.py /tmp/patch_avatar_v12.py
-          fetch patch_bubble_v121.py /tmp/patch_bubble_v121.py
+            curl -sSL --retry 3 --retry-delay 2 -o "/tmp/patch/${f}" "$url"
+            if [ ! -s "/tmp/patch/${f}" ]; then echo "EMPTY: $url"; exit 1; fi
+            echo "  -> $(wc -c < "/tmp/patch/${f}") bytes"
+          done
 
       - name: Apply patches
         run: |
-          set -e
-          cp /tmp/TimeReminderTransformer.fixed.kt app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+          set -euo pipefail
+          cp /tmp/patch/TimeReminderTransformer.fixed.kt \
+             app/src/main/java/me/rerere/rikkahub/data/ai/transformers/TimeReminderTransformer.kt
+
+          # GenerationHandler：去掉 enableTimeReminder 界面开关，时间始终注入
           python3 - <<'PY'
           import re, sys
           gh = "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
@@ -55,23 +53,25 @@ jobs:
           new = "val timeReminder = TimeReminderTransformer.buildReminder(messages)"
           if "enableTimeReminder) {" not in s:
               print("condition already gone")
-          else:
-              pat = re.compile(
-                  r"val timeReminder = if \(assistant\.enableTimeReminder\) \{\n"
-                  r"\s*TimeReminderTransformer\.buildReminder\(messages\)\n"
-                  r"\s*\} else null"
-              )
-              s2, n = pat.subn(new, s)
-              print("replaced", n)
-              if n != 1:
-                  print("ANCHOR NOT FOUND, abort")
-                  sys.exit(1)
-              open(gh, 'w', encoding='utf-8', newline='').write(s2)
+              sys.exit(0)
+          pat = re.compile(
+              r"val timeReminder = if \(assistant\.enableTimeReminder\) \{\n"
+              r"\s*TimeReminderTransformer\.buildReminder\(messages\)\n"
+              r"\s*\} else null"
+          )
+          s2, n = pat.subn(new, s)
+          print("replaced", n)
+          if n != 1:
+              print("ANCHOR NOT FOUND, abort")
+              sys.exit(1)
+          open(gh, 'w', encoding='utf-8', newline='').write(s2)
           PY
-          python3 /tmp/patch_dummy_theme.py
-          python3 /tmp/patch_time_header.py
-          python3 /tmp/patch_avatar_v12.py
-          python3 /tmp/patch_bubble_v121.py
+
+          # 每个补丁单独运行，失败即停并明确指出是哪个脚本
+          for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py; do
+            echo "===== running $p ====="
+            python3 "/tmp/patch/$p" || { echo "PATCH FAILED: $p"; exit 1; }
+          done
 
       - name: Verify
         run: |
