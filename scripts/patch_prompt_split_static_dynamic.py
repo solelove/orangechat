@@ -17,12 +17,17 @@
   v3  src.replace(old, new="") -> TypeError
   v4  grep 防呆误伤 docstring
   v5  数大括号假阳性
+  v6  结束锚点用了 "val timeReminder = if (assistant.enableTimeReminder) {"
+      ——那是补丁执行【之前】的形态。workflow 里的正则已经先把这段替换成
+      "val timeReminder = TimeReminderTransformer.buildReminder(messages)"，
+      所以锚点必须选一个在前后两个版本里都不变的文本。
 
 本版策略：
   1. 起始锚点 + 结束锚点定位唯一一段，先断言各自恰好出现 1 次；
-  2. 断言起点在终点前，且区间内不含函数定义（防止跨函数切割）；
-  3. 整段替换，不做局部 patch；
-  4. 所有校验通过才落盘，任一项失败直接退出且不写文件。
+  2. 结束锚点改用「// 时间上下文无条件注入」这一行注释，它在打补丁前后都稳定；
+  3. 断言起点在终点前，且区间内不含函数定义（防止跨函数切割）；
+  4. 整段替换，不做局部 patch；
+  5. 所有校验通过才落盘，任一项失败直接退出且不写文件。
 """
 import pathlib
 import sys
@@ -41,7 +46,9 @@ if MARK in text:
     sys.exit(0)
 
 START = "            val system = buildString {\n"
-END = "            val timeReminder = if (assistant.enableTimeReminder) {\n"
+# 注意：这里不能用 timeReminder 那行，workflow 的正则已经改过它了。
+# 用「时间上下文」注释行，补丁前后完全一致。
+END = "            // 时间上下文无条件注入 与界面显示解耦\n"
 
 if text.count(START) != 1:
     print("[split] FAIL: start anchor hits=%d (expect 1)" % text.count(START))
@@ -193,6 +200,7 @@ checks = {
     "codeblock_fn_alive": "private fun buildCodeBlockPrompt()" in text,
     "single_system_add": text.count("add(UIMessage.system(prompt = systemWithTime))") == 1,
     "limit_intact": "addAll(messages.limitContext(assistant.contextMessageSize))" in text,
+    "time_comment_alive": "// 时间上下文无条件注入 与界面显示解耦" in text,
 }
 
 si = text.find("val staticSystem = buildString {")
