@@ -103,18 +103,29 @@ jobs:
 
       - name: Verify
         run: |
-          set -e
+          set -euo pipefail
+          GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+
+          need() {
+            if ! grep -q "$1" "$2"; then
+              echo "VERIFY FAIL: '$1' not found in $2"
+              echo "--- matching lines for context ---"
+              grep -n "staticSystem\|dynamicSystem\|timeReminder\|limitContext" "$2" | head -40 || true
+              exit 1
+            fi
+            echo "OK: $1"
+          }
+
           echo "--- time/theme/header ---"
-          grep -n "buildReminder" app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
-          grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt
-          grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt
+          grep -n "buildReminder" $GH || true
+          grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt || true
+          grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt || true
 
           echo "--- two-system split + time tail ---"
-          GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
-          grep -q "val staticSystem = buildString {" $GH
-          grep -q "val dynamicSystem = buildString {" $GH
-          grep -q "add(UIMessage.user(timeReminder))" $GH
-          grep -q "\[time-tail\]" $GH
+          need "val staticSystem = buildString {" $GH
+          need "val dynamicSystem = buildString {" $GH
+          need "add(UIMessage.user(timeReminder))" $GH
+          need "\[time-tail\]" $GH
           if grep -q "systemWithTime" $GH; then
             echo "ERROR: systemWithTime 还留着，时间没挪出 system"; exit 1
           fi
@@ -153,7 +164,7 @@ jobs:
 
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
           echo "--- avatar v12 wiring ---"
-          grep -n "textSegmentAvatar\|partAvatarSpec" $CM
+          grep -n "textSegmentAvatar\|partAvatarSpec" $CM || true
 
           if grep -q "!shouldHideSideAvatar(" $CM; then
             echo "ERROR: 外层侧边头像没删干净"; exit 1
@@ -164,30 +175,30 @@ jobs:
           if grep -nE "^[[:space:]]*ChatMessageSideUserAvatar\(" $CM; then
             echo "ERROR: ChatMessageSideUserAvatar 仍被调用"; exit 1
           fi
-          grep -qE "^private fun ChatMessageSideAvatar\(" $CM
-          grep -qE "^private fun ChatMessageSideUserAvatar\(" $CM
+          need "^private fun ChatMessageSideAvatar(" $CM
+          need "^private fun ChatMessageSideUserAvatar(" $CM
 
-          grep -q "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
-          grep -q "val partAvatarSpec: SegmentAvatarSpec? = textSegmentAvatar" $CM
-          grep -q "segmentAvatar = textSegmentAvatar," $CM
+          need "val textSegmentAvatar: SegmentAvatarSpec? = remember(" $CM
+          need "val partAvatarSpec: SegmentAvatarSpec? = textSegmentAvatar" $CM
+          need "segmentAvatar = textSegmentAvatar," $CM
           if grep -q "if (!splitOn) null" $CM; then
             echo "ERROR: 段头像仍受拆分开关限制"; exit 1
           fi
-          grep -q "internal fun AudioPlayerBubble(url: String) {" $CM
-          grep -q "internal fun VoiceMessageBubble(" $CM
+          need "internal fun AudioPlayerBubble(url: String) {" $CM
+          need "internal fun VoiceMessageBubble(" $CM
 
           BS=app/src/main/java/me/rerere/rikkahub/ui/components/message/BubbleSurface.kt
           echo "--- bubble v12.1 wiring ---"
-          grep -n "不开拆分也要带头像" $BS
-          grep -n "singleAvatarSpace\|singleMaxWidth\|singleRightSide" $BS
+          grep -n "不开拆分也要带头像" $BS || true
+          grep -n "singleAvatarSpace\|singleMaxWidth\|singleRightSide" $BS || true
           if ! grep -q "singleAvatarSpace = if (segmentAvatar != null)" $BS; then
             echo "ERROR: 不开拆分分支没有头像占用宽度"; exit 1
           fi
           if ! grep -q "SegmentAvatarView(segmentAvatar, avatarLoading)" $BS; then
             echo "ERROR: SegmentAvatarView 没被调用"; exit 1
           fi
-          grep -q "val segments = remember(text, mode) { splitByMode(text, mode) }" $BS
-          grep -q "fun BubbleSurface(" $BS
+          need "val segments = remember(text, mode) { splitByMode(text, mode) }" $BS
+          need "fun BubbleSurface(" $BS
           echo "assert OK"
 
       - name: Verify diff scope
