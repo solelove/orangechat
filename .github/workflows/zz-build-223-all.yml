@@ -61,6 +61,10 @@ jobs:
           if ! grep -q 'no_bare_system_var' /tmp/patch/patch_time_tail.py; then
             echo "STALE SCRIPT: patch_time_tail.py (missing bare-system guard)"; exit 1
           fi
+          # v2: 时间提醒必须是独立一条消息，不能拼进最后一条 user
+          if ! grep -q 'add(UIMessage.user(timeReminder))' /tmp/patch/patch_time_tail.py; then
+            echo "STALE SCRIPT: patch_time_tail.py (expect standalone time message)"; exit 1
+          fi
 
       - name: Apply patches
         run: |
@@ -109,10 +113,13 @@ jobs:
           GH=app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
           grep -q "val staticSystem = buildString {" $GH
           grep -q "val dynamicSystem = buildString {" $GH
-          grep -q "val lastUserIndex = indexOfLast { it.role == MessageRole.USER }" $GH
+          grep -q "add(UIMessage.user(timeReminder))" $GH
           grep -q "\[time-tail\]" $GH
           if grep -q "systemWithTime" $GH; then
             echo "ERROR: systemWithTime 还留着，时间没挪出 system"; exit 1
+          fi
+          if grep -q "val lastUserIndex = indexOfLast" $GH; then
+            echo "ERROR: 时间还在拼进最后一条 user 消息"; exit 1
           fi
           python3 - <<'PY'
           s = open("app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt", encoding='utf-8').read()
@@ -132,16 +139,16 @@ jobs:
           assert "tools.forEach" in dyn, "tool prompts must be in dynamic"
           assert dyn.index("buildMemoryPrompt") < dyn.index("External memory recall failed")
           assert dyn.index("buildMemoryPrompt") < dyn.index("buildRecentChatsPrompt")
-          # 两条 system 分别 add，且顺序先静态后动态；之后才是 limitContext 和尾部时间
+          # 两条 system 分别 add，且顺序先静态后动态；之后才是 limitContext 和尾部独立时间消息
           i_static = s.index("add(UIMessage.system(prompt = staticSystem))")
           i_dyn = s.index("add(UIMessage.system(prompt = dynamicSystem))")
           i_lim = s.index("addAll(messages.limitContext(assistant.contextMessageSize))")
-          i_tail = s.index("val lastUserIndex = indexOfLast")
+          i_tail = s.index("add(UIMessage.user(timeReminder))")
           assert i_static < i_dyn < i_lim < i_tail, "order wrong: static -> dynamic -> limitContext -> time tail"
           # 不能残留裸 system 变量
           assert "prompt = system)" not in s, "bare system variable still referenced"
           assert s.count("{") == s.count("}"), "brace imbalance"
-          print("two-system split + time tail OK")
+          print("two-system split + standalone time tail OK")
           PY
 
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
@@ -222,7 +229,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av19-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av20-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -244,6 +251,6 @@ jobs:
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 三处修复 + 头像 v12.1 + 两条 system + 时间挪末尾" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。5) system 拆成两条消息：静态段（人格 + 代码块规则 + Skip/Jump + 气泡）固定在最前永远命中缓存；动态段（记忆 + 外置召回 + 最近会话 + 工具 + 插件）单独一条，怎么变都不影响前面。6) 时间提醒从 system 移出，追加到消息列表末尾。界面完全没动。" \
+            --title "v2.2.3 三处修复 + 头像 v12.1 + 两条 system + 时间独立成条" \
+            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。5) system 拆成两条消息：静态段（人格 + 代码块规则 + Skip/Jump + 气泡）固定在最前永远命中缓存；动态段（记忆 + 外置召回 + 最近会话 + 工具 + 插件）单独一条，怎么变都不影响前面。6) 时间提醒不再拼进最后一条 user 消息，改为列表末尾独立一条 user 消息——旧做法会把那条消息永远变成脏数据，每轮多脏一条，累积吃掉整段历史的缓存命中。界面完全没动。" \
             app/build/outputs/apk/release/*.apk
