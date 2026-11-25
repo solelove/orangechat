@@ -1,5 +1,5 @@
 name: Build v2.2.3 three fixes + bubble avatar
-# rerun trigger: two-system v12（time-tail 分别 add 两条 system）
+# rerun trigger: recent-chats 移出 system（v2，2026-11-26）
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - '.github/workflows/zz-build-223-all.yml'
       - 'scripts/patch_prompt_two_system.py'
       - 'scripts/patch_time_tail.py'
+      - 'scripts/patch_recent_chats_tail.py'
   workflow_dispatch:
 
 permissions:
@@ -39,7 +40,7 @@ jobs:
           # raw.githubusercontent.com 走 Fastly CDN，对 master 这种移动分支会缓存。
           # 加一个随构建变化的 cache-buster 参数，强制拿到最新内容。
           CB="cb=$(date +%s)-${GITHUB_RUN_ID}"
-          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py; do
+          for f in TimeReminderTransformer.fixed.kt patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py patch_recent_chats_tail.py; do
             url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/scripts/${f}?${CB}"
             echo "GET $url"
             rm -f "/tmp/patch/${f}"
@@ -64,6 +65,13 @@ jobs:
           # v2: 时间提醒必须是独立一条消息，不能拼进最后一条 user
           if ! grep -q 'add(UIMessage.user(timeReminder))' /tmp/patch/patch_time_tail.py; then
             echo "STALE SCRIPT: patch_time_tail.py (expect standalone time message)"; exit 1
+          fi
+          # recent-chats 补丁必须是「挪出 system」那版
+          if ! grep -q 'recent-tail' /tmp/patch/patch_recent_chats_tail.py; then
+            echo "STALE SCRIPT: patch_recent_chats_tail.py (expect [recent-tail] marker)"; exit 1
+          fi
+          if ! grep -q '<recent_chats>' /tmp/patch/patch_recent_chats_tail.py; then
+            echo "STALE SCRIPT: patch_recent_chats_tail.py (expect <recent_chats> wrapper)"; exit 1
           fi
 
       - name: Apply patches
@@ -95,8 +103,8 @@ jobs:
           PY
 
           # 每个补丁单独运行，失败即停并明确指出是哪个脚本
-          # 顺序要求：two-system 必须早于 time-tail（time-tail 依赖 static/dynamic 变量）
-          for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py; do
+          # 顺序要求：two-system -> time-tail -> recent-tail（后两个依赖 static/dynamic 变量和 limitContext 结构）
+          for p in patch_dummy_theme.py patch_time_header.py patch_avatar_v12.py patch_bubble_v121.py patch_prompt_two_system.py patch_time_tail.py patch_recent_chats_tail.py; do
             echo "===== running $p ====="
             python3 "/tmp/patch/$p" || { echo "PATCH FAILED: $p"; exit 1; }
           done
@@ -110,7 +118,7 @@ jobs:
             if ! grep -q "$1" "$2"; then
               echo "VERIFY FAIL: '$1' not found in $2"
               echo "--- matching lines for context ---"
-              grep -n "staticSystem\|dynamicSystem\|timeReminder\|limitContext" "$2" | head -40 || true
+              grep -n "staticSystem\|dynamicSystem\|timeReminder\|limitContext\|recent_chats" "$2" | head -40 || true
               exit 1
             fi
             echo "OK: $1"
@@ -121,11 +129,13 @@ jobs:
           grep -n "fun dummy()" app/src/main/java/me/rerere/rikkahub/data/datastore/PreferencesStore.kt || true
           grep -n "一律带上日期" app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatList.kt || true
 
-          echo "--- two-system split + time tail ---"
+          echo "--- two-system split + time tail + recent tail ---"
           need "val staticSystem = buildString {" $GH
           need "val dynamicSystem = buildString {" $GH
           need "add(UIMessage.user(timeReminder))" $GH
           need "\[time-tail\]" $GH
+          need "\[recent-tail\]" $GH
+          need "<recent_chats>" $GH
           if grep -q "systemWithTime" $GH; then
             echo "ERROR: systemWithTime 还留着，时间没挪出 system"; exit 1
           fi
@@ -145,21 +155,25 @@ jobs:
           assert "tools.forEach" not in static_part, "tool prompts must not be in static"
           assert "External memory recall failed" not in static_part, "external recall must not be in static"
           assert "buildRecentChatsPrompt" not in static_part, "recent chats must not be in static"
-          dyn = s[di:]
+
+          # 动态段：静态之后到 add(dynamicSystem) 之间。记忆和工具必须还在里面，最近会话必须已经不在了。
+          di_end = s.index("add(UIMessage.system(prompt = dynamicSystem))")
+          dyn = s[di:di_end]
           assert "buildMemoryPrompt" in dyn, "memory must be in dynamic"
           assert "tools.forEach" in dyn, "tool prompts must be in dynamic"
-          assert dyn.index("buildMemoryPrompt") < dyn.index("External memory recall failed")
-          assert dyn.index("buildMemoryPrompt") < dyn.index("buildRecentChatsPrompt")
-          # 两条 system 分别 add，且顺序先静态后动态；之后才是 limitContext 和尾部独立时间消息
+          assert "buildRecentChatsPrompt" not in dyn, "recent chats must be OUT of dynamic system"
+
+          # 最近会话全程只调用一次，且位置在 limitContext 之后、时间之前
+          assert s.count("buildRecentChatsPrompt(assistant, conversationRepo)") == 1, "recent chats call count != 1"
+          i_recent = s.index("<recent_chats>")
           i_static = s.index("add(UIMessage.system(prompt = staticSystem))")
           i_dyn = s.index("add(UIMessage.system(prompt = dynamicSystem))")
           i_lim = s.index("addAll(messages.limitContext(assistant.contextMessageSize))")
           i_tail = s.index("add(UIMessage.user(timeReminder))")
-          assert i_static < i_dyn < i_lim < i_tail, "order wrong: static -> dynamic -> limitContext -> time tail"
-          # 不能残留裸 system 变量
+          assert i_static < i_dyn < i_lim < i_recent < i_tail, "order wrong: static -> dynamic -> history -> recent -> time"
           assert "prompt = system)" not in s, "bare system variable still referenced"
           assert s.count("{") == s.count("}"), "brace imbalance"
-          print("two-system split + standalone time tail OK")
+          print("two-system + standalone time tail + recent-chats tail OK")
           PY
 
           CM=app/src/main/java/me/rerere/rikkahub/ui/components/message/ChatMessage.kt
@@ -240,7 +254,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-223-av20-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-223-av21-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build release
         run: |
@@ -262,6 +276,6 @@ jobs:
           TAG="223-all-av-$(date +%Y%m%d%H%M)"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
-            --title "v2.2.3 三处修复 + 头像 v12.1 + 两条 system + 时间独立成条" \
-            --notes "基于 v2.2.3 标签 7b041d77。1) 时间上下文去掉界面开关限制，每次取真实当前时间。2) 启动加载期间主题不再闪粉。3) 时间条非今天的消息显示月日+时分。4) 头像 v12.1：不开拆分时气泡旁边也有一个头像；文字段、图片段各带一个；外层不再单独画；思考块、工具块不带头像。5) system 拆成两条消息：静态段（人格 + 代码块规则 + Skip/Jump + 气泡）固定在最前永远命中缓存；动态段（记忆 + 外置召回 + 最近会话 + 工具 + 插件）单独一条，怎么变都不影响前面。6) 时间提醒不再拼进最后一条 user 消息，改为列表末尾独立一条 user 消息——旧做法会把那条消息永远变成脏数据，每轮多脏一条，累积吃掉整段历史的缓存命中。界面完全没动。" \
+            --title "v2.2.3 av21：最近会话移出 system（缓存命中修复）" \
+            --notes "基于 v2.2.3 标签 7b041d77。本次唯一实质改动：把「参考历史聊天记录」从动态 system 里挪出来，改成对话历史之后、时间提醒之前的一条独立消息，用 <recent_chats> 标签包住，明确是存档参考而非当前轮次。原因：buildRecentChatsPrompt 带 last_chat 日期，每轮都变，卡在 system 中间会把后面全部历史和工具定义切碎——实测 106.5K 只有 28.9K 命中，那个 28.9K 正好是前两条 system 的长度。内容一个字没删，只换位置。请求顺序变成：静态system(不变) -> 动态system(记忆+工具) -> 对话历史 -> 最近会话(每轮变) -> 时间(每分钟变)。" \
             app/build/outputs/apk/release/*.apk
